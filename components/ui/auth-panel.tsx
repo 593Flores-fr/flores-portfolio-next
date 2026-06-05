@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RealismButton } from "./realism-button";
-import { X, Eye, EyeOff, CheckCircle, AlertCircle } from "lucide-react";
+import { X, Eye, EyeOff, AlertCircle } from "lucide-react";
 
 interface AuthPanelProps {
   onClose?: () => void;
@@ -15,7 +16,7 @@ export function AuthPanel({ onClose }: AuthPanelProps) {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const router = useRouter();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -78,14 +79,14 @@ export function AuthPanel({ onClose }: AuthPanelProps) {
           setError("Compte créé, mais connexion automatique échouée. Connectez-vous.");
           setMode("login");
         } else {
-          setSuccess(true);
+          router.push("/espace");
         }
       } else {
         const result = await signIn("credentials", { email, password, redirect: false });
         if (result?.error) {
           setError("Email ou mot de passe incorrect");
         } else {
-          setSuccess(true);
+          router.push("/espace");
         }
       }
     } catch {
@@ -94,43 +95,6 @@ export function AuthPanel({ onClose }: AuthPanelProps) {
       setLoading(false);
     }
   };
-
-  if (success) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.97 }}
-        animate={{ opacity: 1, scale: 1 }}
-        style={{
-          width: "100%",
-          borderRadius: "20px",
-          background: "rgba(8,12,24,0.82)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-          border: "1px solid rgba(255,255,255,0.09)",
-          boxShadow: "0 32px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)",
-          padding: "32px 24px",
-          textAlign: "center",
-          position: "relative",
-        }}
-      >
-        {onClose && (
-          <button onClick={onClose} style={{ position: "absolute", top: "12px", right: "12px", background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.3)", padding: "4px", display: "flex" }}>
-            <X size={14} />
-          </button>
-        )}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
-          <CheckCircle size={36} color="rgba(74,222,128,0.85)" strokeWidth={1.5} />
-        </div>
-        <h3 style={{ fontFamily: "var(--font-poppins)", fontSize: "18px", fontWeight: 700, color: "white", marginBottom: "8px" }}>
-          Vous êtes connecté !
-        </h3>
-        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", color: "rgba(255,255,255,0.4)", fontWeight: 300, lineHeight: 1.65 }}>
-          Bienvenue dans votre espace partagé. Vous pouvez maintenant discuter d&rsquo;un projet ou demander un devis.
-        </p>
-        <div style={{ position: "absolute", bottom: 0, left: "20%", right: "20%", height: "1px", background: "linear-gradient(to right, transparent, rgba(74,222,128,0.3), transparent)", borderRadius: "999px" }} />
-      </motion.div>
-    );
-  }
 
   return (
     <motion.div
