@@ -136,13 +136,22 @@ function SectionSub({ children }: { children: React.ReactNode }) {
 
 function TabMessages({ user }: { user: Session["user"] }) {
   const [messages, setMessages] = useState<Msg[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch("/api/messages").then(r => r.json()).then(data => { setMessages(data); setLoading(false); });
+    Promise.all([
+      fetch("/api/messages").then(r => r.json()),
+      fetch("/api/projects").then(r => r.json()),
+    ]).then(([msgs, projs]) => {
+      setMessages(msgs);
+      const relevantProjs = (projs as Project[]).filter(p => p.status !== "rejected");
+      setProjects(relevantProjs);
+      setLoading(false);
+    });
   }, []);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
@@ -164,6 +173,45 @@ function TabMessages({ user }: { user: Session["user"] }) {
       <SectionSub>Échangez directement avec Flores — questions sur votre projet en cours, informations complémentaires, suivi.</SectionSub>
 
       <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px", paddingBottom: "16px" }}>
+        {/* Projet embed en tête de conversation */}
+        {!loading && projects.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "8px" }}>
+            {projects.map(p => (
+              <div key={p.id} style={{
+                padding: "12px 14px", borderRadius: "12px",
+                background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px", flexWrap: "wrap" }}>
+                  <span style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.75)" }}>{p.title}</span>
+                  <span style={{
+                    fontSize: "9px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em",
+                    color: STATUS_COLOR[p.status] ?? "rgba(255,255,255,0.4)",
+                    background: STATUS_BG[p.status] ?? "rgba(255,255,255,0.05)",
+                    padding: "2px 7px", borderRadius: "999px", flexShrink: 0,
+                  }}>
+                    {STATUS_LABEL[p.status] ?? p.status}
+                  </span>
+                </div>
+                <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.3)", margin: "0 0 3px" }}>
+                  {p.type === "web" ? "Web" : p.type === "visual" ? "Visuel" : "Autre"}
+                  {p.budget ? ` · ${p.budget}` : ""}
+                  {" · " + new Date(p.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })}
+                </p>
+                {p.description && (
+                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 300, color: "rgba(255,255,255,0.38)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {p.description}
+                  </p>
+                )}
+              </div>
+            ))}
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", margin: "4px 0" }}>
+              <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.05)" }} />
+              <span style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(255,255,255,0.15)" }}>Échanges</span>
+              <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.05)" }} />
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px", textAlign: "center", padding: "40px 0" }}>Chargement...</div>
         ) : messages.length === 0 ? (

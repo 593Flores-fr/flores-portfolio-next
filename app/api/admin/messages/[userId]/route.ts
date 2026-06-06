@@ -32,7 +32,14 @@ export async function GET(
     select: { id: true, name: true, email: true, image: true },
   });
 
-  return NextResponse.json({ user, messages });
+  const projects = await prisma.project.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take: 5,
+    select: { id: true, title: true, status: true, type: true, budget: true, description: true, createdAt: true },
+  });
+
+  return NextResponse.json({ user, messages, projects });
 }
 
 export async function POST(

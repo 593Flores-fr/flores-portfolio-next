@@ -46,7 +46,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if ("paid" in body) data.paid = Boolean(body.paid);
   if ("kanbanNotes" in body) data.kanbanNotes = body.kanbanNotes ? String(body.kanbanNotes) : null;
 
-  await prisma.project.update({ where: { id }, data });
+  if (Object.keys(data).length > 0) {
+    await prisma.project.update({ where: { id }, data });
+  }
 
   // Auto-create default kanban columns when becoming active or forced via initColumns
   if (data.status === "active" || body.initColumns === true) {
