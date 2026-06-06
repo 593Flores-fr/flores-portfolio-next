@@ -3,39 +3,137 @@
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, LogOut, MessageSquare } from "lucide-react";
+import {
+  Send, LogOut, MessageSquare, Kanban, Star,
+  Settings, PlusCircle, ChevronRight, CheckCircle2,
+  Circle, Clock, AlertCircle, Eye, EyeOff,
+} from "lucide-react";
 import type { Session } from "next-auth";
 
-type Msg = {
-  id: string;
-  content: string;
-  fromAdmin: boolean;
-  createdAt: string;
+// ── Types ────────────────────────────────────────────────────────────────────
+
+type Tab = "messages" | "devis" | "projets" | "avis" | "parametres";
+
+type Msg = { id: string; content: string; fromAdmin: boolean; createdAt: string };
+
+type KanbanTask = { id: string; title: string; description?: string | null; done: boolean; order: number };
+type KanbanColumn = { id: string; title: string; order: number; tasks: KanbanTask[] };
+type Project = {
+  id: string; title: string; description?: string | null; type: string;
+  budget?: string | null; status: string; paid: boolean;
+  adminNotes?: string | null; createdAt: string;
+  columns: KanbanColumn[];
+  review?: { status: string } | null;
 };
 
-function formatDate(iso: string) {
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function fmtDate(iso: string) {
   return new Date(iso).toLocaleString("fr-FR", {
     day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
   });
 }
 
-function Avatar({ name, image }: { name?: string | null; image?: string | null }) {
-  if (image) return <img src={image} alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />;
+function fmtDateShort(iso: string) {
+  return new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  pending: "En attente", accepted: "Accepté", active: "En cours",
+  completed: "Livré", rejected: "Refusé",
+};
+const STATUS_COLOR: Record<string, string> = {
+  pending: "rgba(250,204,21,0.8)", accepted: "rgba(74,222,128,0.8)",
+  active: "rgba(96,165,250,0.8)", completed: "rgba(167,139,250,0.8)", rejected: "rgba(248,113,113,0.8)",
+};
+const STATUS_BG: Record<string, string> = {
+  pending: "rgba(250,204,21,0.08)", accepted: "rgba(74,222,128,0.08)",
+  active: "rgba(96,165,250,0.08)", completed: "rgba(167,139,250,0.08)", rejected: "rgba(248,113,113,0.08)",
+};
+
+// ── Avatar ───────────────────────────────────────────────────────────────────
+
+function Avatar({ name, image, size = 36 }: { name?: string | null; image?: string | null; size?: number }) {
+  if (image) return <img src={image} alt="" style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />;
   const initials = (name ?? "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
   return (
     <div style={{
-      width: 36, height: 36, borderRadius: "50%",
+      width: size, height: size, borderRadius: "50%", flexShrink: 0,
       background: "linear-gradient(135deg, rgba(60,100,255,0.6), rgba(100,60,255,0.6))",
       display: "flex", alignItems: "center", justifyContent: "center",
-      fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 700, color: "white",
-      flexShrink: 0,
+      fontFamily: "var(--font-poppins)", fontSize: size * 0.36 + "px", fontWeight: 700, color: "white",
     }}>
       {initials}
     </div>
   );
 }
 
-export function EspaceClient({ user }: { user: Session["user"] }) {
+// ── Tab nav item ──────────────────────────────────────────────────────────────
+
+function NavItem({ id, active, icon: Icon, label, badge, onClick }: {
+  id: Tab; active: boolean; icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
+  label: string; badge?: number; onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: "flex", alignItems: "center", gap: "10px",
+        padding: "10px 12px", borderRadius: "10px", border: "none",
+        background: active ? "rgba(60,100,255,0.15)" : "transparent",
+        cursor: "pointer", width: "100%", textAlign: "left",
+        fontFamily: "var(--font-poppins)", transition: "background 0.15s",
+      }}
+    >
+      <Icon size={15} color={active ? "rgba(100,140,255,0.9)" : "rgba(255,255,255,0.3)"} strokeWidth={active ? 2 : 1.5} />
+      <span style={{
+        fontSize: "12px", fontWeight: active ? 600 : 400,
+        color: active ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.35)",
+        flex: 1,
+      }}>
+        {label}
+      </span>
+      {badge != null && badge > 0 && (
+        <span style={{
+          fontSize: "10px", fontWeight: 600, color: "rgba(96,165,250,0.9)",
+          background: "rgba(96,165,250,0.12)", border: "1px solid rgba(96,165,250,0.2)",
+          borderRadius: "999px", padding: "1px 6px",
+        }}>
+          {badge}
+        </span>
+      )}
+    </button>
+  );
+}
+
+// ── Shared section title ──────────────────────────────────────────────────────
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 style={{
+      fontFamily: "var(--font-poppins)", fontSize: "18px", fontWeight: 700,
+      color: "white", letterSpacing: "-0.01em", margin: "0 0 4px",
+    }}>
+      {children}
+    </h2>
+  );
+}
+function SectionSub({ children }: { children: React.ReactNode }) {
+  return (
+    <p style={{
+      fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300,
+      color: "rgba(255,255,255,0.3)", margin: "0 0 28px", lineHeight: 1.65,
+    }}>
+      {children}
+    </p>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TAB: MESSAGES
+// ─────────────────────────────────────────────────────────────────────────────
+
+function TabMessages({ user }: { user: Session["user"] }) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -43,177 +141,59 @@ export function EspaceClient({ user }: { user: Session["user"] }) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch("/api/messages")
-      .then(r => r.json())
-      .then(data => { setMessages(data); setLoading(false); });
+    fetch("/api/messages").then(r => r.json()).then(data => { setMessages(data); setLoading(false); });
   }, []);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const send = async () => {
     const content = input.trim();
     if (!content || sending) return;
-    setSending(true);
-    setInput("");
+    setSending(true); setInput("");
     const res = await fetch("/api/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content }),
     });
-    if (res.ok) {
-      const msg = await res.json();
-      setMessages(prev => [...prev, msg]);
-    }
+    if (res.ok) { const msg = await res.json(); setMessages(p => [...p, msg]); }
     setSending(false);
   };
 
-  const handleKey = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
-  };
-
   return (
-    <div style={{
-      minHeight: "100dvh",
-      background: "#060a0e",
-      display: "flex",
-      flexDirection: "column",
-      fontFamily: "var(--font-poppins)",
-    }}>
-      {/* ── Top bar ── */}
-      <header style={{
-        position: "sticky", top: 0, zIndex: 50,
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
-        background: "rgba(6,10,14,0.92)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        padding: "0 6vw",
-        height: "64px",
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <Avatar name={user?.name} image={user?.image} />
-          <div>
-            <p style={{ fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.88)", margin: 0, lineHeight: 1.2 }}>
-              {user?.name ?? "Utilisateur"}
-            </p>
-            <p style={{ fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.3)", margin: 0, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-              Espace client
-            </p>
-          </div>
-        </div>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+      <SectionTitle>Messagerie</SectionTitle>
+      <SectionSub>Échangez directement avec moi — projet, question, suivi.</SectionSub>
 
-        <button
-          onClick={() => signOut({ callbackUrl: "/" })}
-          style={{
-            display: "flex", alignItems: "center", gap: "7px",
-            background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
-            borderRadius: "8px", padding: "7px 14px", cursor: "pointer",
-            fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 500,
-            color: "rgba(255,255,255,0.4)", transition: "all 0.2s",
-          }}
-        >
-          <LogOut size={13} />
-          Déconnexion
-        </button>
-      </header>
-
-      {/* ── Content ── */}
-      <div style={{ flex: 1, maxWidth: "760px", width: "100%", margin: "0 auto", padding: "40px 6vw 120px", display: "flex", flexDirection: "column", gap: "8px" }}>
-
-        {/* Intro card */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          style={{
-            padding: "20px 24px",
-            borderRadius: "16px",
-            background: "rgba(60,100,255,0.06)",
-            border: "1px solid rgba(60,100,255,0.14)",
-            marginBottom: "16px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
-            <MessageSquare size={16} color="rgba(100,140,255,0.7)" strokeWidth={1.5} />
-            <p style={{ fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.7)", margin: 0 }}>
-              Espace partagé
-            </p>
-          </div>
-          <p style={{ fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.38)", lineHeight: 1.75, margin: 0 }}>
-            Bienvenue <strong style={{ color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>{user?.name?.split(" ")[0]}</strong>. Utilisez cet espace pour me décrire votre projet, poser une question ou demander un devis. Je réponds sous 24h.
-          </p>
-        </motion.div>
-
-        {/* Messages thread */}
+      <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px", paddingBottom: "16px" }}>
         {loading ? (
-          <div style={{ textAlign: "center", padding: "40px 0", color: "rgba(255,255,255,0.15)", fontSize: "12px" }}>
-            Chargement...
-          </div>
+          <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px", textAlign: "center", padding: "40px 0" }}>Chargement...</div>
         ) : messages.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            style={{ textAlign: "center", padding: "48px 0", color: "rgba(255,255,255,0.15)", fontSize: "12px" }}
-          >
-            Aucun message pour l&apos;instant — envoyez le premier !
-          </motion.div>
+          <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px", textAlign: "center", padding: "48px 0" }}>
+            Aucun message — envoyez le premier !
+          </div>
         ) : (
           <AnimatePresence initial={false}>
-            {messages.map((msg) => (
-              <motion.div
-                key={msg.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                style={{
-                  display: "flex",
-                  flexDirection: msg.fromAdmin ? "row" : "row-reverse",
-                  gap: "10px",
-                  alignItems: "flex-end",
-                }}
+            {messages.map(msg => (
+              <motion.div key={msg.id}
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                style={{ display: "flex", flexDirection: msg.fromAdmin ? "row" : "row-reverse", gap: "10px", alignItems: "flex-end" }}
               >
-                {/* Avatar */}
                 {msg.fromAdmin ? (
-                  <div style={{
-                    width: 30, height: 30, borderRadius: "50%", flexShrink: 0,
-                    background: "linear-gradient(135deg, #3a6fff, #7c3aed)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "11px", fontWeight: 700, color: "white",
-                  }}>
-                    F
-                  </div>
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg,#3a6fff,#7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, color: "white", flexShrink: 0 }}>F</div>
                 ) : (
-                  <div style={{ width: 30, height: 30, flexShrink: 0 }}>
-                    <Avatar name={user?.name} image={user?.image} />
-                  </div>
+                  <div style={{ flexShrink: 0 }}><Avatar name={user?.name} image={user?.image} size={28} /></div>
                 )}
-
-                {/* Bubble */}
                 <div style={{ maxWidth: "75%" }}>
                   <div style={{
-                    padding: "11px 15px",
-                    borderRadius: msg.fromAdmin ? "16px 16px 16px 4px" : "16px 16px 4px 16px",
-                    background: msg.fromAdmin
-                      ? "rgba(60,100,255,0.12)"
-                      : "rgba(255,255,255,0.07)",
+                    padding: "10px 14px", whiteSpace: "pre-wrap", wordBreak: "break-word",
+                    borderRadius: msg.fromAdmin ? "14px 14px 14px 3px" : "14px 14px 3px 14px",
+                    background: msg.fromAdmin ? "rgba(60,100,255,0.12)" : "rgba(255,255,255,0.07)",
                     border: `1px solid ${msg.fromAdmin ? "rgba(60,100,255,0.2)" : "rgba(255,255,255,0.07)"}`,
-                    fontSize: "13px",
-                    fontWeight: 300,
-                    color: "rgba(255,255,255,0.82)",
-                    lineHeight: 1.65,
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
+                    fontSize: "13px", fontWeight: 300, color: "rgba(255,255,255,0.82)", lineHeight: 1.65,
                   }}>
                     {msg.content}
                   </div>
-                  <p style={{
-                    fontSize: "10px", color: "rgba(255,255,255,0.2)", margin: "4px 4px 0",
-                    textAlign: msg.fromAdmin ? "left" : "right",
-                    fontWeight: 300,
-                  }}>
-                    {formatDate(msg.createdAt)}
+                  <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.18)", margin: "4px 4px 0", textAlign: msg.fromAdmin ? "left" : "right" }}>
+                    {fmtDate(msg.createdAt)}
                   </p>
                 </div>
               </motion.div>
@@ -223,59 +203,662 @@ export function EspaceClient({ user }: { user: Session["user"] }) {
         <div ref={bottomRef} />
       </div>
 
-      {/* ── Input bar ── */}
-      <div style={{
-        position: "fixed", bottom: 0, left: 0, right: 0,
-        background: "rgba(6,10,14,0.95)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        borderTop: "1px solid rgba(255,255,255,0.06)",
-        padding: "16px 6vw 20px",
-      }}>
-        <div style={{ maxWidth: "760px", margin: "0 auto", display: "flex", gap: "10px", alignItems: "flex-end" }}>
+      <div style={{ paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+        <div style={{ display: "flex", gap: "10px", alignItems: "flex-end" }}>
           <textarea
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={handleKey}
-            placeholder="Décrivez votre projet… (Entrée pour envoyer, Shift+Entrée pour sauter une ligne)"
+            value={input} onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+            placeholder="Votre message… (Entrée pour envoyer)"
             rows={1}
             style={{
-              flex: 1,
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: "12px",
-              padding: "12px 14px",
-              color: "white",
-              fontFamily: "var(--font-poppins)",
-              fontSize: "13px",
-              fontWeight: 300,
-              lineHeight: 1.6,
-              outline: "none",
-              resize: "none",
-              maxHeight: "120px",
-              overflowY: "auto",
+              flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: "10px", padding: "10px 12px", color: "white", fontFamily: "var(--font-poppins)",
+              fontSize: "13px", fontWeight: 300, lineHeight: 1.5, outline: "none", resize: "none",
+              maxHeight: "100px", overflowY: "auto",
             }}
-            onInput={e => {
-              const t = e.currentTarget;
-              t.style.height = "auto";
-              t.style.height = Math.min(t.scrollHeight, 120) + "px";
-            }}
+            onInput={e => { const t = e.currentTarget; t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 100) + "px"; }}
           />
           <button
-            onClick={send}
-            disabled={!input.trim() || sending}
+            onClick={send} disabled={!input.trim() || sending}
             style={{
-              width: 44, height: 44, borderRadius: "12px", flexShrink: 0,
-              background: input.trim() ? "rgba(60,100,255,0.7)" : "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              cursor: input.trim() ? "pointer" : "default",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              transition: "background 0.2s",
+              width: 40, height: 40, borderRadius: "10px", flexShrink: 0, border: "1px solid rgba(255,255,255,0.08)",
+              background: input.trim() ? "rgba(60,100,255,0.7)" : "rgba(255,255,255,0.04)",
+              cursor: input.trim() ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center",
             }}
           >
-            <Send size={16} color={input.trim() ? "white" : "rgba(255,255,255,0.2)"} />
+            <Send size={15} color={input.trim() ? "white" : "rgba(255,255,255,0.2)"} />
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TAB: DEVIS
+// ─────────────────────────────────────────────────────────────────────────────
+
+const PROJECT_TYPES = [
+  { value: "web", label: "Site web / Application" },
+  { value: "visual", label: "Création visuelle" },
+  { value: "other", label: "Autre / Je ne sais pas encore" },
+];
+
+function TabDevis({ onSuccess }: { onSuccess: () => void }) {
+  const [title, setTitle] = useState("");
+  const [type, setType] = useState("");
+  const [description, setDescription] = useState("");
+  const [budget, setBudget] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
+
+  const inputStyle: React.CSSProperties = {
+    width: "100%", padding: "10px 13px", borderRadius: "10px",
+    border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)",
+    color: "white", fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 300,
+    outline: "none", boxSizing: "border-box",
+  };
+  const labelStyle: React.CSSProperties = {
+    display: "block", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 500,
+    color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "6px",
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(""); setLoading(true);
+    const res = await fetch("/api/projects", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, type, description, budget }),
+    });
+    setLoading(false);
+    if (!res.ok) { const d = await res.json(); setError(d.error ?? "Erreur"); return; }
+    setDone(true);
+    setTimeout(onSuccess, 1800);
+  };
+
+  if (done) {
+    return (
+      <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
+        style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, gap: "16px" }}
+      >
+        <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <CheckCircle2 size={24} color="rgba(74,222,128,0.8)" />
+        </div>
+        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "15px", fontWeight: 600, color: "white", margin: 0 }}>Demande envoyée !</p>
+        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.3)", margin: 0 }}>Je vous réponds sous 24h.</p>
+      </motion.div>
+    );
+  }
+
+  return (
+    <div>
+      <SectionTitle>Demande de devis</SectionTitle>
+      <SectionSub>Décrivez votre projet — je vous réponds sous 24h avec une estimation.</SectionSub>
+
+      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "18px", maxWidth: "560px" }}>
+        <div>
+          <label style={labelStyle}>Intitulé du projet *</label>
+          <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="ex : Site vitrine restaurant" required style={inputStyle} />
+        </div>
+
+        <div>
+          <label style={labelStyle}>Type de prestation *</label>
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            {PROJECT_TYPES.map(pt => (
+              <label key={pt.value} style={{
+                display: "flex", alignItems: "center", gap: "10px", padding: "10px 13px",
+                borderRadius: "10px", border: `1px solid ${type === pt.value ? "rgba(60,100,255,0.35)" : "rgba(255,255,255,0.07)"}`,
+                background: type === pt.value ? "rgba(60,100,255,0.1)" : "rgba(255,255,255,0.02)",
+                cursor: "pointer", transition: "all 0.15s",
+              }}>
+                <input type="radio" name="type" value={pt.value} checked={type === pt.value} onChange={() => setType(pt.value)} style={{ display: "none" }} />
+                <div style={{ width: 14, height: 14, borderRadius: "50%", border: `1.5px solid ${type === pt.value ? "rgba(100,140,255,0.8)" : "rgba(255,255,255,0.2)"}`, background: type === pt.value ? "rgba(100,140,255,0.25)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  {type === pt.value && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "rgba(100,140,255,0.9)" }} />}
+                </div>
+                <span style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 400, color: "rgba(255,255,255,0.65)" }}>{pt.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label style={labelStyle}>Description</label>
+          <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4}
+            placeholder="Décrivez votre projet, vos besoins, vos références…"
+            style={{ ...inputStyle, resize: "vertical", minHeight: "90px" }}
+          />
+        </div>
+
+        <div>
+          <label style={labelStyle}>Budget envisagé</label>
+          <input type="text" value={budget} onChange={e => setBudget(e.target.value)} placeholder="ex : 500€, À définir…" style={inputStyle} />
+        </div>
+
+        {error && (
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 13px", borderRadius: "10px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+            <AlertCircle size={13} color="rgba(239,68,68,0.8)" />
+            <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(239,68,68,0.85)" }}>{error}</span>
+          </div>
+        )}
+
+        <button type="submit" disabled={loading || !title || !type}
+          style={{
+            padding: "11px 24px", borderRadius: "10px", border: "1px solid rgba(60,100,255,0.35)",
+            background: "rgba(60,100,255,0.65)", fontFamily: "var(--font-poppins)", fontSize: "13px",
+            fontWeight: 600, color: "white", cursor: (loading || !title || !type) ? "not-allowed" : "pointer",
+            opacity: (loading || !title || !type) ? 0.5 : 1, transition: "opacity 0.2s", alignSelf: "flex-start",
+          }}
+        >
+          {loading ? "Envoi…" : "Envoyer ma demande →"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TAB: PROJETS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function KanbanView({ columns }: { columns: KanbanColumn[] }) {
+  return (
+    <div style={{ display: "flex", gap: "14px", overflowX: "auto", paddingBottom: "8px" }}>
+      {columns.map(col => (
+        <div key={col.id} style={{ flex: "0 0 200px", minWidth: "200px" }}>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(255,255,255,0.3)", margin: "0 0 10px" }}>
+            {col.title}
+            <span style={{ marginLeft: "6px", color: "rgba(255,255,255,0.15)", fontWeight: 400 }}>({col.tasks.length})</span>
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            {col.tasks.map(task => (
+              <div key={task.id} style={{
+                padding: "10px 12px", borderRadius: "9px",
+                background: task.done ? "rgba(74,222,128,0.05)" : "rgba(255,255,255,0.03)",
+                border: `1px solid ${task.done ? "rgba(74,222,128,0.15)" : "rgba(255,255,255,0.06)"}`,
+                display: "flex", gap: "8px", alignItems: "flex-start",
+              }}>
+                {task.done ? <CheckCircle2 size={13} color="rgba(74,222,128,0.6)" style={{ marginTop: "1px", flexShrink: 0 }} /> : <Circle size={13} color="rgba(255,255,255,0.15)" style={{ marginTop: "1px", flexShrink: 0 }} />}
+                <div>
+                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: task.done ? 400 : 500, color: task.done ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.72)", margin: 0, textDecoration: task.done ? "line-through" : "none" }}>
+                    {task.title}
+                  </p>
+                  {task.description && (
+                    <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.22)", margin: "3px 0 0", lineHeight: 1.5 }}>
+                      {task.description}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+            {col.tasks.length === 0 && (
+              <div style={{ padding: "14px 12px", borderRadius: "9px", border: "1px dashed rgba(255,255,255,0.05)", textAlign: "center", fontSize: "10px", color: "rgba(255,255,255,0.12)" }}>
+                Vide
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ProjectCard({ project, onOpen }: { project: Project; onOpen: () => void }) {
+  const total = project.columns.flatMap(c => c.tasks).length;
+  const done = project.columns.flatMap(c => c.tasks).filter(t => t.done).length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+      onClick={onOpen}
+      style={{
+        padding: "18px 20px", borderRadius: "14px", border: "1px solid rgba(255,255,255,0.07)",
+        background: "rgba(255,255,255,0.02)", cursor: "pointer", transition: "border-color 0.2s",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", marginBottom: "12px" }}>
+        <div>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.85)", margin: "0 0 4px" }}>{project.title}</p>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.25)", margin: 0 }}>{fmtDateShort(project.createdAt)}</p>
+        </div>
+        <span style={{
+          fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em",
+          color: STATUS_COLOR[project.status] ?? "rgba(255,255,255,0.4)",
+          background: STATUS_BG[project.status] ?? "transparent",
+          border: `1px solid ${STATUS_COLOR[project.status] ?? "rgba(255,255,255,0.15)"}22`,
+          padding: "3px 9px", borderRadius: "999px", flexShrink: 0, fontFamily: "var(--font-poppins)",
+        }}>
+          {STATUS_LABEL[project.status] ?? project.status}
+        </span>
+      </div>
+
+      {project.paid && total > 0 && (
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
+            <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", color: "rgba(255,255,255,0.2)" }}>Avancement</span>
+            <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, color: "rgba(255,255,255,0.4)" }}>{pct}%</span>
+          </div>
+          <div style={{ height: "3px", borderRadius: "99px", background: "rgba(255,255,255,0.06)" }}>
+            <div style={{ height: "100%", width: `${pct}%`, borderRadius: "99px", background: "rgba(100,140,255,0.6)", transition: "width 0.4s ease" }} />
+          </div>
+        </div>
+      )}
+
+      {!project.paid && (
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <Clock size={11} color="rgba(250,204,21,0.5)" />
+          <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", color: "rgba(255,255,255,0.2)" }}>
+            {project.status === "pending" ? "En attente de réponse" : project.status === "accepted" ? "En attente de paiement" : "Non actif"}
+          </span>
+        </div>
+      )}
+
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "10px" }}>
+        <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", color: "rgba(100,140,255,0.5)", display: "flex", alignItems: "center", gap: "4px" }}>
+          Voir <ChevronRight size={11} />
+        </span>
+      </div>
+    </motion.div>
+  );
+}
+
+function TabProjets({ onRequestDevis }: { onRequestDevis: () => void }) {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<Project | null>(null);
+
+  useEffect(() => {
+    fetch("/api/projects").then(r => r.json()).then(data => { setProjects(data); setLoading(false); });
+  }, []);
+
+  if (selected) {
+    return (
+      <div>
+        <button onClick={() => setSelected(null)} style={{ display: "flex", alignItems: "center", gap: "6px", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "20px", padding: 0 }}>
+          ← Retour
+        </button>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", marginBottom: "6px" }}>
+          <SectionTitle>{selected.title}</SectionTitle>
+          <span style={{
+            fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em",
+            color: STATUS_COLOR[selected.status] ?? "rgba(255,255,255,0.4)",
+            background: STATUS_BG[selected.status] ?? "transparent",
+            padding: "4px 10px", borderRadius: "999px", fontFamily: "var(--font-poppins)", flexShrink: 0,
+          }}>
+            {STATUS_LABEL[selected.status] ?? selected.status}
+          </span>
+        </div>
+        <SectionSub>{fmtDateShort(selected.createdAt)} · {selected.type === "web" ? "Web" : selected.type === "visual" ? "Visuel" : "Autre"}{selected.budget ? ` · Budget : ${selected.budget}` : ""}</SectionSub>
+
+        {selected.description && (
+          <div style={{ padding: "14px 16px", borderRadius: "12px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: "24px" }}>
+            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.45)", lineHeight: 1.7, margin: 0 }}>{selected.description}</p>
+          </div>
+        )}
+
+        {selected.adminNotes && (
+          <div style={{ padding: "14px 16px", borderRadius: "12px", background: "rgba(60,100,255,0.05)", border: "1px solid rgba(60,100,255,0.15)", marginBottom: "24px" }}>
+            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(100,140,255,0.6)", margin: "0 0 6px" }}>Note de Flores</p>
+            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, margin: 0 }}>{selected.adminNotes}</p>
+          </div>
+        )}
+
+        {selected.paid && selected.columns.length > 0 ? (
+          <>
+            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.14em", color: "rgba(255,255,255,0.2)", margin: "0 0 16px" }}>Suivi du projet</p>
+            <KanbanView columns={selected.columns} />
+          </>
+        ) : !selected.paid ? (
+          <div style={{ padding: "20px", borderRadius: "12px", background: "rgba(250,204,21,0.05)", border: "1px solid rgba(250,204,21,0.12)", textAlign: "center" }}>
+            <Clock size={18} color="rgba(250,204,21,0.5)" style={{ marginBottom: "8px" }} />
+            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.3)", margin: 0 }}>
+              Le suivi kanban sera accessible une fois le paiement confirmé.
+            </p>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", marginBottom: "4px" }}>
+        <SectionTitle>Mes projets</SectionTitle>
+        <button onClick={onRequestDevis} style={{
+          display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "9px",
+          border: "1px solid rgba(60,100,255,0.25)", background: "rgba(60,100,255,0.1)",
+          fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, color: "rgba(100,140,255,0.8)",
+          cursor: "pointer",
+        }}>
+          <PlusCircle size={13} /> Nouveau devis
+        </button>
+      </div>
+      <SectionSub>Retrouvez toutes vos demandes et suivez l'avancement en direct.</SectionSub>
+
+      {loading ? (
+        <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px", textAlign: "center", padding: "40px 0" }}>Chargement...</div>
+      ) : projects.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "48px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
+          <div style={{ width: 48, height: 48, borderRadius: "12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Kanban size={20} color="rgba(255,255,255,0.15)" />
+          </div>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.25)", margin: 0 }}>Aucun projet pour l'instant</p>
+          <button onClick={onRequestDevis} style={{ padding: "9px 18px", borderRadius: "9px", border: "1px solid rgba(60,100,255,0.3)", background: "rgba(60,100,255,0.12)", fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "rgba(100,140,255,0.8)", cursor: "pointer" }}>
+            Faire une demande de devis
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          {projects.map(p => <ProjectCard key={p.id} project={p} onOpen={() => setSelected(p)} />)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TAB: AVIS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function StarRating({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  return (
+    <div style={{ display: "flex", gap: "4px" }}>
+      {[1, 2, 3, 4, 5].map(n => (
+        <button key={n} type="button" onClick={() => onChange(n)} style={{ background: "none", border: "none", cursor: "pointer", padding: "2px" }}>
+          <Star size={20} fill={n <= value ? "rgba(250,204,21,0.8)" : "none"} color={n <= value ? "rgba(250,204,21,0.8)" : "rgba(255,255,255,0.15)"} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function TabAvis() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [content, setContent] = useState("");
+  const [rating, setRating] = useState(5);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/projects").then(r => r.json()).then(data => { setProjects(data); setLoading(false); });
+  }, []);
+
+  const reviewableProject = projects.find(p => p.review?.status === "requested");
+  const submittedProjects = projects.filter(p => p.review?.status === "submitted" || p.review?.status === "approved");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    if (!reviewableProject) return;
+    e.preventDefault(); setError(""); setSubmitting(true);
+    const res = await fetch(`/api/reviews/${reviewableProject.id}`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content, rating }),
+    });
+    setSubmitting(false);
+    if (!res.ok) { const d = await res.json(); setError(d.error ?? "Erreur"); return; }
+    setDone(true);
+  };
+
+  if (loading) return <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px", textAlign: "center", padding: "40px 0" }}>Chargement...</div>;
+
+  return (
+    <div>
+      <SectionTitle>Avis</SectionTitle>
+      <SectionSub>Partagez votre expérience — votre avis peut apparaître sur le portfolio.</SectionSub>
+
+      {reviewableProject && !done && (
+        <div style={{ marginBottom: "32px" }}>
+          <div style={{ padding: "12px 16px", borderRadius: "10px", background: "rgba(96,165,250,0.06)", border: "1px solid rgba(96,165,250,0.15)", marginBottom: "20px" }}>
+            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(96,165,250,0.7)", margin: 0 }}>
+              Vous êtes invité à laisser un avis pour le projet <strong style={{ color: "rgba(255,255,255,0.65)" }}>{reviewableProject.title}</strong>
+            </p>
+          </div>
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <div>
+              <label style={{ display: "block", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 500, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "8px" }}>Note</label>
+              <StarRating value={rating} onChange={setRating} />
+            </div>
+            <div>
+              <label style={{ display: "block", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 500, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "6px" }}>Votre avis *</label>
+              <textarea value={content} onChange={e => setContent(e.target.value)} rows={5} required
+                placeholder="Décrivez votre expérience, la qualité du travail, la communication…"
+                style={{
+                  width: "100%", padding: "10px 13px", borderRadius: "10px", resize: "vertical",
+                  border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)",
+                  color: "white", fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 300,
+                  outline: "none", lineHeight: 1.6, boxSizing: "border-box",
+                }}
+              />
+            </div>
+            {error && <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(239,68,68,0.8)", margin: 0 }}>{error}</p>}
+            <button type="submit" disabled={submitting || !content.trim()} style={{
+              padding: "11px 24px", borderRadius: "10px", border: "1px solid rgba(100,140,255,0.3)",
+              background: "rgba(60,100,255,0.6)", fontFamily: "var(--font-poppins)", fontSize: "13px",
+              fontWeight: 600, color: "white", cursor: (submitting || !content.trim()) ? "not-allowed" : "pointer",
+              opacity: (submitting || !content.trim()) ? 0.5 : 1, alignSelf: "flex-start",
+            }}>
+              {submitting ? "Envoi…" : "Soumettre mon avis →"}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {done && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          style={{ padding: "20px", borderRadius: "12px", background: "rgba(74,222,128,0.05)", border: "1px solid rgba(74,222,128,0.15)", display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}
+        >
+          <CheckCircle2 size={18} color="rgba(74,222,128,0.7)" />
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 400, color: "rgba(255,255,255,0.55)", margin: 0 }}>Merci ! Votre avis est en cours de validation.</p>
+        </motion.div>
+      )}
+
+      {submittedProjects.length > 0 && (
+        <div>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(255,255,255,0.2)", margin: "0 0 14px" }}>Avis soumis</p>
+          {submittedProjects.map(p => (
+            <div key={p.id} style={{ padding: "14px 16px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)", marginBottom: "8px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.65)", margin: 0 }}>{p.title}</p>
+                <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", color: p.review?.status === "approved" ? "rgba(74,222,128,0.7)" : "rgba(250,204,21,0.6)" }}>
+                  {p.review?.status === "approved" ? "✓ Publié" : "En attente de validation"}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!reviewableProject && submittedProjects.length === 0 && !loading && (
+        <div style={{ textAlign: "center", padding: "48px 0" }}>
+          <Star size={24} color="rgba(255,255,255,0.1)" style={{ marginBottom: "12px" }} />
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.2)", margin: 0 }}>
+            Aucune invitation à laisser un avis pour l'instant.<br />Je vous contacterai à la fin de votre projet.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TAB: PARAMÈTRES
+// ─────────────────────────────────────────────────────────────────────────────
+
+function TabParametres({ user }: { user: Session["user"] }) {
+  const [name, setName] = useState(user?.name ?? "");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [showNew, setShowNew] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState("");
+  const [error, setError] = useState("");
+
+  const inputStyle: React.CSSProperties = {
+    width: "100%", padding: "10px 13px", borderRadius: "10px",
+    border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)",
+    color: "white", fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 300,
+    outline: "none", boxSizing: "border-box",
+  };
+  const labelStyle: React.CSSProperties = {
+    display: "block", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 500,
+    color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "6px",
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault(); setError(""); setSuccess(""); setLoading(true);
+    const body: Record<string, string> = {};
+    if (name !== user?.name) body.name = name;
+    if (newPassword) { body.currentPassword = currentPassword; body.newPassword = newPassword; }
+
+    if (Object.keys(body).length === 0) { setLoading(false); setError("Aucune modification"); return; }
+
+    const res = await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    setLoading(false);
+    if (!res.ok) { const d = await res.json(); setError(d.error ?? "Erreur"); return; }
+    setSuccess("Modifications enregistrées.");
+    setCurrentPassword(""); setNewPassword("");
+  };
+
+  return (
+    <div>
+      <SectionTitle>Paramètres</SectionTitle>
+      <SectionSub>Modifiez votre profil et vos informations de connexion.</SectionSub>
+
+      <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "20px", maxWidth: "480px" }}>
+        {/* Avatar */}
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <Avatar name={user?.name} image={user?.image} size={52} />
+          <div>
+            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.75)", margin: "0 0 3px" }}>{user?.name}</p>
+            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 300, color: "rgba(255,255,255,0.25)", margin: 0 }}>{user?.email}</p>
+          </div>
+        </div>
+
+        <div style={{ height: "1px", background: "rgba(255,255,255,0.05)" }} />
+
+        <div>
+          <label style={labelStyle}>Nom affiché</label>
+          <input type="text" value={name} onChange={e => setName(e.target.value)} style={inputStyle} />
+        </div>
+
+        <div style={{ height: "1px", background: "rgba(255,255,255,0.05)" }} />
+        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.25)", margin: "0 -4px", textTransform: "uppercase", letterSpacing: "0.14em" }}>Changer le mot de passe</p>
+
+        <div>
+          <label style={labelStyle}>Mot de passe actuel</label>
+          <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder="••••••••" style={inputStyle} autoComplete="current-password" />
+        </div>
+
+        <div>
+          <label style={labelStyle}>Nouveau mot de passe</label>
+          <div style={{ position: "relative" }}>
+            <input type={showNew ? "text" : "password"} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="8 caractères minimum" minLength={8} style={{ ...inputStyle, paddingRight: "38px" }} autoComplete="new-password" />
+            <button type="button" onClick={() => setShowNew(v => !v)} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.3)", display: "flex" }}>
+              {showNew ? <EyeOff size={13} /> : <Eye size={13} />}
+            </button>
+          </div>
+        </div>
+
+        {error && <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(239,68,68,0.8)", margin: 0 }}>{error}</p>}
+        {success && <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(74,222,128,0.75)", margin: 0 }}>✓ {success}</p>}
+
+        <button type="submit" disabled={loading} style={{
+          padding: "11px 24px", borderRadius: "10px", border: "1px solid rgba(60,100,255,0.3)",
+          background: "rgba(60,100,255,0.6)", fontFamily: "var(--font-poppins)", fontSize: "13px",
+          fontWeight: 600, color: "white", cursor: loading ? "not-allowed" : "pointer",
+          opacity: loading ? 0.5 : 1, alignSelf: "flex-start",
+        }}>
+          {loading ? "Enregistrement…" : "Sauvegarder"}
+        </button>
+      </form>
+
+      <div style={{ marginTop: "40px", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+        <button
+          onClick={() => signOut({ callbackUrl: "/" })}
+          style={{
+            display: "flex", alignItems: "center", gap: "8px", background: "none", border: "none",
+            cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 500,
+            color: "rgba(248,113,113,0.55)", padding: 0,
+          }}
+        >
+          <LogOut size={13} /> Se déconnecter
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ROOT COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function EspaceClient({ user }: { user: Session["user"] }) {
+  const [tab, setTab] = useState<Tab>("messages");
+
+  const navItems: { id: Tab; icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; label: string }[] = [
+    { id: "messages", icon: MessageSquare, label: "Messagerie" },
+    { id: "devis", icon: PlusCircle, label: "Demande de devis" },
+    { id: "projets", icon: Kanban, label: "Mes projets" },
+    { id: "avis", icon: Star, label: "Avis" },
+    { id: "parametres", icon: Settings, label: "Paramètres" },
+  ];
+
+  return (
+    <div style={{ minHeight: "100dvh", background: "#060a0e", display: "flex", flexDirection: "column", fontFamily: "var(--font-poppins)" }}>
+
+      {/* ── Top bar ── */}
+      <header style={{
+        position: "sticky", top: 0, zIndex: 50,
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        background: "rgba(6,10,14,0.92)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+        padding: "0 6vw", height: "60px",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <Avatar name={user?.name} image={user?.image} size={32} />
+          <div>
+            <p style={{ fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.85)", margin: 0, lineHeight: 1.2 }}>{user?.name ?? "Utilisateur"}</p>
+            <p style={{ fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.25)", margin: 0, textTransform: "uppercase", letterSpacing: "0.1em" }}>Espace client</p>
+          </div>
+        </div>
+        {/* Mobile tab label */}
+        <p style={{ fontSize: "11px", fontWeight: 500, color: "rgba(255,255,255,0.3)", display: "none" }}>{navItems.find(n => n.id === tab)?.label}</p>
+      </header>
+
+      {/* ── Body ── */}
+      <div style={{ flex: 1, display: "flex", maxWidth: "1100px", width: "100%", margin: "0 auto", padding: "0 6vw" }}>
+
+        {/* Sidebar */}
+        <aside style={{
+          width: "200px", flexShrink: 0, paddingTop: "32px", paddingRight: "20px",
+          borderRight: "1px solid rgba(255,255,255,0.05)",
+        }}>
+          <nav style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+            {navItems.map(item => (
+              <NavItem key={item.id} {...item} active={tab === item.id} onClick={() => setTab(item.id)} />
+            ))}
+          </nav>
+        </aside>
+
+        {/* Main content */}
+        <main style={{ flex: 1, minWidth: 0, padding: "32px 0 32px 32px", display: "flex", flexDirection: "column" }}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={tab}
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              style={{ flex: 1, display: "flex", flexDirection: "column" }}
+            >
+              {tab === "messages" && <TabMessages user={user} />}
+              {tab === "devis" && <TabDevis onSuccess={() => setTab("projets")} />}
+              {tab === "projets" && <TabProjets onRequestDevis={() => setTab("devis")} />}
+              {tab === "avis" && <TabAvis />}
+              {tab === "parametres" && <TabParametres user={user} />}
+            </motion.div>
+          </AnimatePresence>
+        </main>
       </div>
     </div>
   );

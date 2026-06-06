@@ -16,6 +16,8 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   messages  Message[]
+  projects  Project[]
+  reviews   Review[]
 }
 
 model Message {
@@ -26,4 +28,65 @@ model Message {
   createdAt DateTime @default(now())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// "pending"  = devis soumis, en attente de réponse admin
+// "accepted" = devis accepté, en attente de paiement
+// "active"   = paiement confirmé, projet en cours (kanban visible)
+// "completed"= projet livré
+// "rejected" = devis refusé
+model Project {
+  id          String         @id @default(cuid())
+  title       String
+  description String?
+  type        String         // "web" | "visual" | "other"
+  budget      String?
+  status      String         @default("pending")
+  paid        Boolean        @default(false)
+  adminNotes  String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  columns     KanbanColumn[]
+  review      Review?
+}
+
+model KanbanColumn {
+  id        String       @id @default(cuid())
+  title     String
+  order     Int
+  projectId String
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks     KanbanTask[]
+}
+
+model KanbanTask {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  order       Int
+  done        Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  columnId    String
+  column      KanbanColumn @relation(fields: [columnId], references: [id], onDelete: Cascade)
+}
+
+// "idle"      = pas encore demandé
+// "requested" = admin a demandé un avis au client
+// "submitted" = client a rédigé son avis, en attente de validation admin
+// "approved"  = visible sur le site
+// "hidden"    = masqué par admin
+model Review {
+  id          String    @id @default(cuid())
+  content     String?
+  rating      Int       @default(5)
+  status      String    @default("idle")
+  requestedAt DateTime?
+  submittedAt DateTime?
+  createdAt   DateTime  @default(now())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId   String    @unique
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
