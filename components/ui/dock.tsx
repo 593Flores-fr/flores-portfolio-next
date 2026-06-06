@@ -7,11 +7,11 @@ import { usePathname } from "next/navigation";
 import { Home, Layers, User, Tag, KeyRound } from "lucide-react";
 
 const items = [
-  { id: "home",      label: "Accueil",   href: "/",           icon: Home },
-  { id: "portfolio", label: "Portfolio", href: "/#portfolio", icon: Layers },
-  { id: "about",     label: "About",     href: "/#about",     icon: User },
-  { id: "tarifs",    label: "Tarifs",    href: "/#tarifs",    icon: Tag },
-  { id: "espace",    label: "Espace",    href: "/espace",     icon: KeyRound },
+  { id: "home",      label: "Accueil",   href: "/",          icon: Home },
+  { id: "portfolio", label: "Portfolio", href: "/portfolio", icon: Layers },
+  { id: "about",     label: "About",     href: "/about",     icon: User },
+  { id: "tarifs",    label: "Tarifs",    href: "/tarif",     icon: Tag },
+  { id: "espace",    label: "Espace",    href: "/espace",    icon: KeyRound },
 ];
 
 function DockItem({
@@ -94,38 +94,20 @@ function DockItem({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            background: isActive
+            background: (isActive || hovered)
               ? "rgba(60,100,255,0.18)"
-              : hovered
-              ? "rgba(255,255,255,0.1)"
               : "rgba(255,255,255,0.05)",
-            border: `1px solid ${
-              isActive
-                ? "rgba(60,100,255,0.35)"
-                : hovered
-                ? "rgba(255,255,255,0.18)"
-                : "rgba(255,255,255,0.08)"
-            }`,
+            border: `1px solid ${(isActive || hovered) ? "rgba(60,100,255,0.35)" : "rgba(255,255,255,0.08)"}`,
             cursor: "pointer",
-            boxShadow: hovered
-              ? "0 6px 24px rgba(255,255,255,0.07)"
-              : isActive
-              ? "0 0 0 1px rgba(60,100,255,0.2)"
-              : "none",
+            boxShadow: (isActive || hovered) ? "0 0 0 1px rgba(60,100,255,0.15), 0 4px 20px rgba(60,100,255,0.12)" : "none",
             transition: "background 0.2s, border-color 0.2s, box-shadow 0.2s",
             backdropFilter: "blur(2px)",
           }}
         >
           <Icon
             size={18}
-            color={
-              isActive
-                ? "rgba(100,140,255,0.9)"
-                : hovered
-                ? "rgba(255,255,255,0.9)"
-                : "rgba(255,255,255,0.45)"
-            }
-            strokeWidth={isActive ? 2 : 1.6}
+            color={(isActive || hovered) ? "rgba(120,155,255,0.95)" : "rgba(255,255,255,0.38)"}
+            strokeWidth={(isActive || hovered) ? 2 : 1.6}
           />
         </motion.div>
       </Link>
@@ -155,8 +137,7 @@ export function Dock() {
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
-    if (href.startsWith("/#")) return pathname === "/";
-    return pathname.startsWith(href);
+    return pathname === href || pathname.startsWith(href + "/");
   };
 
   return (

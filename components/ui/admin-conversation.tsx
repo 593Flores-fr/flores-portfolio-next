@@ -33,19 +33,26 @@ export function AdminConversation({ userId }: { userId: string }) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   useEffect(() => {
+    setLoading(true);
+    setError(false);
     fetch(`/api/admin/messages/${userId}`)
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error("Erreur " + r.status);
+        return r.json();
+      })
       .then(data => {
-        setUser(data.user);
-        setMessages(data.messages);
+        setUser(data.user ?? null);
+        setMessages(Array.isArray(data.messages) ? data.messages : []);
         setLoading(false);
-      });
+      })
+      .catch(() => { setError(true); setLoading(false); });
   }, [userId]);
 
   useEffect(() => {
@@ -74,62 +81,58 @@ export function AdminConversation({ userId }: { userId: string }) {
   };
 
   return (
-    <div style={{ minHeight: "100dvh", background: "#060a0e", display: "flex", flexDirection: "column", fontFamily: "var(--font-poppins)" }}>
-
+    <div style={{ display: "flex", flexDirection: "column", height: "100dvh", fontFamily: "var(--font-poppins)" }}>
       {/* Header */}
-      <header style={{
-        position: "sticky", top: 0, zIndex: 50,
+      <div style={{
+        padding: "20px 28px",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
-        background: "rgba(6,10,14,0.95)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        padding: "0 6vw",
-        height: "64px",
+        background: "rgba(6,10,14,0.6)",
+        backdropFilter: "blur(12px)",
         display: "flex", alignItems: "center", gap: "14px",
+        flexShrink: 0,
       }}>
         <button
           onClick={() => router.push("/admin/messages")}
           style={{
             display: "flex", alignItems: "center", gap: "6px",
             background: "none", border: "none", cursor: "pointer",
-            color: "rgba(255,255,255,0.4)", padding: "6px",
+            color: "rgba(255,255,255,0.35)", padding: 0,
             fontFamily: "var(--font-poppins)", fontSize: "11px",
           }}
         >
-          <ArrowLeft size={15} />
-          Retour
+          <ArrowLeft size={14} /> Retour
         </button>
 
         {user && (
           <>
-            <div style={{ width: "1px", height: "20px", background: "rgba(255,255,255,0.08)" }} />
-            <Avatar name={user.name} image={user.image} size={32} />
+            <div style={{ width: "1px", height: "18px", background: "rgba(255,255,255,0.07)" }} />
+            <Avatar name={user.name} image={user.image} size={30} />
             <div>
               <p style={{ fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.85)", margin: 0, lineHeight: 1.2 }}>
                 {user.name ?? "Sans nom"}
               </p>
-              <p style={{ fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.25)", margin: 0 }}>
-                {user.email}
-              </p>
+              <p style={{ fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.25)", margin: 0 }}>{user.email}</p>
             </div>
           </>
         )}
-      </header>
+      </div>
 
-      {/* Messages */}
-      <div style={{ flex: 1, maxWidth: "760px", width: "100%", margin: "0 auto", padding: "32px 6vw 120px", display: "flex", flexDirection: "column", gap: "8px" }}>
+      {/* Messages — scrollable area */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px 16px", display: "flex", flexDirection: "column", gap: "8px" }}>
         {loading ? (
-          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.2)", textAlign: "center", padding: "40px 0" }}>
-            Chargement...
-          </p>
+          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.2)", textAlign: "center", padding: "40px 0" }}>Chargement...</p>
+        ) : error ? (
+          <p style={{ fontSize: "12px", color: "rgba(248,113,113,0.6)", textAlign: "center", padding: "40px 0" }}>Erreur lors du chargement.</p>
+        ) : messages.length === 0 ? (
+          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.2)", textAlign: "center", padding: "40px 0" }}>Aucun message.</p>
         ) : (
           <AnimatePresence initial={false}>
-            {messages.map((msg) => (
+            {messages.map(msg => (
               <motion.div
                 key={msg.id}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                 style={{
                   display: "flex",
                   flexDirection: msg.fromAdmin ? "row-reverse" : "row",
@@ -139,37 +142,31 @@ export function AdminConversation({ userId }: { userId: string }) {
               >
                 {msg.fromAdmin ? (
                   <div style={{
-                    width: 30, height: 30, borderRadius: "50%", flexShrink: 0,
+                    width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
                     background: "linear-gradient(135deg, #3a6fff, #7c3aed)",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "11px", fontWeight: 700, color: "white",
-                  }}>
-                    F
-                  </div>
+                    fontSize: "10px", fontWeight: 700, color: "white",
+                  }}>F</div>
                 ) : (
-                  <Avatar name={user?.name} image={user?.image} size={30} />
+                  <Avatar name={user?.name} image={user?.image} size={28} />
                 )}
-                <div style={{ maxWidth: "75%" }}>
+                <div style={{ maxWidth: "72%" }}>
                   <div style={{
-                    padding: "11px 15px",
-                    borderRadius: msg.fromAdmin ? "16px 4px 16px 16px" : "4px 16px 16px 16px",
+                    padding: "10px 14px",
+                    borderRadius: msg.fromAdmin ? "14px 4px 14px 14px" : "4px 14px 14px 14px",
                     background: msg.fromAdmin
-                      ? "linear-gradient(135deg, rgba(58,111,255,0.25), rgba(124,58,237,0.15))"
+                      ? "linear-gradient(135deg, rgba(58,111,255,0.2), rgba(124,58,237,0.12))"
                       : "rgba(255,255,255,0.06)",
-                    border: `1px solid ${msg.fromAdmin ? "rgba(58,111,255,0.25)" : "rgba(255,255,255,0.07)"}`,
+                    border: `1px solid ${msg.fromAdmin ? "rgba(58,111,255,0.2)" : "rgba(255,255,255,0.07)"}`,
                     fontSize: "13px", fontWeight: 300,
                     color: "rgba(255,255,255,0.82)",
-                    lineHeight: 1.65,
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
+                    lineHeight: 1.65, whiteSpace: "pre-wrap", wordBreak: "break-word",
                   }}>
                     {msg.content}
                   </div>
                   <p style={{
-                    fontSize: "10px", color: "rgba(255,255,255,0.2)",
-                    margin: "4px 4px 0",
-                    textAlign: msg.fromAdmin ? "right" : "left",
-                    fontWeight: 300,
+                    fontSize: "10px", color: "rgba(255,255,255,0.18)",
+                    margin: "3px 4px 0", textAlign: msg.fromAdmin ? "right" : "left",
                   }}>
                     {formatDate(msg.createdAt)}
                   </p>
@@ -181,53 +178,44 @@ export function AdminConversation({ userId }: { userId: string }) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
+      {/* Input — pinned to bottom of this container */}
       <div style={{
-        position: "fixed", bottom: 0, left: 0, right: 0,
-        background: "rgba(6,10,14,0.95)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
+        padding: "12px 28px 20px",
         borderTop: "1px solid rgba(255,255,255,0.06)",
-        padding: "16px 6vw 20px",
+        background: "rgba(6,10,14,0.4)",
+        flexShrink: 0,
       }}>
-        <div style={{ maxWidth: "760px", margin: "0 auto", display: "flex", gap: "10px", alignItems: "flex-end" }}>
+        <div style={{ display: "flex", gap: "10px", alignItems: "flex-end" }}>
           <textarea
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKey}
-            placeholder="Répondre au client… (Entrée pour envoyer)"
+            placeholder="Répondre… (Entrée pour envoyer)"
             rows={1}
             style={{
-              flex: 1,
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: "12px",
-              padding: "12px 14px",
-              color: "white",
-              fontFamily: "var(--font-poppins)",
-              fontSize: "13px", fontWeight: 300,
-              lineHeight: 1.6, outline: "none",
-              resize: "none", maxHeight: "120px", overflowY: "auto",
+              flex: 1, background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px",
+              padding: "10px 12px", color: "white",
+              fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 300,
+              lineHeight: 1.5, outline: "none", resize: "none", maxHeight: "100px", overflowY: "auto",
             }}
             onInput={e => {
               const t = e.currentTarget;
               t.style.height = "auto";
-              t.style.height = Math.min(t.scrollHeight, 120) + "px";
+              t.style.height = Math.min(t.scrollHeight, 100) + "px";
             }}
           />
           <button
-            onClick={send}
-            disabled={!input.trim() || sending}
+            onClick={send} disabled={!input.trim() || sending}
             style={{
-              width: 44, height: 44, borderRadius: "12px", flexShrink: 0,
+              width: 40, height: 40, borderRadius: "10px", flexShrink: 0,
               background: input.trim() ? "linear-gradient(135deg, rgba(58,111,255,0.7), rgba(124,58,237,0.6))" : "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              border: "1px solid rgba(255,255,255,0.07)",
               cursor: input.trim() ? "pointer" : "default",
               display: "flex", alignItems: "center", justifyContent: "center",
-              transition: "background 0.2s",
             }}
           >
-            <Send size={16} color={input.trim() ? "white" : "rgba(255,255,255,0.2)"} />
+            <Send size={15} color={input.trim() ? "white" : "rgba(255,255,255,0.2)"} />
           </button>
         </div>
       </div>

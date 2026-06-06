@@ -18,6 +18,26 @@ model User {
   messages  Message[]
   projects  Project[]
   reviews   Review[]
+  invoices  Invoice[]
+}
+
+model Invoice {
+  id            String    @id @default(cuid())
+  number        String    @unique
+  type          String    @default("devis")   // "devis" | "facture"
+  status        String    @default("draft")   // "draft" | "sent" | "paid" | "cancelled"
+  clientName    String    @default("")
+  clientEmail   String    @default("")
+  clientAddress String    @default("")
+  items         Json      @default("[]")
+  taxRate       Float     @default(0)
+  notes         String    @default("")
+  issuedAt      DateTime  @default(now())
+  dueDate       DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  userId        String?
+  user          User?     @relation(fields: [userId], references: [id])
 }
 
 model Message {
