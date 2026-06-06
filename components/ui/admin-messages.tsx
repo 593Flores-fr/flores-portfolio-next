@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { MessageSquare, LogOut, ChevronRight } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { ChevronRight } from "lucide-react";
 
 type ClientRow = {
   id: string;
@@ -53,56 +52,15 @@ export function AdminMessages() {
   }, []);
 
   return (
-    <div style={{ minHeight: "100dvh", background: "#060a0e", fontFamily: "var(--font-poppins)" }}>
-
-      {/* Header */}
-      <header style={{
-        position: "sticky", top: 0, zIndex: 50,
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
-        background: "rgba(6,10,14,0.95)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        padding: "0 6vw",
-        height: "64px",
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: "8px",
-            background: "linear-gradient(135deg, rgba(60,100,255,0.7), rgba(100,60,255,0.7))",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            <MessageSquare size={15} color="white" strokeWidth={2} />
-          </div>
-          <div>
-            <p style={{ fontSize: "13px", fontWeight: 700, color: "rgba(255,255,255,0.88)", margin: 0, lineHeight: 1.2 }}>
-              Panel Admin
-            </p>
-            <p style={{ fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.25)", margin: 0, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-              Messages clients
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={() => signOut({ callbackUrl: "/" })}
-          style={{
-            display: "flex", alignItems: "center", gap: "7px",
-            background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
-            borderRadius: "8px", padding: "7px 14px", cursor: "pointer",
-            fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 500,
-            color: "rgba(255,255,255,0.4)",
-          }}
-        >
-          <LogOut size={13} />
-          Déconnexion
-        </button>
-      </header>
-
-      {/* Content */}
-      <div style={{ maxWidth: "680px", margin: "0 auto", padding: "40px 6vw" }}>
+    <div style={{ padding: "32px 40px", maxWidth: "680px", fontFamily: "var(--font-poppins)" }}>
+      <div style={{ marginBottom: "28px" }}>
+        <h1 style={{ fontSize: "20px", fontWeight: 800, color: "white", margin: "0 0 4px", letterSpacing: "-0.01em" }}>Messagerie</h1>
+        <p style={{ fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.3)", margin: 0 }}>Conversations avec vos clients.</p>
+      </div>
+      <div>
 
         {/* Stats */}
-        <div style={{ display: "flex", gap: "12px", marginBottom: "32px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "12px", marginBottom: "24px", flexWrap: "wrap" }}>
           {[
             { label: "Clients", value: clients.length },
             { label: "Non lus", value: clients.reduce((s, c) => s + c._count.messages, 0) },
