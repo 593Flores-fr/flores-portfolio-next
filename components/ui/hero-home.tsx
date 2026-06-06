@@ -2,8 +2,8 @@
 
 import { motion, type Variants } from "framer-motion";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { AuthPanel } from "./auth-panel";
+import { useEffect, useRef } from "react";
+import { HeroCtaPanel } from "./hero-cta-panel";
 
 declare global {
   interface Window {
@@ -56,7 +56,7 @@ function UnicornPanel({ projectId }: { projectId: string }) {
 }
 
 export function HeroHome() {
-  const [showAuth, setShowAuth] = useState(true);
+  const showAuth = true;
 
   return (
     // Section sans overflow:hidden — permet au panel d'être positionné librement
@@ -159,26 +159,19 @@ export function HeroHome() {
         `}</style>
       </div>
 
-      {/* ── Auth panel — centré verticalement dans la zone droite ── */}
+      {/* ── CTA panel — centré verticalement dans la zone droite ── */}
       {showAuth && (
         <div style={{
           position: "absolute",
           top: 0,
           bottom: 0,
           left: "70%",
-          width: "430px",
+          width: "380px",
           display: "flex",
           alignItems: "center",
           zIndex: 20,
         }}>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            style={{ width: "100%" }}
-          >
-            <AuthPanel onClose={() => setShowAuth(false)} />
-          </motion.div>
+          <HeroCtaPanel />
         </div>
       )}
 

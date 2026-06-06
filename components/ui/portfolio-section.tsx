@@ -65,7 +65,7 @@ const projects = [
 
 export function PortfolioSection() {
   return (
-    <section style={{ background: "#060a0e", padding: "120px 0 140px", overflow: "hidden" }}>
+    <section id="portfolio" style={{ background: "#060a0e", padding: "120px 0 140px", overflow: "hidden" }}>
       <div style={{ maxWidth: "1300px", margin: "0 auto", padding: "0 6vw" }}>
 
         {/* Header */}

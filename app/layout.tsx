@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins, Six_Caps } from "next/font/google";
 import Script from "next/script";
 import { Providers } from "@/components/providers";
+import { Dock } from "@/components/ui/dock";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -30,7 +31,8 @@ export default function RootLayout({
     <html lang="fr" className={`${poppins.variable} ${sixCaps.variable}`}>
       <body style={{ fontFamily: "var(--font-poppins), sans-serif", background: "#060a0e" }}>
         <Providers>
-        {children}
+          {children}
+          <Dock />
         </Providers>
         {/* UnicornStudio SDK */}
         <Script

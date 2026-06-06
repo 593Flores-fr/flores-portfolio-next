@@ -252,7 +252,7 @@ function CategoryPanel({
 
 export function TarifsSection() {
   return (
-    <section style={{ background: "#060a0e", padding: "120px 0 140px", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+    <section id="tarifs" style={{ background: "#060a0e", padding: "120px 0 140px", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
       <div style={{ maxWidth: "1300px", margin: "0 auto", padding: "0 6vw" }}>
 
         {/* Header */}

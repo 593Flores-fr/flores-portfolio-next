@@ -32,7 +32,7 @@ const points = [
 
 export function AboutSection() {
   return (
-    <section style={{ background: "#060a0e", padding: "140px 0 140px", overflow: "hidden", position: "relative" }}>
+    <section id="about" style={{ background: "#060a0e", padding: "140px 0 140px", overflow: "hidden", position: "relative" }}>
       {/* Fondu haut — raccord avec le hero */}
       <div style={{
         position: "absolute",
