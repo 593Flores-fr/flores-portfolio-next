@@ -5,14 +5,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import {
   FolderOpen, ChevronRight, CheckCircle2, XCircle,
-  CreditCard, Truck, Clock, AlertCircle,
+  CreditCard, Truck, Clock, AlertCircle, Trash2,
 } from "lucide-react";
 
 type User = { id: string; name: string | null; email: string; image: string | null };
 type Project = {
   id: string; title: string; description: string | null; type: string;
-  budget: string | null; status: string; paid: boolean;
-  adminNotes: string | null; createdAt: string;
+  budget: string | null; deadline: string | null; references: string | null; contact: string | null;
+  status: string; paid: boolean; adminNotes: string | null; createdAt: string;
   user: User;
   review: { status: string } | null;
   _count: { columns: number };
@@ -80,6 +80,12 @@ export function AdminDevis() {
   };
 
   const openProject = (p: Project) => { setSelected(p); setNotes(p.adminNotes ?? ""); };
+
+  const deleteProject = async (id: string) => {
+    await fetch(`/api/admin/projects/${id}`, { method: "DELETE" });
+    setProjects(prev => prev.filter(p => p.id !== id));
+    setSelected(null);
+  };
 
   const counts = {
     all: projects.length,
@@ -212,9 +218,33 @@ export function AdminDevis() {
               </div>
 
               {selected.description && (
-                <p style={{ fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.4)", lineHeight: 1.7, margin: "0 0 16px" }}>
+                <p style={{ fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.4)", lineHeight: 1.7, margin: "0 0 12px" }}>
                   {selected.description}
                 </p>
+              )}
+
+              {/* Extra fields */}
+              {(selected.deadline || selected.references || selected.contact) && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "7px", padding: "12px 14px", borderRadius: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", marginBottom: "14px" }}>
+                  {selected.deadline && (
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <span style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.2)", width: "70px", flexShrink: 0, paddingTop: "1px" }}>Délai</span>
+                      <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }}>{{ urgent: "Urgent (< 2 sem.)", "1mois": "1 mois", "3mois": "2-3 mois", flexible: "Flexible" }[selected.deadline] ?? selected.deadline}</span>
+                    </div>
+                  )}
+                  {selected.contact && (
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <span style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.2)", width: "70px", flexShrink: 0, paddingTop: "1px" }}>Contact</span>
+                      <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }}>{{ email: "E-mail", discord: "Discord", other: "Peu importe" }[selected.contact] ?? selected.contact}</span>
+                    </div>
+                  )}
+                  {selected.references && (
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <span style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.2)", width: "70px", flexShrink: 0, paddingTop: "1px" }}>Réf.</span>
+                      <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", lineHeight: 1.6 }}>{selected.references}</span>
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* Admin note */}
@@ -295,6 +325,21 @@ export function AdminDevis() {
                     </span>
                   </div>
                 )}
+              </div>
+
+              {/* Danger zone */}
+              <div style={{ marginTop: "20px", paddingTop: "14px", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+                <button
+                  onClick={() => { if (confirm("Supprimer ce devis définitivement ?")) deleteProject(selected.id); }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "7px", padding: "7px 13px", borderRadius: "8px",
+                    border: "1px solid rgba(248,113,113,0.2)", background: "rgba(248,113,113,0.05)",
+                    fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 500,
+                    color: "rgba(248,113,113,0.55)", cursor: "pointer",
+                  }}
+                >
+                  <Trash2 size={12} /> Supprimer le devis
+                </button>
               </div>
             </motion.div>
           )}

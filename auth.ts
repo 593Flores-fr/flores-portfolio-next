@@ -29,6 +29,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   session: { strategy: "jwt" },
   pages: { signIn: "/" },
+  events: {
+    async signIn({ user, account }) {
+      try {
+        await prisma.loginEvent.create({
+          data: {
+            userId: user.id ?? null,
+            userEmail: user.email ?? null,
+            provider: account?.provider ?? "credentials",
+          },
+        });
+      } catch {}
+    },
+  },
   callbacks: {
     jwt({ token, user }) {
       if (user) token.id = user.id;

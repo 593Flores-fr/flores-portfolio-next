@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 import {
   Send, LogOut, MessageSquare, Kanban, Star,
   Settings, PlusCircle, ChevronRight, CheckCircle2,
@@ -160,7 +161,7 @@ function TabMessages({ user }: { user: Session["user"] }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
       <SectionTitle>Messagerie</SectionTitle>
-      <SectionSub>Échangez directement avec moi — projet, question, suivi.</SectionSub>
+      <SectionSub>Espace réservé aux signalements de bug ou problèmes techniques sur le site. Pour toute question liée à un projet, utilisez <strong style={{color:"rgba(255,255,255,0.5)"}}>Demande de devis</strong>.</SectionSub>
 
       <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px", paddingBottom: "16px" }}>
         {loading ? (
@@ -243,12 +244,26 @@ const PROJECT_TYPES = [
   { value: "visual", label: "Création visuelle" },
   { value: "other", label: "Autre / Je ne sais pas encore" },
 ];
+const DEADLINES = [
+  { value: "urgent", label: "Urgent (moins de 2 semaines)" },
+  { value: "1mois", label: "1 mois environ" },
+  { value: "3mois", label: "2 à 3 mois" },
+  { value: "flexible", label: "Flexible / Pas de contrainte" },
+];
+const CONTACTS = [
+  { value: "email", label: "E-mail" },
+  { value: "discord", label: "Discord" },
+  { value: "other", label: "Peu importe" },
+];
 
 function TabDevis({ onSuccess }: { onSuccess: () => void }) {
   const [title, setTitle] = useState("");
   const [type, setType] = useState("");
   const [description, setDescription] = useState("");
   const [budget, setBudget] = useState("");
+  const [deadline, setDeadline] = useState("");
+  const [references, setReferences] = useState("");
+  const [contact, setContact] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
@@ -263,13 +278,18 @@ function TabDevis({ onSuccess }: { onSuccess: () => void }) {
     display: "block", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 500,
     color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "6px",
   };
+  const selectStyle: React.CSSProperties = {
+    ...inputStyle, appearance: "none", cursor: "pointer",
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,0.2)'/%3E%3C/svg%3E")`,
+    backgroundRepeat: "no-repeat", backgroundPosition: "right 13px center",
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(""); setLoading(true);
     const res = await fetch("/api/projects", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, type, description, budget }),
+      body: JSON.stringify({ title, type, description, budget, deadline, references, contact }),
     });
     setLoading(false);
     if (!res.ok) { const d = await res.json(); setError(d.error ?? "Erreur"); return; }
@@ -323,16 +343,55 @@ function TabDevis({ onSuccess }: { onSuccess: () => void }) {
         </div>
 
         <div>
-          <label style={labelStyle}>Description</label>
+          <label style={labelStyle}>Description du projet</label>
           <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4}
-            placeholder="Décrivez votre projet, vos besoins, vos références…"
+            placeholder="Décrivez votre projet, vos objectifs, votre cible…"
             style={{ ...inputStyle, resize: "vertical", minHeight: "90px" }}
           />
         </div>
 
+        <div style={{ display: "flex", gap: "12px" }}>
+          <div style={{ flex: 1 }}>
+            <label style={labelStyle}>Budget envisagé</label>
+            <input type="text" value={budget} onChange={e => setBudget(e.target.value)} placeholder="ex : 500€ · À définir" style={inputStyle} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={labelStyle}>Délai souhaité</label>
+            <select value={deadline} onChange={e => setDeadline(e.target.value)} style={selectStyle}>
+              <option value="">Sélectionner…</option>
+              {DEADLINES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+            </select>
+          </div>
+        </div>
+
         <div>
-          <label style={labelStyle}>Budget envisagé</label>
-          <input type="text" value={budget} onChange={e => setBudget(e.target.value)} placeholder="ex : 500€, À définir…" style={inputStyle} />
+          <label style={labelStyle}>Références / Inspirations</label>
+          <textarea value={references} onChange={e => setReferences(e.target.value)} rows={2}
+            placeholder="Liens, noms de sites, styles appréciés…"
+            style={{ ...inputStyle, resize: "vertical", minHeight: "60px" }}
+          />
+        </div>
+
+        <div>
+          <label style={labelStyle}>Moyen de contact préféré</label>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            {CONTACTS.map(c => (
+              <button
+                key={c.value} type="button"
+                onClick={() => setContact(c.value)}
+                style={{
+                  padding: "8px 14px", borderRadius: "9px", cursor: "pointer",
+                  border: `1px solid ${contact === c.value ? "rgba(60,100,255,0.35)" : "rgba(255,255,255,0.07)"}`,
+                  background: contact === c.value ? "rgba(60,100,255,0.12)" : "rgba(255,255,255,0.02)",
+                  fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: contact === c.value ? 600 : 400,
+                  color: contact === c.value ? "rgba(100,140,255,0.9)" : "rgba(255,255,255,0.4)",
+                  transition: "all 0.15s",
+                }}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {error && (
@@ -795,7 +854,7 @@ function TabParametres({ user }: { user: Session["user"] }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function EspaceClient({ user }: { user: Session["user"] }) {
-  const [tab, setTab] = useState<Tab>("messages");
+  const [tab, setTab] = useState<Tab>("devis");
 
   const navItems: { id: Tab; icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; label: string }[] = [
     { id: "messages", icon: MessageSquare, label: "Messagerie" },
@@ -823,8 +882,29 @@ export function EspaceClient({ user }: { user: Session["user"] }) {
             <p style={{ fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.25)", margin: 0, textTransform: "uppercase", letterSpacing: "0.1em" }}>Espace client</p>
           </div>
         </div>
-        {/* Mobile tab label */}
-        <p style={{ fontSize: "11px", fontWeight: 500, color: "rgba(255,255,255,0.3)", display: "none" }}>{navItems.find(n => n.id === tab)?.label}</p>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <Link href="/" style={{
+            display: "flex", alignItems: "center", gap: "6px",
+            background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
+            borderRadius: "8px", padding: "6px 12px",
+            fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 500,
+            color: "rgba(255,255,255,0.3)", textDecoration: "none",
+          }}>
+            ← Site
+          </Link>
+          <button
+            onClick={() => signOut({ callbackUrl: "/" })}
+            style={{
+              display: "flex", alignItems: "center", gap: "7px",
+              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: "8px", padding: "6px 12px", cursor: "pointer",
+              fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 500,
+              color: "rgba(255,255,255,0.4)",
+            }}
+          >
+            <LogOut size={13} />
+          </button>
+        </div>
       </header>
 
       {/* ── Body ── */}

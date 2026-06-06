@@ -151,6 +151,8 @@ export function Dock() {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const pathname = usePathname();
 
+  if (pathname.startsWith("/admin") || pathname.startsWith("/espace")) return null;
+
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
     if (href.startsWith("/#")) return pathname === "/";

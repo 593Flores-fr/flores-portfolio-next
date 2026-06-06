@@ -3,13 +3,15 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { MessageSquare, FolderOpen, Kanban, Star, LogOut, ShieldCheck } from "lucide-react";
+import { MessageSquare, FolderOpen, Kanban, Star, LogOut, ShieldCheck, BarChart2, Image, ArrowUpLeft } from "lucide-react";
 
 const navItems = [
-  { href: "/admin/messages", icon: MessageSquare, label: "Messagerie" },
-  { href: "/admin/devis",    icon: FolderOpen,    label: "Devis"      },
-  { href: "/admin/projets",  icon: Kanban,        label: "Projets"    },
-  { href: "/admin/reviews",  icon: Star,          label: "Avis"       },
+  { href: "/admin/devis",     icon: FolderOpen,    label: "Devis"      },
+  { href: "/admin/projets",   icon: Kanban,        label: "Projets"    },
+  { href: "/admin/messages",  icon: MessageSquare, label: "Messagerie" },
+  { href: "/admin/reviews",   icon: Star,          label: "Avis"       },
+  { href: "/admin/portfolio", icon: Image,         label: "Portfolio"  },
+  { href: "/admin/analytics", icon: BarChart2,     label: "Analytics"  },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
@@ -85,18 +87,26 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* Footer */}
-        <div style={{ padding: "16px 12px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+        <div style={{ padding: "16px 12px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column", gap: "2px" }}>
+          <Link href="/" style={{
+            display: "flex", alignItems: "center", gap: "9px",
+            padding: "9px 10px", borderRadius: "9px", textDecoration: "none",
+          }}>
+            <ArrowUpLeft size={14} color="rgba(255,255,255,0.25)" />
+            <span style={{ fontSize: "12px", fontWeight: 400, color: "rgba(255,255,255,0.25)", fontFamily: "var(--font-poppins)" }}>
+              Retour au site
+            </span>
+          </Link>
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
             style={{
               display: "flex", alignItems: "center", gap: "9px", width: "100%",
               padding: "9px 10px", borderRadius: "9px",
               background: "transparent", border: "none", cursor: "pointer",
-              transition: "background 0.15s",
             }}
           >
             <LogOut size={14} color="rgba(248,113,113,0.5)" />
-            <span style={{ fontSize: "12px", fontWeight: 400, color: "rgba(248,113,113,0.5)" }}>
+            <span style={{ fontSize: "12px", fontWeight: 400, color: "rgba(248,113,113,0.5)", fontFamily: "var(--font-poppins)" }}>
               Déconnexion
             </span>
           </button>

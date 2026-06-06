@@ -36,20 +36,51 @@ model Message {
 // "completed"= projet livré
 // "rejected" = devis refusé
 model Project {
-  id          String         @id @default(cuid())
+  id           String         @id @default(cuid())
+  title        String
+  description  String?
+  type         String
+  budget       String?
+  deadline     String?
+  references   String?
+  contact      String?
+  status       String         @default("pending")
+  paid         Boolean        @default(false)
+  adminNotes   String?
+  kanbanNotes  String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  userId       String
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  columns      KanbanColumn[]
+  review       Review?
+}
+
+model PageView {
+  id        String   @id @default(cuid())
+  page      String
+  createdAt DateTime @default(now())
+}
+
+model LoginEvent {
+  id        String   @id @default(cuid())
+  userId    String?
+  userEmail String?
+  provider  String?
+  createdAt DateTime @default(now())
+}
+
+model PortfolioProject {
+  id          String   @id @default(cuid())
+  slug        String   @unique
   title       String
-  description String?
-  type        String         // "web" | "visual" | "other"
-  budget      String?
-  status      String         @default("pending")
-  paid        Boolean        @default(false)
-  adminNotes  String?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  userId      String
-  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  columns     KanbanColumn[]
-  review      Review?
+  tag         String   @default("")
+  description String   @default("")
+  imageSrc    String   @default("")
+  order       Int      @default(0)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model KanbanColumn {

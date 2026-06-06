@@ -3,6 +3,7 @@ import { Poppins, Six_Caps } from "next/font/google";
 import Script from "next/script";
 import { Providers } from "@/components/providers";
 import { Dock } from "@/components/ui/dock";
+import { PageViewTracker } from "@/components/ui/page-view-tracker";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -33,6 +34,7 @@ export default function RootLayout({
         <Providers>
           {children}
           <Dock />
+          <PageViewTracker />
         </Providers>
         {/* UnicornStudio SDK */}
         <Script
