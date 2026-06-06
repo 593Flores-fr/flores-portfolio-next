@@ -5,13 +5,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import {
   FolderOpen, ChevronRight, CheckCircle2, XCircle,
-  CreditCard, Truck, Clock, AlertCircle, Trash2,
+  CreditCard, Truck, Clock, AlertCircle, Trash2, Star, Download,
 } from "lucide-react";
 
 type User = { id: string; name: string | null; email: string; image: string | null };
 type Project = {
   id: string; title: string; description: string | null; type: string;
   budget: string | null; deadline: string | null; references: string | null; contact: string | null;
+  phone: string | null; callSlots: string | null; briefFile: string | null; briefFileName: string | null;
   status: string; paid: boolean; adminNotes: string | null; createdAt: string;
   user: User;
   review: { status: string } | null;
@@ -58,6 +59,7 @@ export function AdminDevis() {
   const [filter, setFilter] = useState<string>("all");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [requestingReview, setRequestingReview] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -80,6 +82,20 @@ export function AdminDevis() {
   };
 
   const openProject = (p: Project) => { setSelected(p); setNotes(p.adminNotes ?? ""); };
+
+  const requestReview = async (projectId: string) => {
+    setRequestingReview(true);
+    const res = await fetch("/api/admin/reviews/request", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectId }),
+    });
+    if (res.ok) {
+      const review = await res.json();
+      setProjects(prev => prev.map(p => p.id === projectId ? { ...p, review: { status: review.status } } : p));
+      setSelected(prev => prev?.id === projectId ? { ...prev, review: { status: review.status } } : prev);
+    }
+    setRequestingReview(false);
+  };
 
   const deleteProject = async (id: string) => {
     await fetch(`/api/admin/projects/${id}`, { method: "DELETE" });
@@ -224,7 +240,7 @@ export function AdminDevis() {
               )}
 
               {/* Extra fields */}
-              {(selected.deadline || selected.references || selected.contact) && (
+              {(selected.deadline || selected.references || selected.contact || selected.phone || selected.briefFileName) && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "7px", padding: "12px 14px", borderRadius: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", marginBottom: "14px" }}>
                   {selected.deadline && (
                     <div style={{ display: "flex", gap: "8px" }}>
@@ -235,13 +251,39 @@ export function AdminDevis() {
                   {selected.contact && (
                     <div style={{ display: "flex", gap: "8px" }}>
                       <span style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.2)", width: "70px", flexShrink: 0, paddingTop: "1px" }}>Contact</span>
-                      <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }}>{{ email: "E-mail", discord: "Discord", other: "Peu importe" }[selected.contact] ?? selected.contact}</span>
+                      <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }}>{{ email: "E-mail", discord: "Discord", phone: "Téléphone", other: "Peu importe" }[selected.contact] ?? selected.contact}</span>
                     </div>
                   )}
+                  {selected.phone && (
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <span style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.2)", width: "70px", flexShrink: 0, paddingTop: "1px" }}>Tél.</span>
+                      <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }}>{selected.phone}</span>
+                    </div>
+                  )}
+                  {selected.callSlots && (() => {
+                    try { const slots = JSON.parse(selected.callSlots); return slots.length > 0 ? (
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <span style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.2)", width: "70px", flexShrink: 0, paddingTop: "1px" }}>Créneaux</span>
+                        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }}>{slots.join(", ")}</span>
+                      </div>
+                    ) : null; } catch { return null; }
+                  })()}
                   {selected.references && (
                     <div style={{ display: "flex", gap: "8px" }}>
                       <span style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.2)", width: "70px", flexShrink: 0, paddingTop: "1px" }}>Réf.</span>
                       <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", lineHeight: 1.6 }}>{selected.references}</span>
+                    </div>
+                  )}
+                  {selected.briefFile && selected.briefFileName && (
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                      <span style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.2)", width: "70px", flexShrink: 0 }}>Brief</span>
+                      <a
+                        href={selected.briefFile}
+                        download={selected.briefFileName}
+                        style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "11px", color: "rgba(100,140,255,0.7)", textDecoration: "none" }}
+                      >
+                        <Download size={11} /> {selected.briefFileName}
+                      </a>
                     </div>
                   )}
                 </div>
@@ -317,13 +359,22 @@ export function AdminDevis() {
                   </button>
                 )}
 
-                {selected.status === "completed" && (
-                  <div style={{ padding: "10px", borderRadius: "9px", background: "rgba(167,139,250,0.06)", border: "1px solid rgba(167,139,250,0.15)", display: "flex", gap: "8px", alignItems: "center" }}>
-                    <AlertCircle size={13} color="rgba(167,139,250,0.6)" />
-                    <span style={{ fontSize: "11px", color: "rgba(167,139,250,0.7)", fontFamily: "var(--font-poppins)" }}>
-                      Projet livré · Avis demandable depuis Avis
-                    </span>
-                  </div>
+                {(selected.status === "completed" || selected.status === "active") && (
+                  selected.review?.status === "requested" ? (
+                    <div style={{ padding: "10px 12px", borderRadius: "9px", background: "rgba(96,165,250,0.06)", border: "1px solid rgba(96,165,250,0.15)", display: "flex", gap: "8px", alignItems: "center" }}>
+                      <Star size={12} color="rgba(96,165,250,0.6)" />
+                      <span style={{ fontSize: "11px", color: "rgba(96,165,250,0.7)", fontFamily: "var(--font-poppins)" }}>Avis demandé — en attente du client</span>
+                    </div>
+                  ) : selected.review?.status === "submitted" || selected.review?.status === "approved" ? (
+                    <div style={{ padding: "10px 12px", borderRadius: "9px", background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.15)", display: "flex", gap: "8px", alignItems: "center" }}>
+                      <CheckCircle2 size={12} color="rgba(74,222,128,0.6)" />
+                      <span style={{ fontSize: "11px", color: "rgba(74,222,128,0.7)", fontFamily: "var(--font-poppins)" }}>Avis {selected.review.status === "approved" ? "publié" : "soumis"} ✓</span>
+                    </div>
+                  ) : (
+                    <button onClick={() => requestReview(selected.id)} disabled={requestingReview} style={actionBtn("rgba(250,204,21,0.7)")}>
+                      <Star size={13} /> {requestingReview ? "Envoi…" : "Demander un avis au client"}
+                    </button>
+                  )
                 )}
               </div>
 

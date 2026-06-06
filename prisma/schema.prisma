@@ -64,10 +64,14 @@ model Project {
   deadline     String?
   references   String?
   contact      String?
-  status       String         @default("pending")
-  paid         Boolean        @default(false)
-  adminNotes   String?
-  kanbanNotes  String?
+  status        String         @default("pending")
+  paid          Boolean        @default(false)
+  adminNotes    String?
+  kanbanNotes   String?
+  phone         String?
+  callSlots     String?
+  briefFile     String?
+  briefFileName String?
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   userId       String

@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  const { title, description, type, budget, deadline, references, contact } = await req.json();
+  const { title, description, type, budget, deadline, references, contact, phone, callSlots, briefFile, briefFileName } = await req.json();
   if (!title?.trim() || !type) return NextResponse.json({ error: "Champs requis manquants" }, { status: 400 });
 
   const project = await prisma.project.create({
@@ -36,6 +36,10 @@ export async function POST(req: NextRequest) {
       deadline: deadline?.trim() ?? null,
       references: references?.trim() ?? null,
       contact: contact?.trim() ?? null,
+      phone: phone?.trim() ?? null,
+      callSlots: callSlots ? JSON.stringify(callSlots) : null,
+      briefFile: briefFile ?? null,
+      briefFileName: briefFileName ?? null,
       userId: session.user.id,
       status: "pending",
     },

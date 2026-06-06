@@ -46,10 +46,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if ("paid" in body) data.paid = Boolean(body.paid);
   if ("kanbanNotes" in body) data.kanbanNotes = body.kanbanNotes ? String(body.kanbanNotes) : null;
 
-  const project = await prisma.project.update({ where: { id }, data });
+  await prisma.project.update({ where: { id }, data });
 
-  // Auto-create default kanban columns when project becomes active
-  if (data.status === "active") {
+  // Auto-create default kanban columns when becoming active or forced via initColumns
+  if (data.status === "active" || body.initColumns === true) {
     const existingCols = await prisma.kanbanColumn.count({ where: { projectId: id } });
     if (existingCols === 0) {
       const defaultCols = ["À faire", "En cours", "Bloquée", "En review", "Fait"];
@@ -59,5 +59,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
   }
 
-  return NextResponse.json(project);
+  // Return full project with relations
+  const fullProject = await prisma.project.findUnique({
+    where: { id },
+    include: {
+      user: { select: { id: true, name: true, email: true, image: true } },
+      review: true,
+      columns: {
+        orderBy: { order: "asc" },
+        include: { tasks: { orderBy: { order: "asc" } } },
+      },
+    },
+  });
+  return NextResponse.json(fullProject);
 }

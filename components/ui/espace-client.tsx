@@ -7,13 +7,13 @@ import Link from "next/link";
 import {
   Send, LogOut, MessageSquare, Kanban, Star,
   Settings, PlusCircle, ChevronRight, CheckCircle2,
-  Circle, Clock, AlertCircle, Eye, EyeOff,
+  Circle, Clock, AlertCircle, Eye, EyeOff, Paperclip, BarChart2,
 } from "lucide-react";
 import type { Session } from "next-auth";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-type Tab = "messages" | "devis" | "projets" | "avis" | "parametres";
+type Tab = "messages" | "devis" | "projets" | "suivi" | "avis" | "parametres";
 
 type Msg = { id: string; content: string; fromAdmin: boolean; createdAt: string };
 
@@ -71,8 +71,8 @@ function Avatar({ name, image, size = 36 }: { name?: string | null; image?: stri
 
 // ── Tab nav item ──────────────────────────────────────────────────────────────
 
-function NavItem({ id, active, icon: Icon, label, badge, onClick }: {
-  id: Tab; active: boolean; icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
+function NavItem({ active, icon: Icon, label, badge, onClick }: {
+  active: boolean; icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
   label: string; badge?: number; onClick: () => void;
 }) {
   return (
@@ -161,7 +161,7 @@ function TabMessages({ user }: { user: Session["user"] }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
       <SectionTitle>Messagerie</SectionTitle>
-      <SectionSub>Espace réservé aux signalements de bug ou problèmes techniques sur le site. Pour toute question liée à un projet, utilisez <strong style={{color:"rgba(255,255,255,0.5)"}}>Demande de devis</strong>.</SectionSub>
+      <SectionSub>Échangez directement avec Flores — questions sur votre projet en cours, informations complémentaires, suivi.</SectionSub>
 
       <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px", paddingBottom: "16px" }}>
         {loading ? (
@@ -239,6 +239,41 @@ function TabMessages({ user }: { user: Session["user"] }) {
 // TAB: DEVIS
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── Budget slider ─────────────────────────────────────────────────────────────
+
+function BudgetSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const pct = ((value - 100) / (5000 - 100)) * 100;
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
+        <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(255,255,255,0.22)" }}>100€</span>
+        <span style={{ fontFamily: "var(--font-poppins)", fontSize: "14px", fontWeight: 700, color: "white" }}>
+          {value >= 5000 ? "5 000€ +" : `${value.toLocaleString("fr-FR")} €`}
+        </span>
+        <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(255,255,255,0.22)" }}>5 000€+</span>
+      </div>
+      <div style={{ position: "relative", paddingBottom: "16px" }}>
+        <div style={{ height: "5px", borderRadius: "99px", background: "rgba(255,255,255,0.07)", position: "relative", overflow: "visible" }}>
+          <div style={{ position: "absolute", left: 0, width: `${pct}%`, height: "100%", background: "linear-gradient(90deg, rgba(60,100,255,0.6), rgba(100,140,255,0.85))", borderRadius: "99px", pointerEvents: "none", transition: "width 0.05s" }} />
+          <div style={{ position: "absolute", left: `calc(${pct}% - 7px)`, top: "-5px", width: "14px", height: "14px", borderRadius: "50%", background: "rgba(100,140,255,0.9)", border: "2px solid rgba(255,255,255,0.15)", pointerEvents: "none", transition: "left 0.05s" }} />
+        </div>
+        <input
+          type="range" min={100} max={5000} step={50} value={value}
+          onChange={e => onChange(Number(e.target.value))}
+          style={{ position: "absolute", inset: 0, width: "100%", opacity: 0, cursor: "pointer", height: "24px", top: "-5px" }}
+        />
+      </div>
+    </div>
+  );
+}
+
+const TIME_SLOTS = [
+  { value: "9h-12h", label: "Matin  9h–12h" },
+  { value: "14h-17h", label: "Après-midi  14h–17h" },
+  { value: "17h-19h", label: "Soir  17h–19h" },
+  { value: "flexible", label: "Flexible" },
+];
+
 const PROJECT_TYPES = [
   { value: "web", label: "Site web / Application" },
   { value: "visual", label: "Création visuelle" },
@@ -253,6 +288,7 @@ const DEADLINES = [
 const CONTACTS = [
   { value: "email", label: "E-mail" },
   { value: "discord", label: "Discord" },
+  { value: "phone", label: "Téléphone" },
   { value: "other", label: "Peu importe" },
 ];
 
@@ -260,10 +296,14 @@ function TabDevis({ onSuccess }: { onSuccess: () => void }) {
   const [title, setTitle] = useState("");
   const [type, setType] = useState("");
   const [description, setDescription] = useState("");
-  const [budget, setBudget] = useState("");
+  const [budget, setBudget] = useState(500);
   const [deadline, setDeadline] = useState("");
   const [references, setReferences] = useState("");
   const [contact, setContact] = useState("");
+  const [phone, setPhone] = useState("");
+  const [callSlots, setCallSlots] = useState<string[]>([]);
+  const [briefFile, setBriefFile] = useState("");
+  const [briefFileName, setBriefFileName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
@@ -279,9 +319,22 @@ function TabDevis({ onSuccess }: { onSuccess: () => void }) {
     color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "6px",
   };
   const selectStyle: React.CSSProperties = {
-    ...inputStyle, appearance: "none", cursor: "pointer",
+    ...inputStyle, appearance: "none", cursor: "pointer", colorScheme: "dark",
     backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,0.2)'/%3E%3C/svg%3E")`,
     backgroundRepeat: "no-repeat", backgroundPosition: "right 13px center",
+  };
+
+  const toggleSlot = (v: string) =>
+    setCallSlots(prev => prev.includes(v) ? prev.filter(s => s !== v) : [...prev, v]);
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { setError("Fichier trop lourd (max 5 Mo)"); return; }
+    setBriefFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = () => setBriefFile(reader.result as string);
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -289,7 +342,15 @@ function TabDevis({ onSuccess }: { onSuccess: () => void }) {
     setError(""); setLoading(true);
     const res = await fetch("/api/projects", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, type, description, budget, deadline, references, contact }),
+      body: JSON.stringify({
+        title, type, description,
+        budget: budget >= 5000 ? "5000€+" : `${budget}€`,
+        deadline, references, contact,
+        phone: contact === "phone" ? phone : undefined,
+        callSlots: contact === "phone" && callSlots.length > 0 ? callSlots : undefined,
+        briefFile: briefFile || undefined,
+        briefFileName: briefFileName || undefined,
+      }),
     });
     setLoading(false);
     if (!res.ok) { const d = await res.json(); setError(d.error ?? "Erreur"); return; }
@@ -350,18 +411,19 @@ function TabDevis({ onSuccess }: { onSuccess: () => void }) {
           />
         </div>
 
-        <div style={{ display: "flex", gap: "12px" }}>
-          <div style={{ flex: 1 }}>
-            <label style={labelStyle}>Budget envisagé</label>
-            <input type="text" value={budget} onChange={e => setBudget(e.target.value)} placeholder="ex : 500€ · À définir" style={inputStyle} />
+        <div>
+          <label style={labelStyle}>Budget envisagé</label>
+          <div style={{ padding: "12px 14px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)" }}>
+            <BudgetSlider value={budget} onChange={setBudget} />
           </div>
-          <div style={{ flex: 1 }}>
-            <label style={labelStyle}>Délai souhaité</label>
-            <select value={deadline} onChange={e => setDeadline(e.target.value)} style={selectStyle}>
-              <option value="">Sélectionner…</option>
-              {DEADLINES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
-            </select>
-          </div>
+        </div>
+
+        <div>
+          <label style={labelStyle}>Délai souhaité</label>
+          <select value={deadline} onChange={e => setDeadline(e.target.value)} style={selectStyle}>
+            <option value="">Sélectionner…</option>
+            {DEADLINES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+          </select>
         </div>
 
         <div>
@@ -370,6 +432,24 @@ function TabDevis({ onSuccess }: { onSuccess: () => void }) {
             placeholder="Liens, noms de sites, styles appréciés…"
             style={{ ...inputStyle, resize: "vertical", minHeight: "60px" }}
           />
+        </div>
+
+        <div>
+          <label style={labelStyle}>Brief / Document (optionnel)</label>
+          <label style={{
+            display: "flex", alignItems: "center", gap: "10px", padding: "10px 13px",
+            borderRadius: "10px", border: `1px solid ${briefFileName ? "rgba(100,140,255,0.25)" : "rgba(255,255,255,0.07)"}`,
+            background: briefFileName ? "rgba(60,100,255,0.06)" : "rgba(255,255,255,0.02)", cursor: "pointer",
+          }}>
+            <Paperclip size={14} color={briefFileName ? "rgba(100,140,255,0.6)" : "rgba(255,255,255,0.25)"} />
+            <span style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", color: briefFileName ? "rgba(100,140,255,0.8)" : "rgba(255,255,255,0.25)", flex: 1 }}>
+              {briefFileName || "Joindre un PDF ou Word (max 5 Mo)"}
+            </span>
+            {briefFileName && (
+              <button type="button" onClick={e => { e.preventDefault(); setBriefFile(""); setBriefFileName(""); }} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.2)", padding: 0, display: "flex" }}>✕</button>
+            )}
+            <input type="file" accept=".pdf,.docx,.doc" onChange={handleFile} style={{ display: "none" }} />
+          </label>
         </div>
 
         <div>
@@ -392,6 +472,39 @@ function TabDevis({ onSuccess }: { onSuccess: () => void }) {
               </button>
             ))}
           </div>
+          {contact === "phone" && (
+            <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "10px" }}>
+              <input
+                type="tel" value={phone} onChange={e => setPhone(e.target.value)}
+                placeholder="Votre numéro de téléphone"
+                style={inputStyle}
+              />
+              <div>
+                <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 500, color: "rgba(255,255,255,0.25)", textTransform: "uppercase", letterSpacing: "0.15em", margin: "0 0 6px" }}>
+                  Créneaux disponibles (optionnel)
+                </p>
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                  {TIME_SLOTS.map(s => (
+                    <button
+                      key={s.value} type="button"
+                      onClick={() => toggleSlot(s.value)}
+                      style={{
+                        padding: "6px 12px", borderRadius: "8px", cursor: "pointer",
+                        border: `1px solid ${callSlots.includes(s.value) ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.06)"}`,
+                        background: callSlots.includes(s.value) ? "rgba(74,222,128,0.08)" : "rgba(255,255,255,0.02)",
+                        fontFamily: "var(--font-poppins)", fontSize: "11px",
+                        fontWeight: callSlots.includes(s.value) ? 600 : 400,
+                        color: callSlots.includes(s.value) ? "rgba(74,222,128,0.85)" : "rgba(255,255,255,0.35)",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {error && (
@@ -522,7 +635,7 @@ function ProjectCard({ project, onOpen }: { project: Project; onOpen: () => void
   );
 }
 
-function TabProjets({ onRequestDevis }: { onRequestDevis: () => void }) {
+function TabProjets({ onRequestDevis, onMessage, onSuivi }: { onRequestDevis: () => void; onMessage: () => void; onSuivi: () => void }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Project | null>(null);
@@ -548,34 +661,53 @@ function TabProjets({ onRequestDevis }: { onRequestDevis: () => void }) {
             {STATUS_LABEL[selected.status] ?? selected.status}
           </span>
         </div>
-        <SectionSub>{fmtDateShort(selected.createdAt)} · {selected.type === "web" ? "Web" : selected.type === "visual" ? "Visuel" : "Autre"}{selected.budget ? ` · Budget : ${selected.budget}` : ""}</SectionSub>
+        <SectionSub>{fmtDateShort(selected.createdAt)} · {selected.type === "web" ? "Web" : selected.type === "visual" ? "Visuel" : "Autre"}{selected.budget ? ` · ${selected.budget}` : ""}</SectionSub>
 
         {selected.description && (
-          <div style={{ padding: "14px 16px", borderRadius: "12px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: "24px" }}>
+          <div style={{ padding: "14px 16px", borderRadius: "12px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: "16px" }}>
             <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.45)", lineHeight: 1.7, margin: 0 }}>{selected.description}</p>
           </div>
         )}
 
         {selected.adminNotes && (
-          <div style={{ padding: "14px 16px", borderRadius: "12px", background: "rgba(60,100,255,0.05)", border: "1px solid rgba(60,100,255,0.15)", marginBottom: "24px" }}>
+          <div style={{ padding: "14px 16px", borderRadius: "12px", background: "rgba(60,100,255,0.05)", border: "1px solid rgba(60,100,255,0.15)", marginBottom: "16px" }}>
             <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(100,140,255,0.6)", margin: "0 0 6px" }}>Note de Flores</p>
             <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, margin: 0 }}>{selected.adminNotes}</p>
           </div>
         )}
 
-        {selected.paid && selected.columns.length > 0 ? (
-          <>
-            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.14em", color: "rgba(255,255,255,0.2)", margin: "0 0 16px" }}>Suivi du projet</p>
-            <KanbanView columns={selected.columns} />
-          </>
-        ) : !selected.paid ? (
-          <div style={{ padding: "20px", borderRadius: "12px", background: "rgba(250,204,21,0.05)", border: "1px solid rgba(250,204,21,0.12)", textAlign: "center" }}>
-            <Clock size={18} color="rgba(250,204,21,0.5)" style={{ marginBottom: "8px" }} />
-            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.3)", margin: 0 }}>
-              Le suivi kanban sera accessible une fois le paiement confirmé.
-            </p>
+        {/* Action buttons */}
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "8px" }}>
+          <button onClick={onMessage} style={{
+            display: "flex", alignItems: "center", gap: "7px", padding: "9px 14px", borderRadius: "9px",
+            border: "1px solid rgba(60,100,255,0.25)", background: "rgba(60,100,255,0.08)",
+            fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 500,
+            color: "rgba(100,140,255,0.8)", cursor: "pointer",
+          }}>
+            <MessageSquare size={13} /> Contacter l'admin
+          </button>
+          {selected.paid && (selected.status === "active" || selected.status === "completed") && (
+            <button onClick={onSuivi} style={{
+              display: "flex", alignItems: "center", gap: "7px", padding: "9px 14px", borderRadius: "9px",
+              border: "1px solid rgba(74,222,128,0.2)", background: "rgba(74,222,128,0.06)",
+              fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 500,
+              color: "rgba(74,222,128,0.75)", cursor: "pointer",
+            }}>
+              <Kanban size={13} /> Voir le suivi
+            </button>
+          )}
+        </div>
+
+        {!selected.paid && (
+          <div style={{ marginTop: "16px", padding: "14px 16px", borderRadius: "12px", background: "rgba(250,204,21,0.04)", border: "1px solid rgba(250,204,21,0.1)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+              <Clock size={13} color="rgba(250,204,21,0.5)" />
+              <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>
+                {selected.status === "pending" ? "En attente de réponse — je vous reviens sous 24h." : selected.status === "accepted" ? "Devis accepté — en attente de paiement pour démarrer." : "Projet en attente."}
+              </span>
+            </div>
           </div>
-        ) : null}
+        )}
       </div>
     );
   }
@@ -593,7 +725,7 @@ function TabProjets({ onRequestDevis }: { onRequestDevis: () => void }) {
           <PlusCircle size={13} /> Nouveau devis
         </button>
       </div>
-      <SectionSub>Retrouvez toutes vos demandes et suivez l'avancement en direct.</SectionSub>
+      <SectionSub>Retrouvez toutes vos demandes et leur statut.</SectionSub>
 
       {loading ? (
         <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px", textAlign: "center", padding: "40px 0" }}>Chargement...</div>
@@ -611,6 +743,94 @@ function TabProjets({ onRequestDevis }: { onRequestDevis: () => void }) {
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           {projects.map(p => <ProjectCard key={p.id} project={p} onOpen={() => setSelected(p)} />)}
         </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TAB: SUIVI
+// ─────────────────────────────────────────────────────────────────────────────
+
+function TabSuivi() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/projects").then(r => r.json()).then((data: Project[]) => {
+      setProjects(data);
+      setLoading(false);
+      const active = data.find(p => p.paid && p.status === "active");
+      if (active) setSelectedId(active.id);
+      else {
+        const completed = data.find(p => p.paid && p.status === "completed");
+        if (completed) setSelectedId(completed.id);
+      }
+    });
+  }, []);
+
+  const activeProjects = projects.filter(p => p.paid && (p.status === "active" || p.status === "completed"));
+  const selected = projects.find(p => p.id === selectedId);
+
+  return (
+    <div>
+      <SectionTitle>Suivi de projet</SectionTitle>
+      <SectionSub>Consultez l'avancement de votre projet en temps réel.</SectionSub>
+
+      {loading ? (
+        <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px", textAlign: "center", padding: "40px 0" }}>Chargement...</div>
+      ) : activeProjects.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "56px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: "14px" }}>
+          <div style={{ width: 56, height: 56, borderRadius: "14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <BarChart2 size={22} color="rgba(255,255,255,0.12)" />
+          </div>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.3)", margin: 0 }}>Aucun projet actif</p>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(255,255,255,0.15)", margin: 0 }}>Le suivi apparaîtra une fois votre projet lancé et réglé.</p>
+        </div>
+      ) : (
+        <>
+          {activeProjects.length > 1 && (
+            <div style={{ display: "flex", gap: "8px", marginBottom: "24px", flexWrap: "wrap" }}>
+              {activeProjects.map(p => (
+                <button key={p.id} onClick={() => setSelectedId(p.id)} style={{
+                  padding: "7px 14px", borderRadius: "9px", cursor: "pointer",
+                  border: `1px solid ${selectedId === p.id ? "rgba(60,100,255,0.35)" : "rgba(255,255,255,0.07)"}`,
+                  background: selectedId === p.id ? "rgba(60,100,255,0.12)" : "rgba(255,255,255,0.02)",
+                  fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: selectedId === p.id ? 600 : 400,
+                  color: selectedId === p.id ? "rgba(100,140,255,0.9)" : "rgba(255,255,255,0.4)",
+                }}>
+                  {p.title}
+                </button>
+              ))}
+            </div>
+          )}
+          {selected && (() => {
+            const total = selected.columns.flatMap(c => c.tasks).length;
+            const done = selected.columns.flatMap(c => c.tasks).filter(t => t.done).length;
+            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+            return (
+              <>
+                {total > 0 && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
+                    <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(255,255,255,0.25)" }}>{done}/{total} tâches terminées</span>
+                    <div style={{ flex: 1, height: "4px", borderRadius: "99px", background: "rgba(255,255,255,0.06)" }}>
+                      <div style={{ height: "100%", width: `${pct}%`, borderRadius: "99px", background: pct === 100 ? "rgba(74,222,128,0.6)" : "rgba(100,140,255,0.6)" }} />
+                    </div>
+                    <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 700, color: "rgba(255,255,255,0.45)" }}>{pct}%</span>
+                  </div>
+                )}
+                {selected.columns.length > 0 ? (
+                  <KanbanView columns={selected.columns} />
+                ) : (
+                  <div style={{ padding: "24px", borderRadius: "12px", border: "1px dashed rgba(255,255,255,0.07)", textAlign: "center" }}>
+                    <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", color: "rgba(255,255,255,0.2)", margin: 0 }}>Le kanban sera initialisé par l'admin sous peu.</p>
+                  </div>
+                )}
+              </>
+            );
+          })()}
+        </>
       )}
     </div>
   );
@@ -857,9 +1077,10 @@ export function EspaceClient({ user }: { user: Session["user"] }) {
   const [tab, setTab] = useState<Tab>("devis");
 
   const navItems: { id: Tab; icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; label: string }[] = [
-    { id: "messages", icon: MessageSquare, label: "Messagerie" },
     { id: "devis", icon: PlusCircle, label: "Demande de devis" },
     { id: "projets", icon: Kanban, label: "Mes projets" },
+    { id: "suivi", icon: BarChart2, label: "Suivi de projet" },
+    { id: "messages", icon: MessageSquare, label: "Messagerie" },
     { id: "avis", icon: Star, label: "Avis" },
     { id: "parametres", icon: Settings, label: "Paramètres" },
   ];
@@ -917,7 +1138,7 @@ export function EspaceClient({ user }: { user: Session["user"] }) {
         }}>
           <nav style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
             {navItems.map(item => (
-              <NavItem key={item.id} {...item} active={tab === item.id} onClick={() => setTab(item.id)} />
+              <NavItem key={item.id} icon={item.icon} label={item.label} active={tab === item.id} onClick={() => setTab(item.id)} />
             ))}
           </nav>
         </aside>
@@ -931,9 +1152,10 @@ export function EspaceClient({ user }: { user: Session["user"] }) {
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
               style={{ flex: 1, display: "flex", flexDirection: "column" }}
             >
-              {tab === "messages" && <TabMessages user={user} />}
               {tab === "devis" && <TabDevis onSuccess={() => setTab("projets")} />}
-              {tab === "projets" && <TabProjets onRequestDevis={() => setTab("devis")} />}
+              {tab === "projets" && <TabProjets onRequestDevis={() => setTab("devis")} onMessage={() => setTab("messages")} onSuivi={() => setTab("suivi")} />}
+              {tab === "suivi" && <TabSuivi />}
+              {tab === "messages" && <TabMessages user={user} />}
               {tab === "avis" && <TabAvis />}
               {tab === "parametres" && <TabParametres user={user} />}
             </motion.div>

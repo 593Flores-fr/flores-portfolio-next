@@ -45,7 +45,24 @@ export function AdminProjetDetail({ projectId }: { projectId: string }) {
   useEffect(() => {
     fetch(`/api/admin/projects/${projectId}`)
       .then(r => r.json())
-      .then(data => { setProject(data); setNotes(data.kanbanNotes ?? ""); setLoading(false); });
+      .then(data => {
+        setProject(data);
+        setNotes(data.kanbanNotes ?? "");
+        setLoading(false);
+        // Auto-init columns if project is active/completed but has none
+        if (
+          data.columns?.length === 0 &&
+          data.status !== "pending" && data.status !== "rejected" && data.status !== "accepted"
+        ) {
+          fetch(`/api/admin/projects/${projectId}`, {
+            method: "PATCH", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ initColumns: true }),
+          }).then(r => r.json()).then(updated => {
+            setProject(updated);
+            setNotes(updated.kanbanNotes ?? "");
+          });
+        }
+      });
   }, [projectId]);
 
   const saveNotes = async () => {
