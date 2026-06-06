@@ -207,7 +207,16 @@ export function AdminFactures() {
   const activeInvoice: Invoice | null = selected ?? (creating ? null : null);
 
   return (
-    <div style={{ padding: "32px 40px", maxWidth: "1100px" }}>
+    <div style={{ padding: "32px 40px", maxWidth: "1100px", position: "relative" }}>
+      {/* InvoicePrint toujours dans le DOM — position:absolute off-screen évite display:none qui bloque @media print */}
+      {!creating && selected && (
+        <div
+          aria-hidden="true"
+          style={{ position: "absolute", left: "-9999px", top: 0, width: "800px", pointerEvents: "none", overflow: "visible" }}
+        >
+          <InvoicePrint invoice={{ ...selected, items: form.items }} />
+        </div>
+      )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "28px" }}>
         <div>
           <h1 style={{ fontSize: "20px", fontWeight: 800, color: "white", margin: "0 0 4px", letterSpacing: "-0.01em" }}>Devis & Factures</h1>
@@ -419,12 +428,7 @@ export function AdminFactures() {
                 </div>
               )}
 
-              {/* Hidden print content */}
-              {!creating && selected && (
-                <div style={{ display: "none" }}>
-                  <InvoicePrint invoice={{ ...selected, items: form.items }} />
-                </div>
-              )}
+              {/* Print content rendered at root level above — not here */}
             </motion.div>
           )}
         </AnimatePresence>

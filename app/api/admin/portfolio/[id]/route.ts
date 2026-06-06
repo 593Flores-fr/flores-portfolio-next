@@ -11,9 +11,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params;
   const body = await req.json();
   const data: Record<string, unknown> = {};
-  for (const key of ["title", "slug", "tag", "description", "imageSrc", "order", "published"] as const) {
-    if (key in body) data[key] = body[key];
-  }
+  const keys = ["title", "slug", "tag", "description", "imageSrc", "category", "year", "client",
+    "fullDescription", "challenge", "images", "tools", "externalLink", "accentColor", "order", "published"];
+  for (const key of keys) { if (key in body) data[key] = body[key]; }
   const project = await prisma.portfolioProject.update({ where: { id }, data });
   return NextResponse.json(project);
 }

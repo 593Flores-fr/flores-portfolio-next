@@ -95,16 +95,25 @@ model LoginEvent {
 }
 
 model PortfolioProject {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  title       String
-  tag         String   @default("")
-  description String   @default("")
-  imageSrc    String   @default("")
-  order       Int      @default(0)
-  published   Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  title           String
+  tag             String   @default("")
+  description     String   @default("")
+  imageSrc        String   @default("")
+  category        String   @default("")
+  year            String   @default("")
+  client          String   @default("")
+  fullDescription String   @default("")
+  challenge       String   @default("")
+  images          Json     @default("[]")
+  tools           Json     @default("[]")
+  externalLink    String?
+  accentColor     String   @default("")
+  order           Int      @default(0)
+  published       Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model KanbanColumn {

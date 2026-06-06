@@ -7,9 +7,18 @@ import { Plus, Trash2, Edit2, Eye, EyeOff, GripVertical, Check, X } from "lucide
 type PortfolioProject = {
   id: string; slug: string; title: string; tag: string;
   description: string; imageSrc: string; order: number; published: boolean;
+  category: string; year: string; client: string;
+  fullDescription: string; challenge: string;
+  images: string[]; tools: string[];
+  externalLink: string | null; accentColor: string;
 };
 
-const emptyForm = { slug: "", title: "", tag: "", description: "", imageSrc: "", order: 0, published: true };
+const emptyForm = {
+  slug: "", title: "", tag: "", description: "", imageSrc: "",
+  category: "", year: "", client: "", fullDescription: "", challenge: "",
+  imagesRaw: "", toolsRaw: "", externalLink: "", accentColor: "",
+  order: 0, published: true,
+};
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -36,24 +45,54 @@ export function AdminPortfolio() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [seeding, setSeeding] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/portfolio").then(r => r.json()).then(data => { setProjects(data); setLoading(false); });
   }, []);
 
+  const seed = async () => {
+    setSeeding(true);
+    const res = await fetch("/api/admin/portfolio/seed", { method: "POST" });
+    const data = await res.json();
+    if (data.seeded > 0) {
+      const updated = await fetch("/api/admin/portfolio").then(r => r.json());
+      setProjects(updated);
+    }
+    setSeeding(false);
+  };
+
+  const toFormState = (p: PortfolioProject) => ({
+    slug: p.slug, title: p.title, tag: p.tag, description: p.description, imageSrc: p.imageSrc,
+    category: p.category ?? "", year: p.year ?? "", client: p.client ?? "",
+    fullDescription: p.fullDescription ?? "", challenge: p.challenge ?? "",
+    imagesRaw: (p.images ?? []).join("\n"), toolsRaw: (p.tools ?? []).join(", "),
+    externalLink: p.externalLink ?? "", accentColor: p.accentColor ?? "",
+    order: p.order, published: p.published,
+  });
+
   const openCreate = () => { setForm(emptyForm); setEditing(null); setCreating(true); };
-  const openEdit = (p: PortfolioProject) => { setForm({ slug: p.slug, title: p.title, tag: p.tag, description: p.description, imageSrc: p.imageSrc, order: p.order, published: p.published }); setEditing(p); setCreating(false); };
+  const openEdit = (p: PortfolioProject) => { setForm(toFormState(p)); setEditing(p); setCreating(false); };
   const closePanel = () => { setEditing(null); setCreating(false); };
+
+  const buildPayload = () => ({
+    ...form,
+    images: form.imagesRaw.split("\n").map(s => s.trim()).filter(Boolean),
+    tools: form.toolsRaw.split(",").map(s => s.trim()).filter(Boolean),
+    externalLink: form.externalLink.trim() || null,
+  });
 
   const save = async () => {
     setSaving(true);
+    const payload = buildPayload();
     if (editing) {
-      const res = await fetch(`/api/admin/portfolio/${editing.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      const res = await fetch(`/api/admin/portfolio/${editing.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const updated = await res.json();
       setProjects(p => p.map(x => x.id === editing.id ? updated : x));
       setEditing(updated);
+      setForm(toFormState(updated));
     } else {
-      const res = await fetch("/api/admin/portfolio", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      const res = await fetch("/api/admin/portfolio", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const created = await res.json();
       setProjects(p => [...p, created]);
       closePanel();
@@ -82,14 +121,26 @@ export function AdminPortfolio() {
           <h1 style={{ fontSize: "20px", fontWeight: 800, color: "white", margin: "0 0 4px", letterSpacing: "-0.01em" }}>Portfolio</h1>
           <p style={{ fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.3)", margin: 0 }}>Gérez les projets affichés sur votre page portfolio.</p>
         </div>
-        <button onClick={openCreate} style={{
-          display: "flex", alignItems: "center", gap: "7px", padding: "9px 16px", borderRadius: "10px",
-          border: "1px solid rgba(60,100,255,0.3)", background: "rgba(60,100,255,0.12)",
-          fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 500,
-          color: "rgba(100,140,255,0.9)", cursor: "pointer",
-        }}>
-          <Plus size={14} /> Nouveau projet
-        </button>
+        <div style={{ display: "flex", gap: "8px" }}>
+          {projects.length === 0 && (
+            <button onClick={seed} disabled={seeding} style={{
+              display: "flex", alignItems: "center", gap: "7px", padding: "9px 16px", borderRadius: "10px",
+              border: "1px solid rgba(250,204,21,0.25)", background: "rgba(250,204,21,0.07)",
+              fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 500,
+              color: "rgba(250,204,21,0.75)", cursor: "pointer", opacity: seeding ? 0.5 : 1,
+            }}>
+              {seeding ? "Import…" : "↓ Importer projets existants"}
+            </button>
+          )}
+          <button onClick={openCreate} style={{
+            display: "flex", alignItems: "center", gap: "7px", padding: "9px 16px", borderRadius: "10px",
+            border: "1px solid rgba(60,100,255,0.3)", background: "rgba(60,100,255,0.12)",
+            fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 500,
+            color: "rgba(100,140,255,0.9)", cursor: "pointer",
+          }}>
+            <Plus size={14} /> Nouveau projet
+          </button>
+        </div>
       </div>
 
       <div style={{ display: "flex", gap: "20px", alignItems: "flex-start" }}>
@@ -193,14 +244,60 @@ export function AdminPortfolio() {
                     style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }}
                   />
                 </Field>
-                <Field label="Image (URL)">
-                  <input value={form.imageSrc} onChange={e => setForm(f => ({ ...f, imageSrc: e.target.value }))} placeholder="https://…" style={inputStyle} />
+                <Field label="Image couverture (URL ou /images/…)">
+                  <input value={form.imageSrc} onChange={e => setForm(f => ({ ...f, imageSrc: e.target.value }))} placeholder="/images/projet.jpg" style={inputStyle} />
                 </Field>
                 {form.imageSrc && (
-                  <div style={{ borderRadius: "8px", overflow: "hidden", height: "100px", background: "rgba(255,255,255,0.04)" }}>
+                  <div style={{ borderRadius: "8px", overflow: "hidden", height: "90px", background: "rgba(255,255,255,0.04)" }}>
                     <img src={form.imageSrc} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   </div>
                 )}
+
+                {/* Divider */}
+                <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "4px 0" }} />
+                <p style={{ fontSize: "9px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.15em", color: "rgba(255,255,255,0.2)", margin: 0 }}>Page détail</p>
+
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <Field label="Catégorie">
+                    <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} style={{ ...inputStyle, appearance: "none", colorScheme: "dark" }}>
+                      <option value="">—</option>
+                      <option value="Web">Web</option>
+                      <option value="Visuel">Visuel</option>
+                      <option value="Cover">Cover</option>
+                    </select>
+                  </Field>
+                  <Field label="Année">
+                    <input value={form.year} onChange={e => setForm(f => ({ ...f, year: e.target.value }))} placeholder="2024" style={{ ...inputStyle, width: "80px" }} />
+                  </Field>
+                </div>
+
+                <Field label="Client / Projet">
+                  <input value={form.client} onChange={e => setForm(f => ({ ...f, client: e.target.value }))} placeholder="Nom du client ou du projet" style={inputStyle} />
+                </Field>
+                <Field label="Description longue">
+                  <textarea value={form.fullDescription} onChange={e => setForm(f => ({ ...f, fullDescription: e.target.value }))} rows={4} placeholder="Contexte, approche, résultat…" style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }} />
+                </Field>
+                <Field label="Enjeu / Brief">
+                  <textarea value={form.challenge} onChange={e => setForm(f => ({ ...f, challenge: e.target.value }))} rows={3} placeholder="Problématique ou objectif du projet…" style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }} />
+                </Field>
+                <Field label="Outils utilisés (virgule)">
+                  <input value={form.toolsRaw} onChange={e => setForm(f => ({ ...f, toolsRaw: e.target.value }))} placeholder="Figma, Illustrator, Next.js" style={inputStyle} />
+                </Field>
+                <Field label="Images galerie (1 URL par ligne)">
+                  <textarea value={form.imagesRaw} onChange={e => setForm(f => ({ ...f, imagesRaw: e.target.value }))} rows={3} placeholder={"/images/img1.jpg\n/images/img2.jpg"} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.8, fontFamily: "monospace", fontSize: "11px" }} />
+                </Field>
+                <Field label="Lien externe (optionnel)">
+                  <input value={form.externalLink} onChange={e => setForm(f => ({ ...f, externalLink: e.target.value }))} placeholder="https://…" style={inputStyle} />
+                </Field>
+                <Field label="Couleur accent (hex)">
+                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    <input value={form.accentColor} onChange={e => setForm(f => ({ ...f, accentColor: e.target.value }))} placeholder="#3c64ff" style={{ ...inputStyle, flex: 1 }} />
+                    {form.accentColor && <div style={{ width: 28, height: 28, borderRadius: "6px", background: form.accentColor, flexShrink: 0, border: "1px solid rgba(255,255,255,0.1)" }} />}
+                  </div>
+                </Field>
+
+                <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "4px 0" }} />
+
                 <Field label="Ordre d'affichage">
                   <input type="number" value={form.order} onChange={e => setForm(f => ({ ...f, order: Number(e.target.value) }))} style={{ ...inputStyle, width: "80px" }} />
                 </Field>
