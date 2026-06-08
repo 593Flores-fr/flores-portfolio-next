@@ -3,11 +3,12 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { MessageSquare, FolderOpen, Kanban, Star, LogOut, ShieldCheck, BarChart2, Image, ArrowUpLeft, Receipt, Globe } from "lucide-react";
+import { MessageSquare, FolderOpen, Kanban, Users, Star, LogOut, ShieldCheck, BarChart2, Image, ArrowUpLeft, Receipt, Globe } from "lucide-react";
 
 const navItems = [
   { href: "/admin/devis",     icon: FolderOpen,    label: "Devis"      },
-  { href: "/admin/projets",   icon: Kanban,        label: "Projets"    },
+  { href: "/admin/projets",   icon: Users,         label: "Projets"    },
+  { href: "/admin/kanban",    icon: Kanban,        label: "Kanban"     },
   { href: "/admin/messages",  icon: MessageSquare, label: "Messagerie" },
   { href: "/admin/reviews",   icon: Star,          label: "Avis"       },
   { href: "/admin/factures",  icon: Receipt,       label: "Factures"   },

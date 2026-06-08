@@ -33,7 +33,7 @@ function api(url: string, method: string, body?: unknown) {
   }).then(r => r.json());
 }
 
-export function AdminProjetDetail({ projectId }: { projectId: string }) {
+export function AdminProjetDetail({ projectId, compact = false }: { projectId: string; compact?: boolean }) {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [newTaskTitle, setNewTaskTitle] = useState<Record<string, string>>({});
@@ -119,7 +119,7 @@ export function AdminProjetDetail({ projectId }: { projectId: string }) {
   };
 
   if (loading || !project) {
-    return <div style={{ padding: "32px 40px", color: "rgba(255,255,255,0.2)", fontSize: "12px" }}>Chargement...</div>;
+    return <div style={{ padding: compact ? "16px" : "32px 40px", color: "rgba(255,255,255,0.2)", fontSize: "12px" }}>Chargement...</div>;
   }
 
   const total = project.columns.flatMap(c => c.tasks).length;
@@ -136,11 +136,13 @@ export function AdminProjetDetail({ projectId }: { projectId: string }) {
   };
 
   return (
-    <div style={{ padding: "32px 40px", minHeight: "100%" }}>
+    <div style={{ padding: compact ? "20px 24px" : "32px 40px", minHeight: "100%" }}>
       {/* Back */}
-      <button onClick={() => router.push("/admin/projets")} style={{ display: "flex", alignItems: "center", gap: "6px", background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.3)", fontFamily: "var(--font-poppins)", fontSize: "11px", marginBottom: "24px", padding: 0 }}>
-        <ArrowLeft size={13} /> Retour aux projets
-      </button>
+      {!compact && (
+        <button onClick={() => router.push("/admin/projets")} style={{ display: "flex", alignItems: "center", gap: "6px", background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.3)", fontFamily: "var(--font-poppins)", fontSize: "11px", marginBottom: "24px", padding: 0 }}>
+          <ArrowLeft size={13} /> Retour aux projets
+        </button>
+      )}
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", marginBottom: "12px" }}>

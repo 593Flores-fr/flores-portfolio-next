@@ -3,22 +3,27 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { Kanban, ChevronRight, CheckCircle2, Circle } from "lucide-react";
+import { MessageSquare, ChevronRight } from "lucide-react";
 
 type Project = {
   id: string; title: string; type: string; status: string; paid: boolean; createdAt: string;
-  user: { name: string | null; email: string; image: string | null };
+  user: { id: string; name: string | null; email: string; image: string | null };
   _count: { columns: number };
 };
 
 const STATUS_COLOR: Record<string, string> = {
+  pending: "rgba(250,204,21,0.85)", accepted: "rgba(74,222,128,0.85)",
   active: "rgba(96,165,250,0.85)", completed: "rgba(167,139,250,0.85)",
+  rejected: "rgba(248,113,113,0.85)",
 };
 const STATUS_BG: Record<string, string> = {
+  pending: "rgba(250,204,21,0.08)", accepted: "rgba(74,222,128,0.08)",
   active: "rgba(96,165,250,0.08)", completed: "rgba(167,139,250,0.08)",
+  rejected: "rgba(248,113,113,0.08)",
 };
 const STATUS_LABEL: Record<string, string> = {
-  active: "En cours", completed: "Livré",
+  pending: "En attente", accepted: "Accepté",
+  active: "En cours", completed: "Livré", rejected: "Refusé",
 };
 
 function Avatar({ name, image, size = 32 }: { name?: string | null; image?: string | null; size?: number }) {
@@ -40,7 +45,7 @@ export function AdminProjets() {
     fetch("/api/admin/projects")
       .then(r => r.json())
       .then((data: Project[]) => {
-        setProjects(data.filter(p => p.status === "active" || p.status === "completed"));
+        setProjects(data);
         setLoading(false);
       });
   }, []);
@@ -48,9 +53,9 @@ export function AdminProjets() {
   return (
     <div style={{ padding: "32px 40px", maxWidth: "800px" }}>
       <div style={{ marginBottom: "28px" }}>
-        <h1 style={{ fontSize: "20px", fontWeight: 800, color: "white", margin: "0 0 4px", letterSpacing: "-0.01em" }}>Projets actifs</h1>
+        <h1 style={{ fontSize: "20px", fontWeight: 800, color: "white", margin: "0 0 4px", letterSpacing: "-0.01em" }}>Projets</h1>
         <p style={{ fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.3)", margin: 0 }}>
-          Cliquez sur un projet pour éditer son kanban.
+          Cliquez sur un projet pour ouvrir la conversation avec le client.
         </p>
       </div>
 
@@ -58,8 +63,8 @@ export function AdminProjets() {
         <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.2)", padding: "40px 0", textAlign: "center" }}>Chargement...</p>
       ) : projects.length === 0 ? (
         <div style={{ textAlign: "center", padding: "48px 0" }}>
-          <Kanban size={24} color="rgba(255,255,255,0.1)" style={{ marginBottom: "10px" }} />
-          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.2)", margin: 0 }}>Aucun projet actif pour l&apos;instant.</p>
+          <MessageSquare size={24} color="rgba(255,255,255,0.1)" style={{ marginBottom: "10px" }} />
+          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.2)", margin: 0 }}>Aucun projet pour l&apos;instant.</p>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -68,7 +73,7 @@ export function AdminProjets() {
               key={p.id}
               initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              onClick={() => router.push(`/admin/projets/${p.id}`)}
+              onClick={() => router.push(`/admin/messages/${p.user.id}`)}
               style={{
                 display: "flex", alignItems: "center", gap: "14px",
                 padding: "14px 16px", borderRadius: "12px", textAlign: "left", width: "100%",
@@ -94,15 +99,9 @@ export function AdminProjets() {
                     {p.user.name ?? p.user.email}
                   </p>
                   <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.15)" }}>·</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                    {p._count.columns > 0
-                      ? <CheckCircle2 size={11} color="rgba(74,222,128,0.5)" />
-                      : <Circle size={11} color="rgba(255,255,255,0.15)" />
-                    }
-                    <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.2)" }}>
-                      {p._count.columns} colonne{p._count.columns !== 1 ? "s" : ""}
-                    </span>
-                  </div>
+                  <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.2)" }}>
+                    {p.type === "web" ? "Web" : p.type === "visual" ? "Visuel" : "Autre"}
+                  </span>
                 </div>
               </div>
               <ChevronRight size={14} color="rgba(255,255,255,0.15)" style={{ flexShrink: 0 }} />
