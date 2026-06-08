@@ -7,13 +7,13 @@ import Link from "next/link";
 import {
   Send, LogOut, MessageSquare, Kanban, Star,
   Settings, PlusCircle, ChevronRight, CheckCircle2,
-  Circle, Clock, AlertCircle, Eye, EyeOff, Paperclip, BarChart2,
+  Circle, Clock, AlertCircle, Eye, EyeOff, Paperclip, FolderOpen,
 } from "lucide-react";
 import type { Session } from "next-auth";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-type Tab = "messages" | "devis" | "projets" | "suivi" | "avis" | "parametres";
+type Tab = "messages" | "devis" | "projets" | "kanban" | "avis" | "parametres";
 
 type Msg = { id: string; content: string; fromAdmin: boolean; createdAt: string };
 
@@ -624,10 +624,6 @@ function KanbanView({ columns }: { columns: KanbanColumn[] }) {
 }
 
 function ProjectCard({ project, onOpen }: { project: Project; onOpen: () => void }) {
-  const total = project.columns.flatMap(c => c.tasks).length;
-  const done = project.columns.flatMap(c => c.tasks).filter(t => t.done).length;
-  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
@@ -637,7 +633,7 @@ function ProjectCard({ project, onOpen }: { project: Project; onOpen: () => void
         background: "rgba(255,255,255,0.02)", cursor: "pointer", transition: "border-color 0.2s",
       }}
     >
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", marginBottom: "12px" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", marginBottom: "10px" }}>
         <div>
           <p style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.85)", margin: "0 0 4px" }}>{project.title}</p>
           <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.25)", margin: 0 }}>{fmtDateShort(project.createdAt)}</p>
@@ -653,28 +649,7 @@ function ProjectCard({ project, onOpen }: { project: Project; onOpen: () => void
         </span>
       </div>
 
-      {project.kanbanVisible && total > 0 && (
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
-            <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", color: "rgba(255,255,255,0.2)" }}>Avancement</span>
-            <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, color: "rgba(255,255,255,0.4)" }}>{pct}%</span>
-          </div>
-          <div style={{ height: "3px", borderRadius: "99px", background: "rgba(255,255,255,0.06)" }}>
-            <div style={{ height: "100%", width: `${pct}%`, borderRadius: "99px", background: "rgba(100,140,255,0.6)", transition: "width 0.4s ease" }} />
-          </div>
-        </div>
-      )}
-
-      {!project.paid && (
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <Clock size={11} color="rgba(250,204,21,0.5)" />
-          <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", color: "rgba(255,255,255,0.2)" }}>
-            {project.status === "pending" ? "En attente de réponse" : project.status === "accepted" ? "En attente de paiement" : "Non actif"}
-          </span>
-        </div>
-      )}
-
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "10px" }}>
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", color: "rgba(100,140,255,0.5)", display: "flex", alignItems: "center", gap: "4px" }}>
           Voir <ChevronRight size={11} />
         </span>
@@ -683,7 +658,7 @@ function ProjectCard({ project, onOpen }: { project: Project; onOpen: () => void
   );
 }
 
-function TabProjets({ onRequestDevis, onMessage, onSuivi }: { onRequestDevis: () => void; onMessage: () => void; onSuivi: () => void }) {
+function TabProjets({ onRequestDevis, onMessage }: { onRequestDevis: () => void; onMessage: () => void }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Project | null>(null);
@@ -734,16 +709,6 @@ function TabProjets({ onRequestDevis, onMessage, onSuivi }: { onRequestDevis: ()
           }}>
             <MessageSquare size={13} /> Contacter l'admin
           </button>
-          {selected.kanbanVisible && (
-            <button onClick={onSuivi} style={{
-              display: "flex", alignItems: "center", gap: "7px", padding: "9px 14px", borderRadius: "9px",
-              border: "1px solid rgba(74,222,128,0.2)", background: "rgba(74,222,128,0.06)",
-              fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 500,
-              color: "rgba(74,222,128,0.75)", cursor: "pointer",
-            }}>
-              <Kanban size={13} /> Voir le suivi
-            </button>
-          )}
         </div>
 
         {!selected.paid && (
@@ -800,7 +765,7 @@ function TabProjets({ onRequestDevis, onMessage, onSuivi }: { onRequestDevis: ()
 // TAB: SUIVI
 // ─────────────────────────────────────────────────────────────────────────────
 
-function TabSuivi() {
+function TabKanban() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -809,12 +774,8 @@ function TabSuivi() {
     fetch("/api/projects").then(r => r.json()).then((data: Project[]) => {
       setProjects(data);
       setLoading(false);
-      const active = data.find(p => p.paid && p.status === "active");
-      if (active) setSelectedId(active.id);
-      else {
-        const completed = data.find(p => p.paid && p.status === "completed");
-        if (completed) setSelectedId(completed.id);
-      }
+      const first = data.find(p => p.kanbanVisible);
+      if (first) setSelectedId(first.id);
     });
   }, []);
 
@@ -823,18 +784,18 @@ function TabSuivi() {
 
   return (
     <div>
-      <SectionTitle>Suivi de projet</SectionTitle>
-      <SectionSub>Consultez l'avancement de votre projet en temps réel.</SectionSub>
+      <SectionTitle>Kanban</SectionTitle>
+      <SectionSub>Consultez l&apos;avancement de votre projet en temps réel.</SectionSub>
 
       {loading ? (
         <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px", textAlign: "center", padding: "40px 0" }}>Chargement...</div>
       ) : activeProjects.length === 0 ? (
         <div style={{ textAlign: "center", padding: "56px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: "14px" }}>
           <div style={{ width: 56, height: 56, borderRadius: "14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <BarChart2 size={22} color="rgba(255,255,255,0.12)" />
+            <Kanban size={22} color="rgba(255,255,255,0.12)" />
           </div>
-          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.3)", margin: 0 }}>Aucun projet actif</p>
-          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(255,255,255,0.15)", margin: 0 }}>Le suivi apparaîtra une fois votre projet lancé et réglé.</p>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.3)", margin: 0 }}>Aucun kanban disponible</p>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(255,255,255,0.15)", margin: 0 }}>Le kanban apparaîtra dès que Flores l&apos;aura activé sur votre projet.</p>
         </div>
       ) : (
         <>
@@ -1125,12 +1086,12 @@ export function EspaceClient({ user }: { user: Session["user"] }) {
   const [tab, setTab] = useState<Tab>("devis");
 
   const navItems: { id: Tab; icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; label: string }[] = [
-    { id: "devis", icon: PlusCircle, label: "Demande de devis" },
-    { id: "projets", icon: Kanban, label: "Mes projets" },
-    { id: "suivi", icon: BarChart2, label: "Suivi de projet" },
-    { id: "messages", icon: MessageSquare, label: "Messagerie" },
-    { id: "avis", icon: Star, label: "Avis" },
-    { id: "parametres", icon: Settings, label: "Paramètres" },
+    { id: "devis",      icon: PlusCircle,   label: "Demande de devis" },
+    { id: "projets",    icon: FolderOpen,   label: "Mes projets"      },
+    { id: "kanban",     icon: Kanban,       label: "Kanban"           },
+    { id: "messages",   icon: MessageSquare,label: "Messagerie"       },
+    { id: "avis",       icon: Star,         label: "Avis"             },
+    { id: "parametres", icon: Settings,     label: "Paramètres"       },
   ];
 
   return (
@@ -1201,8 +1162,8 @@ export function EspaceClient({ user }: { user: Session["user"] }) {
               style={{ flex: 1, display: "flex", flexDirection: "column" }}
             >
               {tab === "devis" && <TabDevis onSuccess={() => setTab("projets")} />}
-              {tab === "projets" && <TabProjets onRequestDevis={() => setTab("devis")} onMessage={() => setTab("messages")} onSuivi={() => setTab("suivi")} />}
-              {tab === "suivi" && <TabSuivi />}
+              {tab === "projets" && <TabProjets onRequestDevis={() => setTab("devis")} onMessage={() => setTab("messages")} />}
+              {tab === "kanban" && <TabKanban />}
               {tab === "messages" && <TabMessages user={user} />}
               {tab === "avis" && <TabAvis />}
               {tab === "parametres" && <TabParametres user={user} />}
