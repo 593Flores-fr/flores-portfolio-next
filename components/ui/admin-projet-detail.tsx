@@ -32,12 +32,11 @@ const COL_BG: Record<string, string> = {
 };
 
 const CATEGORIES = [
-  { value: "dev", label: "Dév. du site", color: "rgba(96,165,250,1)", bg: "rgba(96,165,250,0.12)" },
-  { value: "conception", label: "Conception & idée", color: "rgba(232,121,249,1)", bg: "rgba(232,121,249,0.12)" },
-  { value: "redaction", label: "Rédaction", color: "rgba(251,146,60,1)", bg: "rgba(251,146,60,0.12)" },
-  { value: "discord", label: "Discord", color: "rgba(139,92,246,1)", bg: "rgba(139,92,246,0.12)" },
-  { value: "graphisme", label: "Graphisme & visuel", color: "rgba(52,211,153,1)", bg: "rgba(52,211,153,0.12)" },
-  { value: "autre", label: "Autre", color: "rgba(156,163,175,1)", bg: "rgba(156,163,175,0.1)" },
+  { value: "dev",         label: "Développement",  color: "rgba(96,165,250,1)",  bg: "rgba(96,165,250,0.12)"  },
+  { value: "feature",     label: "Fonctionnalité",  color: "rgba(167,139,250,1)", bg: "rgba(167,139,250,0.12)" },
+  { value: "idea",        label: "Idée",            color: "rgba(251,146,60,1)",  bg: "rgba(251,146,60,0.12)"  },
+  { value: "visual",      label: "Visuel",          color: "rgba(52,211,153,1)",  bg: "rgba(52,211,153,0.12)"  },
+  { value: "integration", label: "Intégration",     color: "rgba(232,121,249,1)", bg: "rgba(232,121,249,0.12)" },
 ];
 
 const PRIORITIES = [
@@ -496,8 +495,8 @@ export function AdminProjetDetail({ projectId, compact = false }: { projectId: s
                             onClick={() => setModal({ type: "edit", task, columnId: col.id })}
                             style={{
                               padding: "10px 12px", borderRadius: "10px", cursor: "pointer",
-                              border: `1px solid ${task.done ? "rgba(74,222,128,0.15)" : "rgba(255,255,255,0.07)"}`,
-                              background: task.done ? "rgba(74,222,128,0.04)" : "rgba(6,10,14,0.6)",
+                              border: `1px solid ${task.done ? "rgba(74,222,128,0.2)" : "rgba(255,255,255,0.1)"}`,
+                              background: task.done ? "rgba(74,222,128,0.06)" : "rgba(255,255,255,0.05)",
                               transition: "border-color 0.15s, background 0.15s",
                             }}
                           >

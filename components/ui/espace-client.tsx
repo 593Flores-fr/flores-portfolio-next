@@ -50,16 +50,15 @@ const STATUS_BG: Record<string, string> = {
 };
 
 const CAT_COLORS: Record<string, { color: string; bg: string }> = {
-  dev:        { color: "rgba(96,165,250,1)",   bg: "rgba(96,165,250,0.12)"  },
-  conception: { color: "rgba(232,121,249,1)",  bg: "rgba(232,121,249,0.12)" },
-  redaction:  { color: "rgba(251,146,60,1)",   bg: "rgba(251,146,60,0.12)"  },
-  discord:    { color: "rgba(139,92,246,1)",   bg: "rgba(139,92,246,0.12)"  },
-  graphisme:  { color: "rgba(52,211,153,1)",   bg: "rgba(52,211,153,0.12)"  },
-  autre:      { color: "rgba(156,163,175,1)",  bg: "rgba(156,163,175,0.1)"  },
+  dev:         { color: "rgba(96,165,250,1)",  bg: "rgba(96,165,250,0.12)"  },
+  feature:     { color: "rgba(167,139,250,1)", bg: "rgba(167,139,250,0.12)" },
+  idea:        { color: "rgba(251,146,60,1)",  bg: "rgba(251,146,60,0.12)"  },
+  visual:      { color: "rgba(52,211,153,1)",  bg: "rgba(52,211,153,0.12)"  },
+  integration: { color: "rgba(232,121,249,1)", bg: "rgba(232,121,249,0.12)" },
 };
 const CAT_LABELS: Record<string, string> = {
-  dev: "Dév. du site", conception: "Conception & idée", redaction: "Rédaction",
-  discord: "Discord", graphisme: "Graphisme & visuel", autre: "Autre",
+  dev: "Développement", feature: "Fonctionnalité", idea: "Idée",
+  visual: "Visuel", integration: "Intégration",
 };
 const PRIO_COLORS: Record<string, string> = {
   faible: "rgba(156,163,175,0.7)", moyen: "rgba(250,204,21,0.8)", urgent: "rgba(248,113,113,0.9)",
@@ -724,7 +723,7 @@ function TabKanban({ goMessages, setMsgPrefill }: { goMessages: () => void; setM
                                 key={task.id}
                                 whileHover={{ scale: 1.01 }}
                                 onClick={() => handleTaskClick(task)}
-                                style={{ padding: "10px 12px", borderRadius: "10px", background: task.done ? "rgba(74,222,128,0.04)" : "rgba(255,255,255,0.03)", border: `1px solid ${task.done ? "rgba(74,222,128,0.15)" : "rgba(255,255,255,0.06)"}`, cursor: "pointer", transition: "border-color 0.15s" }}
+                                style={{ padding: "10px 12px", borderRadius: "10px", background: task.done ? "rgba(74,222,128,0.06)" : "rgba(255,255,255,0.05)", border: `1px solid ${task.done ? "rgba(74,222,128,0.2)" : "rgba(255,255,255,0.1)"}`, cursor: "pointer", transition: "border-color 0.15s" }}
                               >
                                 {cat && (
                                   <div style={{ marginBottom: "5px" }}>
