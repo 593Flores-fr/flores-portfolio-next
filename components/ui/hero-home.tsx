@@ -4,6 +4,8 @@ import { motion, type Variants } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { HeroCtaPanel } from "./hero-cta-panel";
+import { SITE_DEFAULTS } from "@/lib/site-content";
+import type { SiteContentMap } from "@/lib/site-content";
 
 declare global {
   interface Window {
@@ -55,7 +57,7 @@ function UnicornPanel({ projectId }: { projectId: string }) {
   return <div ref={containerRef} style={{ width: "100%", height: "100%" }} />;
 }
 
-export function HeroHome() {
+export function HeroHome({ content = SITE_DEFAULTS.hero }: { content?: SiteContentMap["hero"] }) {
   const showAuth = true;
 
   return (
@@ -102,12 +104,12 @@ export function HeroHome() {
         <motion.div custom={0} variants={fadeUp} initial="hidden" animate="show" style={{ marginBottom: "2rem" }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "6px 14px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.06)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.2em", color: "rgba(255,255,255,0.5)", fontFamily: "var(--font-poppins)", fontWeight: 500 }}>
             <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 8px rgba(74,222,128,0.9)", flexShrink: 0 }} />
-            Disponible · Devis gratuit
+            {content.badge}
           </span>
         </motion.div>
 
         <motion.p custom={1} variants={fadeUp} initial="hidden" animate="show" style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.28em", color: "rgba(255,255,255,0.25)", fontWeight: 300, marginBottom: "8px" }}>
-          Graphiste &amp; Dev Web · France
+          {content.subtitle}
         </motion.p>
 
         <motion.h1 custom={2} variants={fadeUp} initial="hidden" animate="show" style={{ fontFamily: "var(--font-six-caps), sans-serif", fontSize: "clamp(7rem, 13vw, 14rem)", fontWeight: 400, lineHeight: 0.92, letterSpacing: "0.05em", color: "white", marginBottom: "1.8rem", textTransform: "uppercase" }}>
@@ -115,18 +117,18 @@ export function HeroHome() {
         </motion.h1>
 
         <motion.p custom={3} variants={fadeUp} initial="hidden" animate="show" style={{ fontFamily: "var(--font-poppins)", fontSize: "14px", color: "rgba(255,255,255,0.38)", fontWeight: 300, lineHeight: 1.9, maxWidth: "340px", marginBottom: "2.5rem" }}>
-          Identité visuelle, direction artistique &amp; développement web — des créations qui vous ressemblent vraiment.
+          {content.description}
         </motion.p>
 
         <motion.div custom={4} variants={fadeUp} initial="hidden" animate="show" style={{ display: "flex", flexWrap: "wrap", gap: "12px", marginBottom: "3rem" }}>
           <Link href="/contact" style={{ display: "inline-flex", alignItems: "center", gap: "10px", padding: "12px 24px", borderRadius: "999px", background: "white", color: "black", fontSize: "12px", fontWeight: 600, fontFamily: "var(--font-poppins)", letterSpacing: "0.08em", textTransform: "uppercase", textDecoration: "none" }}>
-            Démarrer un projet
+            {content.cta1}
             <span style={{ width: "22px", height: "22px", borderRadius: "50%", background: "rgba(0,0,0,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M1.5 7.5L7.5 1.5M7.5 1.5H2.5M7.5 1.5V6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </span>
           </Link>
           <Link href="/portfolio" style={{ display: "inline-flex", alignItems: "center", padding: "12px 24px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.6)", fontSize: "12px", fontWeight: 500, fontFamily: "var(--font-poppins)", letterSpacing: "0.08em", textTransform: "uppercase", textDecoration: "none" }}>
-            Voir les projets
+            {content.cta2}
           </Link>
         </motion.div>
 

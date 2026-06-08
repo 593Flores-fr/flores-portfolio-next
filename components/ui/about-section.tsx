@@ -3,6 +3,8 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
+import { SITE_DEFAULTS } from "@/lib/site-content";
+import type { SiteContentMap } from "@/lib/site-content";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 32 },
@@ -12,25 +14,9 @@ const fadeUp = {
   }),
 };
 
-const points = [
-  {
-    num: "01",
-    title: "Qui suis-je",
-    text: "Autodidacte depuis 5 ans, j'ai tout appris seul — du logo au site web en passant par la cover musicale. Graphiste freelance & membre de V.T.O Studio, je construis des identités visuelles qui ont du caractère.",
-  },
-  {
-    num: "02",
-    title: "Ce que je propose",
-    text: "Identité visuelle, direction artistique, développement web, cover art, suivi créateurs & artistes. Un seul interlocuteur, six expertises — du concept à la livraison.",
-  },
-  {
-    num: "03",
-    title: "Pourquoi bosser avec moi",
-    text: "Parce que je m'implique vraiment. Pas de template, pas de copier-coller. Chaque projet est pensé pour vous ressembler et marquer les esprits — avec une réponse sous 24h et un devis gratuit.",
-  },
-];
-
-export function AboutSection() {
+export function AboutSection({ content = SITE_DEFAULTS.about }: { content?: SiteContentMap["about"] }) {
+  const points = content.points;
+  const stats = content.stats;
   return (
     <section id="about" style={{ background: "#060a0e", padding: "140px 0 140px", overflow: "hidden", position: "relative" }}>
       {/* Fondu haut — raccord avec le hero */}
@@ -89,7 +75,7 @@ export function AboutSection() {
           }}>
             <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 8px rgba(74,222,128,0.9)", flexShrink: 0 }} />
             <span style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", color: "rgba(255,255,255,0.7)", fontWeight: 500, letterSpacing: "0.05em" }}>
-              Disponible · Devis gratuit
+              {content.badge}
             </span>
           </div>
 
@@ -108,7 +94,7 @@ export function AboutSection() {
             flexDirection: "column",
             gap: "12px",
           }}>
-            {[["30+", "Projets livrés"], ["5+", "Ans d'exp."]].map(([val, label]) => (
+            {stats.map(({ val, label }) => (
               <div key={label} style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                 <span style={{ fontFamily: "var(--font-six-caps)", fontSize: "2rem", color: "white", lineHeight: 1, letterSpacing: "0.05em" }}>{val}</span>
                 <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.14em", fontWeight: 300 }}>{label}</span>
@@ -135,7 +121,7 @@ export function AboutSection() {
             whileInView="show" viewport={{ once: true, margin: "-100px" }}
             style={{ fontFamily: "var(--font-poppins)", fontSize: "clamp(2.8rem,4.5vw,5rem)", fontWeight: 800, lineHeight: 0.95, letterSpacing: "-0.02em", color: "white", marginBottom: "48px" }}
           >
-            Créer, c&rsquo;est<br />ce que je fais.
+            {content.heading}
           </motion.h2>
 
           {/* Points */}

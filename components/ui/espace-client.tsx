@@ -21,7 +21,7 @@ type KanbanTask = { id: string; title: string; description?: string | null; done
 type KanbanColumn = { id: string; title: string; order: number; tasks: KanbanTask[] };
 type Project = {
   id: string; title: string; description?: string | null; type: string;
-  budget?: string | null; status: string; paid: boolean;
+  budget?: string | null; status: string; paid: boolean; kanbanVisible: boolean;
   adminNotes?: string | null; createdAt: string;
   columns: KanbanColumn[];
   review?: { status: string } | null;
@@ -653,7 +653,7 @@ function ProjectCard({ project, onOpen }: { project: Project; onOpen: () => void
         </span>
       </div>
 
-      {project.paid && total > 0 && (
+      {project.kanbanVisible && total > 0 && (
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
             <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", color: "rgba(255,255,255,0.2)" }}>Avancement</span>
@@ -734,7 +734,7 @@ function TabProjets({ onRequestDevis, onMessage, onSuivi }: { onRequestDevis: ()
           }}>
             <MessageSquare size={13} /> Contacter l'admin
           </button>
-          {selected.paid && (selected.status === "active" || selected.status === "completed") && (
+          {selected.kanbanVisible && (
             <button onClick={onSuivi} style={{
               display: "flex", alignItems: "center", gap: "7px", padding: "9px 14px", borderRadius: "9px",
               border: "1px solid rgba(74,222,128,0.2)", background: "rgba(74,222,128,0.06)",
@@ -818,7 +818,7 @@ function TabSuivi() {
     });
   }, []);
 
-  const activeProjects = projects.filter(p => p.paid && (p.status === "active" || p.status === "completed"));
+  const activeProjects = projects.filter(p => p.kanbanVisible);
   const selected = projects.find(p => p.id === selectedId);
 
   return (

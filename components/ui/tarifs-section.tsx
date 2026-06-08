@@ -2,62 +2,10 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { SITE_DEFAULTS } from "@/lib/site-content";
+import type { SiteContentMap, ServiceItem } from "@/lib/site-content";
 
-type Service = {
-  name: string;
-  description: string;
-  price: string;
-  badge?: string;
-  soon?: boolean;
-};
-
-const devServices: Service[] = [
-  {
-    name: "Site vitrine",
-    description: "Présentation professionnelle de votre activité — responsive, SEO soigné, zéro template.",
-    price: "À partir de 500€",
-  },
-  {
-    name: "Portfolio artiste",
-    description: "Vitrine dédiée à votre univers créatif, animations soignées et identité forte.",
-    price: "À partir de 350€",
-  },
-  {
-    name: "Portfolio commercial",
-    description: "Site catalogue, galerie produits ou landing page optimisée conversion.",
-    price: "À venir",
-    soon: true,
-  },
-  {
-    name: "Application web",
-    description: "Outil sur mesure, tableau de bord, SaaS — architecture pensée pour durer.",
-    price: "Sur devis",
-  },
-];
-
-const visualServices: Service[] = [
-  {
-    name: "Identité visuelle",
-    description: "Logo, charte graphique, palette, typographies — tout ce qui forge une marque reconnaissable.",
-    price: "À partir de 250€",
-  },
-  {
-    name: "Affiches & flyers",
-    description: "Supports print percutants pour vos événements, concerts ou campagnes.",
-    price: "À partir de 50€",
-  },
-  {
-    name: "Pour les artistes",
-    description: "Cover single/EP/album, tracklist visuelle, CV de presse — calibrés pour toutes les plateformes.",
-    price: "À partir de 80€",
-  },
-  {
-    name: "Accompagnement streamers",
-    description: "Overlays, alerts, panels, thumbnails, logo — un pack complet pour ne plus vous soucier de l'image.",
-    price: "À partir de 99€/mois",
-    badge: "Nouveau",
-  },
-];
+type Service = ServiceItem;
 
 function ServiceRow({ service, index }: { service: Service; index: number }) {
   return (
@@ -250,7 +198,10 @@ function CategoryPanel({
   );
 }
 
-export function TarifsSection() {
+export function TarifsSection({ content = SITE_DEFAULTS.tarifs }: { content?: SiteContentMap["tarifs"] }) {
+  const devServices = content.devServices;
+  const visualServices = content.visualServices;
+
   return (
     <section id="tarifs" style={{ background: "#060a0e", padding: "120px 0 140px", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
       <div style={{ maxWidth: "1300px", margin: "0 auto", padding: "0 6vw" }}>
@@ -309,13 +260,13 @@ export function TarifsSection() {
         }}>
           <CategoryPanel
             number="01"
-            title="Développement Web"
+            title={content.devTitle}
             services={devServices}
             delay={0}
           />
           <CategoryPanel
             number="02"
-            title="Création Visuelle"
+            title={content.visualTitle}
             services={visualServices}
             delay={0.1}
           />
@@ -337,7 +288,7 @@ export function TarifsSection() {
             letterSpacing: "0.04em",
           }}
         >
-          Tarifs HT · TVA non applicable selon art. 293B du CGI · Acompte 30% à la commande
+          {content.footerNote}
         </motion.p>
 
       </div>

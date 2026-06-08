@@ -68,6 +68,7 @@ model Project {
   paid          Boolean        @default(false)
   adminNotes    String?
   kanbanNotes   String?
+  kanbanVisible Boolean        @default(false)
   phone         String?
   callSlots     String?
   briefFile     String?
@@ -153,4 +154,11 @@ model Review {
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   projectId   String    @unique
   project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model SiteContent {
+  id        String   @id @default(cuid())
+  section   String   @unique
+  data      Json     @default("{}")
+  updatedAt DateTime @updatedAt
 }

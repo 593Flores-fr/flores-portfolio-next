@@ -11,6 +11,8 @@ import {
   Users,
   Sparkles,
 } from "lucide-react";
+import { SITE_DEFAULTS } from "@/lib/site-content";
+import type { SiteContentMap } from "@/lib/site-content";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -20,40 +22,7 @@ type Feature = {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 };
 
-// ── Data ──────────────────────────────────────────────────────────────────────
-
-const features: Feature[] = [
-  {
-    title: "Identité Visuelle",
-    description: "Logo, charte graphique, papeterie et assets de marque — tout ce qui forge une image reconnaissable et durable.",
-    icon: Palette,
-  },
-  {
-    title: "Direction Artistique",
-    description: "Concept, univers visuel, cohérence globale — je définis et pilote l'image créative de bout en bout.",
-    icon: Sparkles,
-  },
-  {
-    title: "Développement Web",
-    description: "Sites vitrines sur mesure, responsive, SEO soigné. Zéro template — chaque ligne de code est pensée pour vous.",
-    icon: Globe,
-  },
-  {
-    title: "Cover Art",
-    description: "Pochettes single, EP, album — des visuels musicaux percutants calibrés pour toutes les plateformes de streaming.",
-    icon: Music,
-  },
-  {
-    title: "Print & Supports",
-    description: "Affiches, flyers, cartes de visite, packaging — des supports imprimés qui marquent les esprits.",
-    icon: Printer,
-  },
-  {
-    title: "Suivi Créateurs",
-    description: "Thumbnails, overlays, packs stream, assets réseaux — un accompagnement long terme pour les créateurs de contenu.",
-    icon: Users,
-  },
-];
+const ICONS = [Palette, Sparkles, Globe, Music, Printer, Users];
 
 // ── Grid pattern ──────────────────────────────────────────────────────────────
 
@@ -178,7 +147,12 @@ function FeatureCard({ feature, className, style }: { feature: Feature; classNam
 
 // ── Section ───────────────────────────────────────────────────────────────────
 
-export function FeaturesSection() {
+export function FeaturesSection({ content = SITE_DEFAULTS.features }: { content?: SiteContentMap["features"] }) {
+  const features: Feature[] = content.items.map((item, i) => ({
+    ...item,
+    icon: ICONS[i] ?? Palette,
+  }));
+
   return (
     <section style={{ background: "#060a0e", padding: "120px 0 140px" }}>
       <div style={{ maxWidth: "1300px", margin: "0 auto", padding: "0 6vw" }}>
@@ -196,7 +170,7 @@ export function FeaturesSection() {
             textTransform: "uppercase", letterSpacing: "0.28em",
             color: "rgba(255,255,255,0.25)", fontWeight: 300, marginBottom: "20px",
           }}>
-            Ce que je propose
+            {content.eyebrow}
           </p>
           <h2 style={{
             fontFamily: "var(--font-poppins)",
@@ -205,14 +179,14 @@ export function FeaturesSection() {
             letterSpacing: "-0.02em", color: "white",
             marginBottom: "16px",
           }}>
-            Identité. Web. Création.
+            {content.title}
           </h2>
           <p style={{
             fontFamily: "var(--font-poppins)", fontSize: "14px",
             color: "rgba(255,255,255,0.3)", fontWeight: 300,
             maxWidth: "420px", margin: "0 auto", lineHeight: 1.75,
           }}>
-            Six expertises, un seul interlocuteur — du concept à la livraison.
+            {content.subtitle}
           </p>
         </motion.div>
 

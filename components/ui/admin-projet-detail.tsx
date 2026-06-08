@@ -4,13 +4,14 @@ import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft, Plus, Trash2, CheckCircle2, Circle, Star, StickyNote, Save,
+  ArrowLeft, Plus, Trash2, CheckCircle2, Circle, Star, StickyNote, Save, Eye, EyeOff,
 } from "lucide-react";
 
 type Task = { id: string; title: string; description: string | null; done: boolean; order: number };
 type Column = { id: string; title: string; order: number; tasks: Task[] };
 type Project = {
   id: string; title: string; status: string; paid: boolean; kanbanNotes: string | null;
+  kanbanVisible: boolean;
   user: { id: string; name: string | null; email: string };
   columns: Column[];
   review: { id: string; status: string } | null;
@@ -40,6 +41,7 @@ export function AdminProjetDetail({ projectId }: { projectId: string }) {
   const [notes, setNotes] = useState("");
   const [notesSaved, setNotesSaved] = useState(false);
   const [savingNotes, setSavingNotes] = useState(false);
+  const [togglingVisibility, setTogglingVisibility] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -49,11 +51,8 @@ export function AdminProjetDetail({ projectId }: { projectId: string }) {
         setProject(data);
         setNotes(data.kanbanNotes ?? "");
         setLoading(false);
-        // Auto-init columns if project is active/completed but has none
-        if (
-          data.columns?.length === 0 &&
-          data.status !== "pending" && data.status !== "rejected" && data.status !== "accepted"
-        ) {
+        // Auto-init columns as soon as admin opens the project
+        if (data.columns?.length === 0) {
           fetch(`/api/admin/projects/${projectId}`, {
             method: "PATCH", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ initColumns: true }),
@@ -104,6 +103,14 @@ export function AdminProjetDetail({ projectId }: { projectId: string }) {
     } : p);
   };
 
+  const toggleVisibility = async () => {
+    if (!project) return;
+    setTogglingVisibility(true);
+    const updated = await api(`/api/admin/projects/${projectId}`, "PATCH", { kanbanVisible: !project.kanbanVisible });
+    setProject(updated);
+    setTogglingVisibility(false);
+  };
+
   const requestReview = async () => {
     setRequestingReview(true);
     const review = await api("/api/admin/reviews/request", "POST", { projectId });
@@ -144,6 +151,24 @@ export function AdminProjetDetail({ projectId }: { projectId: string }) {
           </p>
         </div>
 
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <button
+            onClick={toggleVisibility}
+            disabled={togglingVisibility}
+            title={project.kanbanVisible ? "Masquer le kanban au client" : "Rendre le kanban visible au client"}
+            style={{
+              display: "flex", alignItems: "center", gap: "7px", padding: "8px 14px", borderRadius: "9px",
+              border: `1px solid ${project.kanbanVisible ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.1)"}`,
+              background: project.kanbanVisible ? "rgba(74,222,128,0.08)" : "rgba(255,255,255,0.04)",
+              fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 500,
+              color: project.kanbanVisible ? "rgba(74,222,128,0.8)" : "rgba(255,255,255,0.35)",
+              cursor: "pointer",
+            }}
+          >
+            {project.kanbanVisible ? <Eye size={13} /> : <EyeOff size={13} />}
+            {project.kanbanVisible ? "Visible client" : "Masqué client"}
+          </button>
+
         {(project.status === "active" || project.status === "completed") && (
           project.review?.status === "requested" ? (
             <span style={{ fontSize: "11px", color: "rgba(96,165,250,0.6)", padding: "8px 14px", borderRadius: "9px", border: "1px solid rgba(96,165,250,0.15)", background: "rgba(96,165,250,0.06)" }}>
@@ -164,6 +189,7 @@ export function AdminProjetDetail({ projectId }: { projectId: string }) {
             </button>
           )
         )}
+        </div>
       </div>
 
       {/* Progress */}
