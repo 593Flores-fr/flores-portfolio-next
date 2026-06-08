@@ -73,7 +73,7 @@ export function AdminProjets() {
               key={p.id}
               initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              onClick={() => router.push(`/admin/messages/${p.user.id}`)}
+              onClick={() => router.push(`/admin/projets/${p.id}`)}
               style={{
                 display: "flex", alignItems: "center", gap: "14px",
                 padding: "14px 16px", borderRadius: "12px", textAlign: "left", width: "100%",

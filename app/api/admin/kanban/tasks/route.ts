@@ -10,12 +10,18 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!isAdmin(session?.user?.email)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { columnId, title, description } = await req.json();
+  const { columnId, title, description, category, priority } = await req.json();
   if (!columnId || !title?.trim()) return NextResponse.json({ error: "Champs requis" }, { status: 400 });
 
   const last = await prisma.kanbanTask.findFirst({ where: { columnId }, orderBy: { order: "desc" } });
   const task = await prisma.kanbanTask.create({
-    data: { columnId, title: title.trim(), description: description?.trim() ?? null, order: (last?.order ?? -1) + 1 },
+    data: {
+      columnId, title: title.trim(),
+      description: description?.trim() ?? null,
+      category: category ?? null,
+      priority: priority ?? "moyen",
+      order: (last?.order ?? -1) + 1,
+    },
   });
   return NextResponse.json(task, { status: 201 });
 }

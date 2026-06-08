@@ -40,12 +40,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const { id } = await params;
   const body = await req.json();
-  const data: { status?: string; adminNotes?: string | null; paid?: boolean; kanbanNotes?: string | null; kanbanVisible?: boolean } = {};
+  const data: { status?: string; adminNotes?: string | null; paid?: boolean; kanbanNotes?: string | null; kanbanVisible?: boolean; projectSummary?: string | null } = {};
   if ("status" in body) data.status = String(body.status);
   if ("adminNotes" in body) data.adminNotes = body.adminNotes ? String(body.adminNotes) : null;
   if ("paid" in body) data.paid = Boolean(body.paid);
   if ("kanbanNotes" in body) data.kanbanNotes = body.kanbanNotes ? String(body.kanbanNotes) : null;
   if ("kanbanVisible" in body) data.kanbanVisible = Boolean(body.kanbanVisible);
+  if ("projectSummary" in body) data.projectSummary = body.projectSummary ? String(body.projectSummary) : null;
 
   if (Object.keys(data).length > 0) {
     await prisma.project.update({ where: { id }, data });

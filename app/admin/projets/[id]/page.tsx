@@ -1,6 +1,6 @@
-import { AdminProjetDetail } from "@/components/ui/admin-projet-detail";
+import { AdminProjetOptions } from "@/components/ui/admin-projet-options";
 
 export default async function AdminProjetDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return <AdminProjetDetail projectId={id} />;
+  return <AdminProjetOptions projectId={id} />;
 }
