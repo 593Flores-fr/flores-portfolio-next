@@ -254,6 +254,7 @@ export function AdminProjetDetail({ projectId, compact = false }: { projectId: s
   const [savingNotes, setSavingNotes] = useState(false);
   const [togglingVisibility, setTogglingVisibility] = useState(false);
   const [requestingReview, setRequestingReview] = useState(false);
+  const [initingCols, setInitingCols] = useState(false);
   const [modal, setModal] = useState<ModalMode | null>(null);
   const router = useRouter();
 
@@ -264,17 +265,22 @@ export function AdminProjetDetail({ projectId, compact = false }: { projectId: s
         setProject(data);
         setNotes(data.kanbanNotes ?? "");
         setLoading(false);
-        if (data.columns?.length === 0) {
-          fetch(`/api/admin/projects/${projectId}`, {
-            method: "PATCH", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ initColumns: true }),
-          }).then(r => r.json()).then(updated => {
-            setProject(updated);
-            setNotes(updated.kanbanNotes ?? "");
-          });
-        }
       });
   }, [projectId]);
+
+  const initColumns = async () => {
+    setInitingCols(true);
+    const res = await fetch(`/api/admin/projects/${projectId}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ initColumns: true }),
+    });
+    const updated = await res.json();
+    if (updated?.columns) {
+      setProject(updated);
+      setNotes(updated.kanbanNotes ?? "");
+    }
+    setInitingCols(false);
+  };
 
   const saveNotes = async () => {
     if (!project) return;
@@ -352,6 +358,26 @@ export function AdminProjetDetail({ projectId, compact = false }: { projectId: s
 
   if (loading || !project) {
     return <div style={{ padding: compact ? "16px" : "32px 40px", color: "rgba(255,255,255,0.2)", fontSize: "12px" }}>Chargement...</div>;
+  }
+
+  if (!Array.isArray(project.columns) || project.columns.length === 0) {
+    return (
+      <div style={{ padding: compact ? "20px 24px" : "32px 40px", fontFamily: "var(--font-poppins)" }}>
+        {!compact && (
+          <button onClick={() => router.push("/admin/projets")} style={{ display: "flex", alignItems: "center", gap: "6px", background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.3)", fontSize: "11px", marginBottom: "24px", padding: 0 }}>
+            <ArrowLeft size={13} /> Retour
+          </button>
+        )}
+        <h1 style={{ fontSize: "18px", fontWeight: 800, color: "white", margin: "0 0 24px", letterSpacing: "-0.01em" }}>{project.title}</h1>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "12px", padding: "28px 24px", borderRadius: "14px", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)", maxWidth: "360px" }}>
+          <p style={{ fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.5)", margin: 0 }}>Aucune colonne pour ce projet.</p>
+          <p style={{ fontSize: "11px", fontWeight: 300, color: "rgba(255,255,255,0.25)", margin: 0, lineHeight: 1.6 }}>Créez les colonnes par défaut pour commencer à gérer les tâches.</p>
+          <button onClick={initColumns} disabled={initingCols} style={{ display: "flex", alignItems: "center", gap: "7px", padding: "9px 18px", borderRadius: "9px", border: "1px solid rgba(250,204,21,0.3)", background: "rgba(250,204,21,0.85)", fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 700, color: "#0a0a0a", cursor: initingCols ? "wait" : "pointer", opacity: initingCols ? 0.7 : 1 }}>
+            <Plus size={13} /> {initingCols ? "Création…" : "Créer les colonnes par défaut"}
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const allTasks = project.columns.flatMap(c => c.tasks);
