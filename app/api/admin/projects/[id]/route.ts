@@ -57,9 +57,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const existingCols = await prisma.kanbanColumn.count({ where: { projectId: id } });
     if (existingCols === 0) {
       const defaultCols = ["À faire", "En cours", "Bloquée", "En review", "Fait"];
-      await prisma.kanbanColumn.createMany({
-        data: defaultCols.map((title, order) => ({ title, order, projectId: id })),
-      });
+      await Promise.all(
+        defaultCols.map((title, order) =>
+          prisma.kanbanColumn.create({ data: { title, order, projectId: id } })
+        )
+      );
     }
   }
 
