@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Trash2, CheckCircle2, Circle, Star, StickyNote, Save, Eye, EyeOff, X } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, CheckCircle2, Circle, Star, StickyNote, Save, Eye, EyeOff, X, ChevronUp } from "lucide-react";
 
 type Task = { id: string; title: string; description: string | null; category: string | null; priority: string; done: boolean; order: number };
 type Column = { id: string; title: string; order: number; tasks: Task[] };
@@ -474,11 +474,9 @@ export function AdminProjetDetail({ projectId, compact = false }: { projectId: s
         </div>
       )}
 
-      {/* Main: kanban + notes */}
-      <div style={{ display: "flex", gap: "20px", alignItems: "flex-start" }}>
-        {/* Kanban */}
-        <div style={{ flex: 1, minWidth: 0, overflowX: "auto" }}>
-          <div style={{ display: "flex", gap: "14px", paddingBottom: "16px", alignItems: "flex-start", minWidth: `${sortedCols.length * 220 + (sortedCols.length - 1) * 14}px` }}>
+      {/* Main: kanban full width */}
+      <div style={{ overflowX: "auto", paddingBottom: "80px" }}>
+        <div style={{ display: "flex", gap: "14px", paddingBottom: "16px", alignItems: "flex-start", minWidth: `${sortedCols.length * 230 + (sortedCols.length - 1) * 14}px` }}>
             {sortedCols.map(col => {
               const accent = COL_COLOR[col.title] ?? "rgba(255,255,255,0.35)";
               const bg = COL_BG[col.title] ?? "rgba(255,255,255,0.015)";
@@ -487,7 +485,7 @@ export function AdminProjetDetail({ projectId, compact = false }: { projectId: s
                 <motion.div
                   key={col.id}
                   initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                  style={{ width: "220px", flexShrink: 0, border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", background: bg, padding: "13px" }}
+                  style={{ width: "240px", flexShrink: 0, border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", background: bg, padding: "13px" }}
                 >
                   {/* Column header */}
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
@@ -593,44 +591,94 @@ export function AdminProjetDetail({ projectId, compact = false }: { projectId: s
           </div>
         </div>
 
-        {/* Side notes */}
-        <div style={{
-          width: "200px", flexShrink: 0,
-          border: "1px solid rgba(250,204,21,0.12)", borderRadius: "14px",
-          background: "rgba(250,204,21,0.03)", padding: "14px",
-          position: "sticky", top: compact ? "20px" : "32px",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "10px" }}>
-            <StickyNote size={13} color="rgba(250,204,21,0.55)" />
-            <span style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.14em", color: "rgba(250,204,21,0.5)" }}>Notes</span>
+      {/* Notes drawer — centré en bas, s'ouvre au hover */}
+      <NotesDrawer
+        notes={notes}
+        onChange={setNotes}
+        onSave={saveNotes}
+        saving={savingNotes}
+        saved={notesSaved}
+      />
+    </div>
+  );
+}
+
+function NotesDrawer({ notes, onChange, onSave, saving, saved }: {
+  notes: string; onChange: (v: string) => void; onSave: () => void; saving: boolean; saved: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div style={{ position: "sticky", bottom: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 20, paddingBottom: "16px" }}>
+      <motion.div
+        onHoverStart={() => setOpen(true)}
+        onHoverEnd={() => setOpen(false)}
+        style={{ pointerEvents: "all", width: "440px", maxWidth: "90vw" }}
+      >
+        <motion.div
+          animate={{ height: open ? "auto" : 40, opacity: 1 }}
+          initial={{ height: 40, opacity: 1 }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          style={{
+            borderRadius: "14px", overflow: "hidden",
+            border: `1px solid ${saved ? "rgba(74,222,128,0.25)" : "rgba(250,204,21,0.18)"}`,
+            background: "rgba(6,10,14,0.92)",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
+            boxShadow: "0 8px 40px rgba(0,0,0,0.5)",
+            transition: "border-color 0.2s",
+          }}
+        >
+          {/* Pill header — always visible */}
+          <div style={{ height: 40, display: "flex", alignItems: "center", justifyContent: "center", gap: "7px", padding: "0 16px", cursor: "default" }}>
+            <StickyNote size={12} color={saved ? "rgba(74,222,128,0.7)" : "rgba(250,204,21,0.6)"} />
+            <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", color: saved ? "rgba(74,222,128,0.7)" : "rgba(250,204,21,0.55)" }}>
+              {saved ? "Notes sauvegardées ✓" : notes.trim() ? "Notes (modifiées)" : "Notes"}
+            </span>
+            <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.22 }} style={{ marginLeft: 2, display: "flex" }}>
+              <ChevronUp size={12} color="rgba(255,255,255,0.25)" />
+            </motion.div>
           </div>
-          <textarea
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            placeholder={"Consignes, idées…\n\nVisibles uniquement par vous."}
-            rows={10}
-            style={{
-              width: "100%", padding: "9px 10px", borderRadius: "9px", resize: "vertical",
-              border: "1px solid rgba(250,204,21,0.1)", background: "rgba(250,204,21,0.04)",
-              color: "rgba(255,255,255,0.7)", fontFamily: "var(--font-poppins)", fontSize: "11px",
-              fontWeight: 300, outline: "none", boxSizing: "border-box", lineHeight: 1.7,
-              minHeight: "140px",
-            }}
-          />
-          <button onClick={saveNotes} disabled={savingNotes} style={{
-            marginTop: "8px", width: "100%", padding: "7px 10px", borderRadius: "8px",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
-            border: `1px solid ${notesSaved ? "rgba(74,222,128,0.25)" : "rgba(250,204,21,0.2)"}`,
-            background: notesSaved ? "rgba(74,222,128,0.07)" : "rgba(250,204,21,0.07)",
-            fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 500,
-            color: notesSaved ? "rgba(74,222,128,0.7)" : "rgba(250,204,21,0.6)",
-            cursor: "pointer", transition: "all 0.2s",
-          }}>
-            <Save size={11} />
-            {notesSaved ? "Sauvegardé ✓" : savingNotes ? "…" : "Sauvegarder"}
-          </button>
-        </div>
-      </div>
+
+          {/* Drawer content */}
+          <AnimatePresence>
+            {open && (
+              <motion.div
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                style={{ padding: "0 14px 14px" }}
+              >
+                <div style={{ height: "1px", background: "rgba(250,204,21,0.1)", marginBottom: "12px" }} />
+                <textarea
+                  value={notes}
+                  onChange={e => onChange(e.target.value)}
+                  placeholder={"Consignes, idées, notes de suivi…\n\nVisibles uniquement par vous."}
+                  rows={8}
+                  style={{
+                    width: "100%", padding: "10px 12px", borderRadius: "10px", resize: "none",
+                    border: "1px solid rgba(250,204,21,0.1)", background: "rgba(250,204,21,0.04)",
+                    color: "rgba(255,255,255,0.75)", fontFamily: "var(--font-poppins)", fontSize: "12px",
+                    fontWeight: 300, outline: "none", boxSizing: "border-box", lineHeight: 1.75,
+                  }}
+                  autoFocus={open}
+                />
+                <button onClick={onSave} disabled={saving} style={{
+                  marginTop: "8px", width: "100%", padding: "8px 12px", borderRadius: "9px",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+                  border: `1px solid ${saved ? "rgba(74,222,128,0.25)" : "rgba(250,204,21,0.2)"}`,
+                  background: saved ? "rgba(74,222,128,0.08)" : "rgba(250,204,21,0.08)",
+                  fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600,
+                  color: saved ? "rgba(74,222,128,0.8)" : "rgba(250,204,21,0.7)",
+                  cursor: "pointer", transition: "all 0.2s",
+                }}>
+                  <Save size={11} />
+                  {saved ? "Sauvegardé ✓" : saving ? "…" : "Sauvegarder"}
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

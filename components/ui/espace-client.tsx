@@ -660,9 +660,13 @@ function TabKanban({ goMessages, setMsgPrefill }: { goMessages: () => void; setM
   };
 
   return (
-    <div>
-      <SectionTitle>Kanban</SectionTitle>
-      <SectionSub>Consultez l&apos;avancement de votre projet en temps réel. Cliquez sur une tâche pour en discuter.</SectionSub>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "16px", flexShrink: 0 }}>
+        <div>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "15px", fontWeight: 700, color: "white", margin: 0, letterSpacing: "-0.01em" }}>Kanban</p>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 300, color: "rgba(255,255,255,0.25)", margin: 0 }}>Cliquez sur une tâche pour en discuter avec Flores.</p>
+        </div>
+      </div>
 
       {loading ? (
         <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px", textAlign: "center", padding: "40px 0" }}>Chargement...</div>
@@ -702,11 +706,11 @@ function TabKanban({ goMessages, setMsgPrefill }: { goMessages: () => void; setM
                     <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 700, color: "rgba(255,255,255,0.45)" }}>{pct}%</span>
                   </div>
                 )}
-                <div style={{ display: "flex", gap: "12px", overflowX: "auto", paddingBottom: "8px" }}>
+                <div style={{ display: "flex", gap: "12px", overflowX: "auto", paddingBottom: "16px", flex: 1 }}>
                   {sortedCols.map(col => {
                     const accent = COL_COLOR[col.title] ?? "rgba(255,255,255,0.35)";
                     return (
-                      <div key={col.id} style={{ flex: "0 0 200px", minWidth: "200px" }}>
+                      <div key={col.id} style={{ flex: "0 0 260px", minWidth: "260px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px" }}>
                           <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: accent }} />
                           <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.16em", color: "rgba(255,255,255,0.45)", margin: 0 }}>
@@ -762,6 +766,7 @@ function TabKanban({ goMessages, setMsgPrefill }: { goMessages: () => void; setM
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TAB: AVIS
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 function StarRating({ value, onChange }: { value: number; onChange: (n: number) => void }) {
@@ -965,16 +970,16 @@ export function EspaceClient({ user }: { user: Session["user"] }) {
       </header>
 
       {/* Body */}
-      <div style={{ flex: 1, display: "flex", maxWidth: "1100px", width: "100%", margin: "0 auto", padding: "0 6vw" }}>
+      <div style={{ flex: 1, display: "flex", width: "100%", ...(tab !== "kanban" ? { maxWidth: "1100px", margin: "0 auto", padding: "0 6vw" } : {}) }}>
         {/* Sidebar */}
-        <aside style={{ width: "200px", flexShrink: 0, paddingTop: "32px", paddingRight: "20px", borderRight: "1px solid rgba(255,255,255,0.05)" }}>
+        <aside style={{ width: "200px", flexShrink: 0, paddingTop: "32px", paddingRight: "16px", paddingLeft: tab === "kanban" ? "20px" : "0", borderRight: "1px solid rgba(255,255,255,0.05)" }}>
           <nav style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
             {navItems.map(item => <NavItem key={item.id} icon={item.icon} label={item.label} active={tab === item.id} onClick={() => setTab(item.id)} />)}
           </nav>
         </aside>
 
         {/* Main content */}
-        <main style={{ flex: 1, minWidth: 0, padding: "32px 0 32px 32px", display: "flex", flexDirection: "column" }}>
+        <main style={{ flex: 1, minWidth: 0, padding: tab === "kanban" ? "20px 16px 0 20px" : "32px 0 32px 32px", display: "flex", flexDirection: "column" }}>
           <AnimatePresence mode="wait">
             <motion.div
               key={tab}
