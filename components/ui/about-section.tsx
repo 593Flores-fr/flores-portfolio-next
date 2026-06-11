@@ -49,7 +49,7 @@ export function AboutSection({ content = SITE_DEFAULTS.about }: { content?: Site
             boxShadow: "0 40px 80px rgba(0,0,0,0.6)",
           }}>
             <Image
-              src="/images/about.jpg"
+              src={content.imageSrc || "/images/about.jpg"}
               alt="Flores — Allan"
               fill
               style={{ objectFit: "cover", objectPosition: "center top" }}

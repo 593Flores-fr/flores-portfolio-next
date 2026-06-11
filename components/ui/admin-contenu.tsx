@@ -149,6 +149,9 @@ function AboutEditor({ value, onChange }: {
       <Field label="Titre section">
         <input style={inputStyle} value={value.heading} onChange={e => setField("heading")(e.target.value)} />
       </Field>
+      <Field label="Photo (chemin ou URL)">
+        <input style={inputStyle} value={value.imageSrc ?? ""} onChange={e => setField("imageSrc")(e.target.value)} placeholder="/images/about.jpg" />
+      </Field>
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         <label style={labelStyle}>Points bio (3)</label>
         {value.points.map((pt, i) => (

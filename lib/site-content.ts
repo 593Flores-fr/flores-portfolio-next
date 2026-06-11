@@ -17,6 +17,7 @@ export type SiteContentMap = {
   about: {
     badge: string;
     heading: string;
+    imageSrc: string;
     points: { num: string; title: string; text: string }[];
     stats: { val: string; label: string }[];
   };
@@ -54,6 +55,7 @@ export const SITE_DEFAULTS: SiteContentMap = {
   about: {
     badge: "Disponible · Devis gratuit",
     heading: "Créer, c'est ce que je fais.",
+    imageSrc: "/images/about.jpg",
     points: [
       { num: "01", title: "Qui suis-je", text: "Autodidacte depuis 5 ans, j'ai tout appris seul — du logo au site web en passant par la cover musicale. Graphiste freelance & membre de V.T.O Studio, je construis des identités visuelles qui ont du caractère." },
       { num: "02", title: "Ce que je propose", text: "Identité visuelle, direction artistique, développement web, cover art, suivi créateurs & artistes. Un seul interlocuteur, six expertises — du concept à la livraison." },
