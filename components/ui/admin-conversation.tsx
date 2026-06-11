@@ -3,11 +3,19 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send, Bug } from "lucide-react";
 
 type Msg = { id: string; content: string; fromAdmin: boolean; createdAt: string };
 type User = { id: string; name: string | null; email: string; image: string | null };
 type Project = { id: string; title: string; status: string; type: string; budget?: string | null; description?: string | null; createdAt: string };
+type Report = { id: string; title: string; type: string; status: string; url?: string | null; createdAt: string };
+
+const REPORT_TYPE_LABEL: Record<string, string> = { bug: "Bug", suggestion: "Suggestion", autre: "Autre" };
+const REPORT_STATUS_COLOR: Record<string, string> = {
+  open: "rgba(250,204,21,0.85)", seen: "rgba(96,165,250,0.85)",
+  resolved: "rgba(74,222,128,0.85)", closed: "rgba(156,163,175,0.7)",
+};
+const REPORT_STATUS_LABEL: Record<string, string> = { open: "Ouvert", seen: "Vu", resolved: "Résolu", closed: "Fermé" };
 
 const STATUS_LABEL: Record<string, string> = {
   pending: "En attente", accepted: "Accepté", active: "En cours",
@@ -47,8 +55,10 @@ export function AdminConversation({ userId }: { userId: string }) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [_retryKey, setRetryKey] = useState(0);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -56,7 +66,7 @@ export function AdminConversation({ userId }: { userId: string }) {
 
   useEffect(() => {
     setLoading(true);
-    setError(false);
+    setError(null);
     fetch(`/api/admin/messages/${userId}`)
       .then(r => {
         if (!r.ok) throw new Error("Erreur " + r.status);
@@ -66,9 +76,10 @@ export function AdminConversation({ userId }: { userId: string }) {
         setUser(data.user ?? null);
         setMessages(Array.isArray(data.messages) ? data.messages : []);
         setProjects(Array.isArray(data.projects) ? data.projects : []);
+        setReports(Array.isArray(data.reports) ? data.reports : []);
         setLoading(false);
       })
-      .catch(() => { setError(true); setLoading(false); });
+      .catch((err) => { setError(String(err)); setLoading(false); });
   }, [userId]);
 
   useEffect(() => {
@@ -136,8 +147,24 @@ export function AdminConversation({ userId }: { userId: string }) {
       {/* Messages — scrollable area */}
       <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px 16px", display: "flex", flexDirection: "column", gap: "8px" }}>
         {/* Project embed cards */}
-        {!loading && !error && projects.length > 0 && (
+        {!loading && !error && (projects.length > 0 || reports.length > 0) && (
           <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "8px" }}>
+            {reports.map(r => (
+              <div key={r.id} style={{ padding: "12px 14px", borderRadius: "12px", background: "rgba(250,204,21,0.03)", border: "1px solid rgba(250,204,21,0.12)", display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                <Bug size={13} color="rgba(250,204,21,0.5)" style={{ marginTop: "2px", flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "3px", flexWrap: "wrap" }}>
+                    <span style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>{r.title}</span>
+                    <span style={{ fontSize: "9px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: REPORT_STATUS_COLOR[r.status] ?? "rgba(255,255,255,0.4)", flexShrink: 0 }}>{REPORT_STATUS_LABEL[r.status] ?? r.status}</span>
+                  </div>
+                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.3)", margin: 0 }}>
+                    {REPORT_TYPE_LABEL[r.type] ?? r.type}
+                    {r.url ? ` · ${r.url}` : ""}
+                    {" · " + new Date(r.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}
+                  </p>
+                </div>
+              </div>
+            ))}
             {projects.map(p => (
               <div key={p.id} style={{
                 padding: "12px 14px", borderRadius: "12px",
@@ -180,7 +207,11 @@ export function AdminConversation({ userId }: { userId: string }) {
         {loading ? (
           <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.2)", textAlign: "center", padding: "40px 0" }}>Chargement...</p>
         ) : error ? (
-          <p style={{ fontSize: "12px", color: "rgba(248,113,113,0.6)", textAlign: "center", padding: "40px 0" }}>Erreur lors du chargement.</p>
+          <div style={{ textAlign: "center", padding: "40px 0" }}>
+            <p style={{ fontSize: "12px", color: "rgba(248,113,113,0.6)", marginBottom: "8px" }}>Erreur lors du chargement.</p>
+            <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.2)", fontFamily: "monospace" }}>{error}</p>
+            <button onClick={() => window.location.reload()} style={{ marginTop: "12px", padding: "6px 14px", borderRadius: "8px", border: "1px solid rgba(248,113,113,0.2)", background: "rgba(248,113,113,0.06)", color: "rgba(248,113,113,0.7)", fontFamily: "var(--font-poppins)", fontSize: "11px", cursor: "pointer" }}>Réessayer</button>
+          </div>
         ) : messages.length === 0 ? (
           <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.2)", textAlign: "center", padding: "40px 0" }}>Aucun message.</p>
         ) : (

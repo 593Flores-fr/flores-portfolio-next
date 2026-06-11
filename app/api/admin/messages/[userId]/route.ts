@@ -16,30 +16,39 @@ export async function GET(
   }
   const { userId } = await params;
 
-  // Mark client messages as read
-  await prisma.message.updateMany({
-    where: { userId, fromAdmin: false, read: false },
-    data: { read: true },
-  });
+  try {
+    await prisma.message.updateMany({
+      where: { userId, fromAdmin: false, read: false },
+      data: { read: true },
+    });
 
-  const messages = await prisma.message.findMany({
-    where: { userId },
-    orderBy: { createdAt: "asc" },
-  });
+    const [messages, user, projects, reports] = await Promise.all([
+      prisma.message.findMany({
+        where: { userId },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, name: true, email: true, image: true },
+      }),
+      prisma.project.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        select: { id: true, title: true, status: true, type: true, budget: true, description: true, createdAt: true },
+      }),
+      prisma.report.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, title: true, type: true, status: true, url: true, createdAt: true },
+      }),
+    ]);
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, name: true, email: true, image: true },
-  });
-
-  const projects = await prisma.project.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-    take: 5,
-    select: { id: true, title: true, status: true, type: true, budget: true, description: true, createdAt: true },
-  });
-
-  return NextResponse.json({ user, messages, projects });
+    return NextResponse.json({ user, messages, projects, reports });
+  } catch (err) {
+    console.error("[admin/messages/userId] DB error:", err);
+    return NextResponse.json({ error: "Erreur serveur", details: String(err) }, { status: 500 });
+  }
 }
 
 export async function POST(

@@ -8,13 +8,18 @@ import {
   Send, LogOut, MessageSquare, Kanban, Star,
   Settings, PlusCircle, ChevronRight, CheckCircle2,
   Circle, Clock, AlertCircle, Eye, EyeOff, Paperclip, FolderOpen,
-  LayoutDashboard, ChevronDown, ChevronUp, Pin, Shield,
+  LayoutDashboard, ChevronDown, ChevronUp, Pin, Shield, Bug,
 } from "lucide-react";
 import type { Session } from "next-auth";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type Tab = "accueil" | "messages" | "devis" | "projets" | "kanban" | "avis" | "parametres";
+type Tab = "accueil" | "messages" | "devis" | "projets" | "kanban" | "avis" | "signalements" | "parametres";
+
+type Report = {
+  id: string; title: string; type: string; description: string;
+  url?: string | null; status: string; createdAt: string;
+};
 
 type Msg = { id: string; content: string; fromAdmin: boolean; createdAt: string };
 
@@ -105,13 +110,14 @@ function SectionSub({ children }: { children: React.ReactNode }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const NAV_DESCRIPTIONS: Record<Tab, { icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; desc: string }> = {
-  accueil:    { icon: LayoutDashboard, desc: "Vue d'ensemble de votre espace" },
-  devis:      { icon: PlusCircle,   desc: "Soumettre une nouvelle demande de devis" },
-  projets:    { icon: FolderOpen,   desc: "Consulter vos projets et leur statut" },
-  kanban:     { icon: Kanban,       desc: "Suivre l'avancement en temps réel" },
-  messages:   { icon: MessageSquare,desc: "Échanger directement avec Flores" },
-  avis:       { icon: Star,         desc: "Laisser un avis sur votre projet" },
-  parametres: { icon: Settings,     desc: "Gérer votre profil et mot de passe" },
+  accueil:      { icon: LayoutDashboard, desc: "Vue d'ensemble de votre espace" },
+  devis:        { icon: PlusCircle,      desc: "Soumettre une nouvelle demande de devis" },
+  projets:      { icon: FolderOpen,      desc: "Consulter vos projets et leur statut" },
+  kanban:       { icon: Kanban,          desc: "Suivre l'avancement en temps réel" },
+  messages:     { icon: MessageSquare,   desc: "Échanger directement avec Flores" },
+  signalements: { icon: Bug,             desc: "Signaler un bug ou faire une suggestion" },
+  avis:         { icon: Star,            desc: "Laisser un avis sur votre projet" },
+  parametres:   { icon: Settings,        desc: "Gérer votre profil et mot de passe" },
 };
 
 function TabAccueil({ user, projects, goTab }: { user: Session["user"]; projects: Project[]; goTab: (t: Tab) => void }) {
@@ -279,6 +285,7 @@ function ProjectSummaryPanel({ project }: { project: Project }) {
 function TabMessages({ user }: { user: Session["user"] }) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -288,9 +295,11 @@ function TabMessages({ user }: { user: Session["user"] }) {
     Promise.all([
       fetch("/api/messages").then(r => r.json()),
       fetch("/api/projects").then(r => r.json()),
-    ]).then(([msgs, projs]) => {
-      setMessages(msgs);
-      setProjects((projs as Project[]).filter(p => p.status !== "rejected"));
+      fetch("/api/reports").then(r => r.json()),
+    ]).then(([msgs, projs, reps]) => {
+      setMessages(Array.isArray(msgs) ? msgs : []);
+      setProjects((Array.isArray(projs) ? projs as Project[] : []).filter(p => p.status !== "rejected"));
+      setReports(Array.isArray(reps) ? reps : []);
       setLoading(false);
     });
   }, []);
@@ -308,11 +317,27 @@ function TabMessages({ user }: { user: Session["user"] }) {
 
   const projectsWithSummary = projects.filter(p => p.projectSummary);
   const projectsWithoutSummary = projects.filter(p => !p.projectSummary);
+  const hasContext = projects.length > 0 || reports.length > 0;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
       <SectionTitle>Messagerie</SectionTitle>
       <SectionSub>Échangez directement avec Flores.</SectionSub>
+
+      {/* Gate — no context */}
+      {!loading && !hasContext && messages.length === 0 && (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "14px", textAlign: "center", padding: "32px 0" }}>
+          <div style={{ width: 52, height: 52, borderRadius: "14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <MessageSquare size={20} color="rgba(255,255,255,0.12)" />
+          </div>
+          <div>
+            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.5)", margin: "0 0 6px" }}>Aucun contexte de discussion</p>
+            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 300, color: "rgba(255,255,255,0.2)", margin: 0, lineHeight: 1.6 }}>
+              Pour ouvrir une discussion, soumettez d&apos;abord<br />un devis ou un signalement.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "6px", paddingBottom: "16px" }}>
 
@@ -372,21 +397,23 @@ function TabMessages({ user }: { user: Session["user"] }) {
         <div ref={bottomRef} />
       </div>
 
-      <div style={{ paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-        <div style={{ display: "flex", gap: "10px", alignItems: "flex-end" }}>
-          <textarea
-            value={input} onChange={e => setInput(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-            placeholder="Votre message… (Entrée pour envoyer)"
-            rows={1}
-            style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "10px 12px", color: "white", fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 300, lineHeight: 1.5, outline: "none", resize: "none", maxHeight: "100px", overflowY: "auto" }}
-            onInput={e => { const t = e.currentTarget; t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 100) + "px"; }}
-          />
-          <button onClick={send} disabled={!input.trim() || sending} style={{ width: 40, height: 40, borderRadius: "10px", flexShrink: 0, border: "1px solid rgba(255,255,255,0.08)", background: input.trim() ? "rgba(60,100,255,0.7)" : "rgba(255,255,255,0.04)", cursor: input.trim() ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Send size={15} color={input.trim() ? "white" : "rgba(255,255,255,0.2)"} />
-          </button>
+      {hasContext && (
+        <div style={{ paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+          <div style={{ display: "flex", gap: "10px", alignItems: "flex-end" }}>
+            <textarea
+              value={input} onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+              placeholder="Votre message… (Entrée pour envoyer)"
+              rows={1}
+              style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "10px 12px", color: "white", fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 300, lineHeight: 1.5, outline: "none", resize: "none", maxHeight: "100px", overflowY: "auto" }}
+              onInput={e => { const t = e.currentTarget; t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 100) + "px"; }}
+            />
+            <button onClick={send} disabled={!input.trim() || sending} style={{ width: 40, height: 40, borderRadius: "10px", flexShrink: 0, border: "1px solid rgba(255,255,255,0.08)", background: input.trim() ? "rgba(60,100,255,0.7)" : "rgba(255,255,255,0.04)", cursor: input.trim() ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Send size={15} color={input.trim() ? "white" : "rgba(255,255,255,0.2)"} />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -925,6 +952,111 @@ function TabParametres({ user }: { user: Session["user"] }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// TAB: SIGNALEMENTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+const REPORT_TYPES = [
+  { value: "bug",        label: "Bug / Dysfonctionnement" },
+  { value: "suggestion", label: "Suggestion d'amélioration" },
+  { value: "autre",      label: "Autre" },
+];
+const REPORT_STATUS_LABEL: Record<string, string> = {
+  open: "Ouvert", seen: "Vu", resolved: "Résolu", closed: "Fermé",
+};
+const REPORT_STATUS_COLOR: Record<string, string> = {
+  open: "rgba(250,204,21,0.85)", seen: "rgba(96,165,250,0.85)",
+  resolved: "rgba(74,222,128,0.85)", closed: "rgba(156,163,175,0.7)",
+};
+
+function TabSignalements({ onGoMessages }: { onGoMessages: () => void }) {
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [title, setTitle] = useState("");
+  const [type, setType] = useState("bug");
+  const [description, setDescription] = useState("");
+  const [url, setUrl] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
+
+  const inputStyle: React.CSSProperties = { width: "100%", padding: "10px 13px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "white", fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 300, outline: "none", boxSizing: "border-box" };
+  const labelStyle: React.CSSProperties = { display: "block", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 500, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "6px" };
+
+  useEffect(() => {
+    fetch("/api/reports").then(r => r.json()).then(data => { setReports(Array.isArray(data) ? data : []); setLoading(false); }).catch(() => setLoading(false));
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault(); setError(""); setSubmitting(true);
+    const res = await fetch("/api/reports", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title, type, description, url: url || undefined }) });
+    setSubmitting(false);
+    if (!res.ok) { const d = await res.json(); setError(d.error ?? "Erreur"); return; }
+    const created = await res.json();
+    setReports(prev => [created, ...prev]);
+    setTitle(""); setType("bug"); setDescription(""); setUrl(""); setDone(true);
+    setTimeout(() => setDone(false), 3000);
+  };
+
+  return (
+    <div>
+      <SectionTitle>Signalements</SectionTitle>
+      <SectionSub>Signalez un bug ou proposez une amélioration sur le site. Chaque signalement ouvre une discussion.</SectionSub>
+
+      {/* Form */}
+      <div style={{ marginBottom: "36px", padding: "20px", borderRadius: "14px", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)" }}>
+        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.16em", color: "rgba(255,255,255,0.2)", margin: "0 0 16px" }}>Nouveau signalement</p>
+        {done && (
+          <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 13px", borderRadius: "9px", background: "rgba(74,222,128,0.07)", border: "1px solid rgba(74,222,128,0.18)", marginBottom: "14px" }}>
+            <CheckCircle2 size={13} color="rgba(74,222,128,0.7)" />
+            <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(74,222,128,0.8)" }}>Signalement envoyé — vous pouvez maintenant en discuter via la messagerie.</span>
+          </motion.div>
+        )}
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+          <div><label style={labelStyle}>Résumé *</label><input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="ex : Le formulaire de contact ne s'envoie pas" required style={inputStyle} /></div>
+          <div>
+            <label style={labelStyle}>Type</label>
+            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+              {REPORT_TYPES.map(t => (
+                <button key={t.value} type="button" onClick={() => setType(t.value)} style={{ padding: "7px 13px", borderRadius: "8px", cursor: "pointer", border: `1px solid ${type === t.value ? "rgba(60,100,255,0.35)" : "rgba(255,255,255,0.07)"}`, background: type === t.value ? "rgba(60,100,255,0.12)" : "rgba(255,255,255,0.02)", fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: type === t.value ? 600 : 400, color: type === t.value ? "rgba(100,140,255,0.9)" : "rgba(255,255,255,0.4)", transition: "all 0.15s" }}>{t.label}</button>
+              ))}
+            </div>
+          </div>
+          <div><label style={labelStyle}>Description *</label><textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} placeholder="Décrivez le problème ou la suggestion en détail…" required style={{ ...inputStyle, resize: "vertical", minHeight: "72px" }} /></div>
+          <div><label style={labelStyle}>URL concernée (optionnel)</label><input type="url" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://…" style={inputStyle} /></div>
+          {error && <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(239,68,68,0.8)", margin: 0 }}>{error}</p>}
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <button type="submit" disabled={submitting || !title || !description} style={{ padding: "10px 20px", borderRadius: "9px", border: "1px solid rgba(60,100,255,0.3)", background: "rgba(60,100,255,0.6)", fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "white", cursor: (submitting || !title || !description) ? "not-allowed" : "pointer", opacity: (submitting || !title || !description) ? 0.5 : 1 }}>
+              {submitting ? "Envoi…" : "Envoyer →"}
+            </button>
+            {done && <button type="button" onClick={onGoMessages} style={{ padding: "10px 14px", borderRadius: "9px", border: "1px solid rgba(74,222,128,0.25)", background: "rgba(74,222,128,0.07)", fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, color: "rgba(74,222,128,0.8)", cursor: "pointer" }}>Ouvrir la messagerie →</button>}
+          </div>
+        </form>
+      </div>
+
+      {/* List */}
+      {!loading && reports.length > 0 && (
+        <div>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(255,255,255,0.2)", margin: "0 0 12px" }}>Mes signalements</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {reports.map(r => (
+              <div key={r.id} style={{ padding: "14px 16px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)" }}>
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", marginBottom: "4px" }}>
+                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.75)", margin: 0 }}>{r.title}</p>
+                  <span style={{ fontSize: "9px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: REPORT_STATUS_COLOR[r.status], flexShrink: 0, fontFamily: "var(--font-poppins)" }}>{REPORT_STATUS_LABEL[r.status] ?? r.status}</span>
+                </div>
+                <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.25)", margin: 0 }}>
+                  {REPORT_TYPES.find(t => t.value === r.type)?.label ?? r.type} · {new Date(r.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ROOT COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -941,13 +1073,14 @@ export function EspaceClient({ user, isAdmin = false }: { user: Session["user"];
   const goTab = (t: Tab) => setTab(t);
 
   const navItems: { id: Tab; icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; label: string }[] = [
-    { id: "accueil",    icon: LayoutDashboard, label: "Accueil"           },
-    { id: "devis",      icon: PlusCircle,      label: "Demande de devis"  },
-    { id: "projets",    icon: FolderOpen,      label: "Mes projets"       },
-    { id: "kanban",     icon: Kanban,          label: "Kanban"            },
-    { id: "messages",   icon: MessageSquare,   label: "Messagerie"        },
-    { id: "avis",       icon: Star,            label: "Avis"              },
-    { id: "parametres", icon: Settings,        label: "Paramètres"        },
+    { id: "accueil",      icon: LayoutDashboard, label: "Accueil"           },
+    { id: "devis",        icon: PlusCircle,      label: "Demande de devis"  },
+    { id: "projets",      icon: FolderOpen,      label: "Mes projets"       },
+    { id: "kanban",       icon: Kanban,          label: "Kanban"            },
+    { id: "messages",     icon: MessageSquare,   label: "Messagerie"        },
+    { id: "signalements", icon: Bug,             label: "Signalements"      },
+    { id: "avis",         icon: Star,            label: "Avis"              },
+    { id: "parametres",   icon: Settings,        label: "Paramètres"        },
   ];
 
   return (
@@ -1000,13 +1133,14 @@ export function EspaceClient({ user, isAdmin = false }: { user: Session["user"];
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
               style={{ flex: 1, display: "flex", flexDirection: "column" }}
             >
-              {tab === "accueil"    && <TabAccueil user={user} projects={projects} goTab={goTab} />}
-              {tab === "devis"      && <TabDevis onSuccess={() => setTab("projets")} />}
-              {tab === "projets"    && <TabProjets onRequestDevis={() => setTab("devis")} onMessage={goMessages} />}
-              {tab === "kanban"     && <TabKanban goMessages={goMessages} setMsgPrefill={setMsgPrefill} />}
-              {tab === "messages"   && <TabMessagesWithPrefill user={user} prefill={msgPrefill} clearPrefill={() => setMsgPrefill("")} />}
-              {tab === "avis"       && <TabAvis />}
-              {tab === "parametres" && <TabParametres user={user} />}
+              {tab === "accueil"      && <TabAccueil user={user} projects={projects} goTab={goTab} />}
+              {tab === "devis"        && <TabDevis onSuccess={() => setTab("projets")} />}
+              {tab === "projets"      && <TabProjets onRequestDevis={() => setTab("devis")} onMessage={goMessages} />}
+              {tab === "kanban"       && <TabKanban goMessages={goMessages} setMsgPrefill={setMsgPrefill} />}
+              {tab === "messages"     && <TabMessagesWithPrefill user={user} prefill={msgPrefill} clearPrefill={() => setMsgPrefill("")} />}
+              {tab === "signalements" && <TabSignalements onGoMessages={goMessages} />}
+              {tab === "avis"         && <TabAvis />}
+              {tab === "parametres"   && <TabParametres user={user} />}
             </motion.div>
           </AnimatePresence>
         </main>
@@ -1019,6 +1153,7 @@ export function EspaceClient({ user, isAdmin = false }: { user: Session["user"];
 function TabMessagesWithPrefill({ user, prefill, clearPrefill }: { user: Session["user"]; prefill: string; clearPrefill: () => void }) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
   const [input, setInput] = useState(prefill);
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -1037,9 +1172,11 @@ function TabMessagesWithPrefill({ user, prefill, clearPrefill }: { user: Session
     Promise.all([
       fetch("/api/messages").then(r => r.json()),
       fetch("/api/projects").then(r => r.json()),
-    ]).then(([msgs, projs]) => {
-      setMessages(msgs);
-      setProjects((projs as Project[]).filter(p => p.status !== "rejected"));
+      fetch("/api/reports").then(r => r.json()),
+    ]).then(([msgs, projs, reps]) => {
+      setMessages(Array.isArray(msgs) ? msgs : []);
+      setProjects((Array.isArray(projs) ? projs as Project[] : []).filter(p => p.status !== "rejected"));
+      setReports(Array.isArray(reps) ? reps : []);
       setLoading(false);
     });
   }, []);
@@ -1057,11 +1194,26 @@ function TabMessagesWithPrefill({ user, prefill, clearPrefill }: { user: Session
 
   const projectsWithSummary = projects.filter(p => p.projectSummary);
   const projectsWithoutSummary = projects.filter(p => !p.projectSummary);
+  const hasContext = projects.length > 0 || reports.length > 0;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
       <SectionTitle>Messagerie</SectionTitle>
       <SectionSub>Échangez directement avec Flores.</SectionSub>
+
+      {!loading && !hasContext && messages.length === 0 && (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "14px", textAlign: "center", padding: "32px 0" }}>
+          <div style={{ width: 52, height: 52, borderRadius: "14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <MessageSquare size={20} color="rgba(255,255,255,0.12)" />
+          </div>
+          <div>
+            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.5)", margin: "0 0 6px" }}>Aucun contexte de discussion</p>
+            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 300, color: "rgba(255,255,255,0.2)", margin: 0, lineHeight: 1.6 }}>
+              Pour ouvrir une discussion, soumettez d&apos;abord<br />un devis ou un signalement.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "6px", paddingBottom: "16px" }}>
         {!loading && projectsWithSummary.map(p => <ProjectSummaryPanel key={p.id} project={p} />)}
@@ -1069,9 +1221,12 @@ function TabMessagesWithPrefill({ user, prefill, clearPrefill }: { user: Session
           <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "8px" }}>
             {projectsWithoutSummary.map(p => (
               <div key={p.id} style={{ padding: "10px 14px", borderRadius: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                   <span style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.65)" }}>{p.title}</span>
-                  <span style={{ fontSize: "9px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: STATUS_COLOR[p.status], background: STATUS_BG[p.status], padding: "2px 7px", borderRadius: "999px" }}>{STATUS_LABEL[p.status] ?? p.status}</span>
+                  <span style={{ fontSize: "9px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: STATUS_COLOR[p.status], background: STATUS_BG[p.status], padding: "2px 7px", borderRadius: "999px", flexShrink: 0 }}>{STATUS_LABEL[p.status] ?? p.status}</span>
+                  <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", color: "rgba(255,255,255,0.2)" }}>
+                    {p.type === "web" ? "Web" : p.type === "visual" ? "Visuel" : "Autre"}{p.budget ? ` · ${p.budget}` : ""}
+                  </span>
                 </div>
               </div>
             ))}
@@ -1082,45 +1237,49 @@ function TabMessagesWithPrefill({ user, prefill, clearPrefill }: { user: Session
             </div>
           </div>
         )}
-        {loading ? <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px", textAlign: "center", padding: "40px 0" }}>Chargement...</div>
-          : messages.length === 0 ? <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px", textAlign: "center", padding: "48px 0" }}>Aucun message — envoyez le premier !</div>
-          : (
-            <AnimatePresence initial={false}>
-              {messages.map(msg => (
-                <motion.div key={msg.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
-                  style={{ display: "flex", flexDirection: msg.fromAdmin ? "row" : "row-reverse", gap: "10px", alignItems: "flex-end" }}>
-                  {msg.fromAdmin ? (
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg,#3a6fff,#7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, color: "white", flexShrink: 0 }}>F</div>
-                  ) : <div style={{ flexShrink: 0 }}><Avatar name={user?.name} image={user?.image} size={28} /></div>}
-                  <div style={{ maxWidth: "75%" }}>
-                    <div style={{ padding: "10px 14px", whiteSpace: "pre-wrap", wordBreak: "break-word", borderRadius: msg.fromAdmin ? "14px 14px 14px 3px" : "14px 14px 3px 14px", background: msg.fromAdmin ? "rgba(60,100,255,0.12)" : "rgba(255,255,255,0.07)", border: `1px solid ${msg.fromAdmin ? "rgba(60,100,255,0.2)" : "rgba(255,255,255,0.07)"}`, fontSize: "13px", fontWeight: 300, color: "rgba(255,255,255,0.82)", lineHeight: 1.65 }}>
-                      {msg.content}
-                    </div>
-                    <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.18)", margin: "4px 4px 0", textAlign: msg.fromAdmin ? "left" : "right" }}>{fmtDate(msg.createdAt)}</p>
+        {loading ? (
+          <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px", textAlign: "center", padding: "40px 0" }}>Chargement...</div>
+        ) : messages.length === 0 ? (
+          <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px", textAlign: "center", padding: "48px 0" }}>Aucun message — envoyez le premier !</div>
+        ) : (
+          <AnimatePresence initial={false}>
+            {messages.map(msg => (
+              <motion.div key={msg.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
+                style={{ display: "flex", flexDirection: msg.fromAdmin ? "row" : "row-reverse", gap: "10px", alignItems: "flex-end" }}>
+                {msg.fromAdmin ? (
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg,#3a6fff,#7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, color: "white", flexShrink: 0 }}>F</div>
+                ) : <div style={{ flexShrink: 0 }}><Avatar name={user?.name} image={user?.image} size={28} /></div>}
+                <div style={{ maxWidth: "75%" }}>
+                  <div style={{ padding: "10px 14px", whiteSpace: "pre-wrap", wordBreak: "break-word", borderRadius: msg.fromAdmin ? "14px 14px 14px 3px" : "14px 14px 3px 14px", background: msg.fromAdmin ? "rgba(60,100,255,0.12)" : "rgba(255,255,255,0.07)", border: `1px solid ${msg.fromAdmin ? "rgba(60,100,255,0.2)" : "rgba(255,255,255,0.07)"}`, fontSize: "13px", fontWeight: 300, color: "rgba(255,255,255,0.82)", lineHeight: 1.65 }}>
+                    {msg.content}
                   </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          )}
+                  <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.18)", margin: "4px 4px 0", textAlign: msg.fromAdmin ? "left" : "right" }}>{fmtDate(msg.createdAt)}</p>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        )}
         <div ref={bottomRef} />
       </div>
 
-      <div style={{ paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-        <div style={{ display: "flex", gap: "10px", alignItems: "flex-end" }}>
-          <textarea
-            ref={inputRef}
-            value={input} onChange={e => setInput(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-            placeholder="Votre message… (Entrée pour envoyer)"
-            rows={1}
-            style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "10px 12px", color: "white", fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 300, lineHeight: 1.5, outline: "none", resize: "none", maxHeight: "100px", overflowY: "auto" }}
-            onInput={e => { const t = e.currentTarget; t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 100) + "px"; }}
-          />
-          <button onClick={send} disabled={!input.trim() || sending} style={{ width: 40, height: 40, borderRadius: "10px", flexShrink: 0, border: "1px solid rgba(255,255,255,0.08)", background: input.trim() ? "rgba(60,100,255,0.7)" : "rgba(255,255,255,0.04)", cursor: input.trim() ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Send size={15} color={input.trim() ? "white" : "rgba(255,255,255,0.2)"} />
-          </button>
+      {hasContext && (
+        <div style={{ paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+          <div style={{ display: "flex", gap: "10px", alignItems: "flex-end" }}>
+            <textarea
+              ref={inputRef}
+              value={input} onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+              placeholder="Votre message… (Entrée pour envoyer)"
+              rows={1}
+              style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "10px 12px", color: "white", fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 300, lineHeight: 1.5, outline: "none", resize: "none", maxHeight: "100px", overflowY: "auto" }}
+              onInput={e => { const t = e.currentTarget; t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 100) + "px"; }}
+            />
+            <button onClick={send} disabled={!input.trim() || sending} style={{ width: 40, height: 40, borderRadius: "10px", flexShrink: 0, border: "1px solid rgba(255,255,255,0.08)", background: input.trim() ? "rgba(60,100,255,0.7)" : "rgba(255,255,255,0.04)", cursor: input.trim() ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Send size={15} color={input.trim() ? "white" : "rgba(255,255,255,0.2)"} />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

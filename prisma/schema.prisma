@@ -19,6 +19,24 @@ model User {
   projects  Project[]
   reviews   Review[]
   invoices  Invoice[]
+  reports   Report[]
+}
+
+// "open"     = signalement soumis, en attente de traitement
+// "seen"     = vu par admin
+// "resolved" = résolu
+// "closed"   = fermé sans action
+model Report {
+  id          String   @id @default(cuid())
+  title       String
+  type        String   @default("bug")  // "bug" | "suggestion" | "autre"
+  description String
+  url         String?
+  status      String   @default("open")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Invoice {
