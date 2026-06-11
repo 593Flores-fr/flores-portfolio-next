@@ -8,7 +8,7 @@ import {
   Send, LogOut, MessageSquare, Kanban, Star,
   Settings, PlusCircle, ChevronRight, CheckCircle2,
   Circle, Clock, AlertCircle, Eye, EyeOff, Paperclip, FolderOpen,
-  LayoutDashboard, ChevronDown, ChevronUp, Pin,
+  LayoutDashboard, ChevronDown, ChevronUp, Pin, Shield,
 } from "lucide-react";
 import type { Session } from "next-auth";
 
@@ -928,7 +928,7 @@ function TabParametres({ user }: { user: Session["user"] }) {
 // ROOT COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function EspaceClient({ user }: { user: Session["user"] }) {
+export function EspaceClient({ user, isAdmin = false }: { user: Session["user"]; isAdmin?: boolean }) {
   const [tab, setTab] = useState<Tab>("accueil");
   const [projects, setProjects] = useState<Project[]>([]);
   const [msgPrefill, setMsgPrefill] = useState("");
@@ -963,6 +963,11 @@ export function EspaceClient({ user }: { user: Session["user"] }) {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", padding: "6px 12px", fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 500, color: "rgba(255,255,255,0.3)", textDecoration: "none" }}>← Site</Link>
+          {isAdmin && (
+            <Link href="/admin" style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(60,100,255,0.12)", border: "1px solid rgba(60,100,255,0.3)", borderRadius: "8px", padding: "6px 12px", fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, color: "rgba(100,140,255,0.9)", textDecoration: "none" }}>
+              <Shield size={12} /> Admin
+            </Link>
+          )}
           <button onClick={() => signOut({ callbackUrl: "/" })} style={{ display: "flex", alignItems: "center", gap: "7px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 12px", cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 500, color: "rgba(255,255,255,0.4)" }}>
             <LogOut size={13} />
           </button>
@@ -972,10 +977,18 @@ export function EspaceClient({ user }: { user: Session["user"] }) {
       {/* Body */}
       <div style={{ flex: 1, display: "flex", width: "100%", ...(tab !== "kanban" ? { maxWidth: "1100px", margin: "0 auto", padding: "0 6vw" } : {}) }}>
         {/* Sidebar */}
-        <aside style={{ width: "200px", flexShrink: 0, paddingTop: "32px", paddingRight: "16px", paddingLeft: tab === "kanban" ? "20px" : "0", borderRight: "1px solid rgba(255,255,255,0.05)" }}>
-          <nav style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+        <aside style={{ width: "200px", flexShrink: 0, paddingTop: "32px", paddingRight: "16px", paddingLeft: tab === "kanban" ? "20px" : "0", borderRight: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column" }}>
+          <nav style={{ display: "flex", flexDirection: "column", gap: "2px", flex: 1 }}>
             {navItems.map(item => <NavItem key={item.id} icon={item.icon} label={item.label} active={tab === item.id} onClick={() => setTab(item.id)} />)}
           </nav>
+          {isAdmin && (
+            <div style={{ paddingBottom: "24px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+              <Link href="/admin" style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", borderRadius: "10px", background: "rgba(60,100,255,0.08)", border: "1px solid rgba(60,100,255,0.2)", textDecoration: "none" }}>
+                <Shield size={15} color="rgba(100,140,255,0.7)" />
+                <span style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "rgba(100,140,255,0.8)" }}>Panel Admin</span>
+              </Link>
+            </div>
+          )}
         </aside>
 
         {/* Main content */}

@@ -5,5 +5,6 @@ import { EspaceGate } from "@/components/ui/espace-gate";
 export default async function EspacePage() {
   const session = await auth();
   if (!session?.user) return <EspaceGate />;
-  return <EspaceClient user={session.user} />;
+  const isAdmin = session.user.email === process.env.ADMIN_EMAIL;
+  return <EspaceClient user={session.user} isAdmin={isAdmin} />;
 }

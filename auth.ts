@@ -44,17 +44,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, user, account }) {
       if (user) {
-        if (account?.provider === "discord" && user.email) {
-          // Link Discord to existing credentials account by email, or create new user
-          let dbUser = await prisma.user.findUnique({ where: { email: user.email } });
-          if (!dbUser) {
-            dbUser = await prisma.user.create({
-              data: { email: user.email, name: user.name ?? null, image: user.image ?? null },
-            });
-          } else if (user.image && !dbUser.image) {
-            await prisma.user.update({ where: { id: dbUser.id }, data: { image: user.image } });
+        if (account?.provider === "discord") {
+          const isAdminDiscord = account.providerAccountId === process.env.ADMIN_DISCORD_ID;
+
+          if (isAdminDiscord) {
+            // Compte Discord admin → résoudre vers le compte admin par email
+            let dbUser = await prisma.user.findUnique({ where: { email: process.env.ADMIN_EMAIL! } });
+            if (!dbUser) {
+              dbUser = await prisma.user.create({
+                data: { email: process.env.ADMIN_EMAIL!, name: user.name ?? null, image: user.image ?? null },
+              });
+            } else if (user.image && !dbUser.image) {
+              await prisma.user.update({ where: { id: dbUser.id }, data: { image: user.image } });
+            }
+            token.id = dbUser.id;
+            token.email = process.env.ADMIN_EMAIL;
+          } else if (user.email) {
+            // Compte Discord normal → lier par email
+            let dbUser = await prisma.user.findUnique({ where: { email: user.email } });
+            if (!dbUser) {
+              dbUser = await prisma.user.create({
+                data: { email: user.email, name: user.name ?? null, image: user.image ?? null },
+              });
+            } else if (user.image && !dbUser.image) {
+              await prisma.user.update({ where: { id: dbUser.id }, data: { image: user.image } });
+            }
+            token.id = dbUser.id;
           }
-          token.id = dbUser.id;
         } else {
           token.id = user.id;
         }
@@ -63,6 +79,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     session({ session, token }) {
       if (session.user && token.id) session.user.id = token.id as string;
+      if (token.email) session.user.email = token.email as string;
       return session;
     },
   },
