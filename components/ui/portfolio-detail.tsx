@@ -10,7 +10,7 @@ type Project = {
   id: string; slug: string; title: string; tag: string;
   description: string; imageSrc: string; category: string; year: string;
   client: string; fullDescription: string; challenge: string;
-  images: unknown; tools: unknown; externalLink: string | null; accentColor: string;
+  images: unknown; mockupImages: unknown; tools: unknown; externalLink: string | null; accentColor: string;
 };
 
 function resolveAccent(color?: string) {
@@ -41,6 +41,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
     : "60,100,255";
 
   const images = toStringArray(project.images);
+  const mockupImages = toStringArray(project.mockupImages);
   const tools = toStringArray(project.tools);
 
   return (
@@ -236,6 +237,37 @@ export default function PortfolioDetail({ project }: { project: Project }) {
                   }}
                 >
                   <Image src={src} alt={`${project.title} — visuel ${i + 1}`} fill style={{ objectFit: "cover" }} sizes="(max-width: 768px) 100vw, 50vw" />
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Mockup browser frames */}
+        {mockupImages.length > 0 && (
+          <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: "120px" }}>
+            <p style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.25em", color: `rgba(${accentRgb},0.6)`, marginBottom: "28px" }}>
+              Interface & aperçu
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "40px" }}>
+              {mockupImages.map((src, i) => (
+                <motion.div key={i} custom={i} variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }}>
+                  {/* Browser chrome */}
+                  <div style={{ borderRadius: "14px", border: "1px solid rgba(255,255,255,0.09)", overflow: "hidden", boxShadow: `0 40px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(${accentRgb},0.06)` }}>
+                    <div style={{ padding: "10px 16px", background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: "10px" }}>
+                      <div style={{ display: "flex", gap: "5px", flexShrink: 0 }}>
+                        <div style={{ width: 10, height: 10, borderRadius: "50%", background: "rgba(255,97,97,0.5)" }} />
+                        <div style={{ width: 10, height: 10, borderRadius: "50%", background: "rgba(255,200,97,0.5)" }} />
+                        <div style={{ width: 10, height: 10, borderRadius: "50%", background: "rgba(97,205,97,0.5)" }} />
+                      </div>
+                      <div style={{ flex: 1, background: "rgba(255,255,255,0.04)", borderRadius: "6px", padding: "4px 12px", fontSize: "10px", color: "rgba(255,255,255,0.2)", fontFamily: "var(--font-poppins)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {project.externalLink ? project.externalLink.replace(/^https?:\/\//, "") : project.slug + ".fr"}
+                      </div>
+                    </div>
+                    <div style={{ position: "relative", aspectRatio: "16/9", overflow: "hidden" }}>
+                      <Image src={src} alt={`${project.title} — aperçu ${i + 1}`} fill style={{ objectFit: "cover", objectPosition: "top" }} sizes="100vw" />
+                    </div>
+                  </div>
                 </motion.div>
               ))}
             </div>

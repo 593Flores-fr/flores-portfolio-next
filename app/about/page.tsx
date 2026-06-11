@@ -5,24 +5,40 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 
-const tools = [
-  { name: "Photoshop",   category: "Design" },
-  { name: "Illustrator", category: "Design" },
-  { name: "Figma",       category: "Design" },
-  { name: "After Effects", category: "Motion" },
-  { name: "Premiere Pro",  category: "Motion" },
-  { name: "Next.js",     category: "Dev" },
-  { name: "TypeScript",  category: "Dev" },
-  { name: "Prisma",      category: "Dev" },
-  { name: "Tailwind",    category: "Dev" },
-  { name: "Framer Motion", category: "Dev" },
-];
+type ToolIcon = { bg: string; label: string; color?: string; border?: string };
+type Tool = { name: string; icon: ToolIcon; desc: string };
+type ToolGroup = { category: string; accent: string; tools: Tool[] };
 
-const CAT_COLOR: Record<string, string> = {
-  Design: "rgba(167,139,250,0.7)",
-  Motion: "rgba(96,165,250,0.7)",
-  Dev:    "rgba(74,222,128,0.7)",
-};
+const toolGroups: ToolGroup[] = [
+  {
+    category: "Design",
+    accent: "rgba(167,139,250,0.7)",
+    tools: [
+      { name: "Photoshop",   icon: { bg: "#31A8FF",  label: "Ps" }, desc: "Retouche photo, compositions et visuels digitaux haute qualité." },
+      { name: "Illustrator", icon: { bg: "#FF7C00",  label: "Ai" }, desc: "Création vectorielle — logos, icônes et éléments de charte graphique." },
+      { name: "Figma",       icon: { bg: "#A259FF",  label: "Fg" }, desc: "Maquettes UI/UX, prototypage et systèmes de design collaboratifs." },
+    ],
+  },
+  {
+    category: "Motion",
+    accent: "rgba(96,165,250,0.7)",
+    tools: [
+      { name: "After Effects", icon: { bg: "#9999FF", label: "Ae" }, desc: "Motion design, animations graphiques et effets visuels sur mesure." },
+      { name: "Premiere Pro",  icon: { bg: "#EA77FF", label: "Pr" }, desc: "Montage vidéo, reels et contenus créatifs pour les réseaux sociaux." },
+    ],
+  },
+  {
+    category: "Dev",
+    accent: "rgba(74,222,128,0.7)",
+    tools: [
+      { name: "Next.js",       icon: { bg: "#1a1a1a", label: "▲", color: "rgba(255,255,255,0.85)", border: "1px solid rgba(255,255,255,0.1)" }, desc: "Framework React full-stack — App Router, SSR/SSG, performances optimales." },
+      { name: "TypeScript",    icon: { bg: "#3178C6", label: "TS" }, desc: "Typage statique pour un code robuste, erreurs détectées en amont." },
+      { name: "Prisma",        icon: { bg: "#0C344B", label: "◆", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.08)" }, desc: "ORM type-safe — modélisation de données et migrations simplifiées." },
+      { name: "Tailwind",      icon: { bg: "#0EA5E9", label: "TW" }, desc: "Utility-first CSS, design system cohérent et itérations ultra-rapides." },
+      { name: "Framer Motion", icon: { bg: "#0055FF", label: "FM" }, desc: "Animations fluides et micro-interactions React, déclaratives et performantes." },
+    ],
+  },
+];
 
 const process = [
   { num: "01", title: "Écoute & cadrage", text: "Un brief approfondi pour comprendre votre univers, vos contraintes et vos ambitions. Rien de générique." },
@@ -113,24 +129,60 @@ export default function AboutPage() {
         {/* Tools */}
         <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }} style={{ marginBottom: "100px" }}>
           <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.28em", color: "rgba(255,255,255,0.22)", marginBottom: "16px" }}>Stack & outils</p>
-          <h2 style={{ fontFamily: "var(--font-poppins)", fontSize: "clamp(2rem,4vw,3.2rem)", fontWeight: 800, lineHeight: 1.05, letterSpacing: "-0.02em", marginBottom: "48px" }}>
-            Ce que j'utilise.
+          <h2 style={{ fontFamily: "var(--font-poppins)", fontSize: "clamp(2rem,4vw,3.2rem)", fontWeight: 800, lineHeight: 1.05, letterSpacing: "-0.02em", marginBottom: "56px" }}>
+            Ce que j&apos;utilise.
           </h2>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-            {tools.map((t, i) => (
-              <motion.div key={t.name} custom={i} variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }}
-                style={{ display: "flex", alignItems: "center", gap: "7px", padding: "8px 14px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)" }}
-              >
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: CAT_COLOR[t.category], flexShrink: 0 }} />
-                <span style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 500, color: "rgba(255,255,255,0.65)" }}>{t.name}</span>
-              </motion.div>
-            ))}
-          </div>
-          <div style={{ display: "flex", gap: "16px", marginTop: "20px" }}>
-            {Object.entries(CAT_COLOR).map(([cat, color]) => (
-              <div key={cat} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: color }} />
-                <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", color: "rgba(255,255,255,0.25)", textTransform: "uppercase", letterSpacing: "0.1em" }}>{cat}</span>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "40px" }}>
+            {toolGroups.map((group, gi) => (
+              <div key={group.category}>
+                {/* Category label */}
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+                  <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.18em", color: group.accent }}>
+                    {group.category}
+                  </span>
+                  <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.05)" }} />
+                </div>
+
+                {/* Tools grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "10px" }}>
+                  {group.tools.map((t, i) => (
+                    <motion.div
+                      key={t.name}
+                      custom={gi * 5 + i}
+                      variants={fadeUp}
+                      initial="hidden"
+                      whileInView="show"
+                      viewport={{ once: true }}
+                      style={{
+                        display: "flex", gap: "14px", alignItems: "flex-start",
+                        padding: "16px 18px", borderRadius: "12px",
+                        border: "1px solid rgba(255,255,255,0.07)",
+                        background: "rgba(255,255,255,0.02)",
+                      }}
+                    >
+                      {/* Icon */}
+                      <div style={{
+                        width: 36, height: 36, borderRadius: "8px", flexShrink: 0,
+                        background: t.icon.bg, border: t.icon.border ?? "none",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 700,
+                        color: t.icon.color ?? "white", letterSpacing: "-0.02em",
+                      }}>
+                        {t.icon.label}
+                      </div>
+                      {/* Text */}
+                      <div>
+                        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.8)", margin: "0 0 5px" }}>
+                          {t.name}
+                        </p>
+                        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 300, color: "rgba(255,255,255,0.32)", lineHeight: 1.6, margin: 0 }}>
+                          {t.desc}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>

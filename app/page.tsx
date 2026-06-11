@@ -2,6 +2,7 @@ import { HeroHome } from "@/components/ui/hero-home";
 import { AboutSection } from "@/components/ui/about-section";
 import { FeaturesSection } from "@/components/ui/features-section";
 import { PortfolioSection } from "@/components/ui/portfolio-section";
+import { ReviewsSection } from "@/components/ui/reviews-section";
 import { TarifsSection } from "@/components/ui/tarifs-section";
 import { ContactSection } from "@/components/ui/contact-section";
 import { Footer } from "@/components/ui/footer";
@@ -34,6 +35,7 @@ export default async function Home() {
       <AboutSection content={content.about} />
       <FeaturesSection content={content.features} />
       <PortfolioSection />
+      <ReviewsSection />
       <TarifsSection content={content.tarifs} />
       <ContactSection />
       <Footer content={content.footer} />

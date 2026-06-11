@@ -9,14 +9,14 @@ type PortfolioProject = {
   description: string; imageSrc: string; order: number; published: boolean;
   category: string; year: string; client: string;
   fullDescription: string; challenge: string;
-  images: string[]; tools: string[];
+  images: string[]; mockupImages: string[]; tools: string[];
   externalLink: string | null; accentColor: string;
 };
 
 const emptyForm = {
   slug: "", title: "", tag: "", description: "", imageSrc: "",
   category: "", year: "", client: "", fullDescription: "", challenge: "",
-  imagesRaw: "", toolsRaw: "", externalLink: "", accentColor: "",
+  imagesRaw: "", mockupImagesRaw: "", toolsRaw: "", externalLink: "", accentColor: "",
   order: 0, published: true,
 };
 
@@ -66,7 +66,9 @@ export function AdminPortfolio() {
     slug: p.slug, title: p.title, tag: p.tag, description: p.description, imageSrc: p.imageSrc,
     category: p.category ?? "", year: p.year ?? "", client: p.client ?? "",
     fullDescription: p.fullDescription ?? "", challenge: p.challenge ?? "",
-    imagesRaw: (p.images ?? []).join("\n"), toolsRaw: (p.tools ?? []).join(", "),
+    imagesRaw: (p.images ?? []).join("\n"),
+    mockupImagesRaw: (p.mockupImages ?? []).join("\n"),
+    toolsRaw: (p.tools ?? []).join(", "),
     externalLink: p.externalLink ?? "", accentColor: p.accentColor ?? "",
     order: p.order, published: p.published,
   });
@@ -78,6 +80,7 @@ export function AdminPortfolio() {
   const buildPayload = () => ({
     ...form,
     images: form.imagesRaw.split("\n").map(s => s.trim()).filter(Boolean),
+    mockupImages: form.mockupImagesRaw.split("\n").map(s => s.trim()).filter(Boolean),
     tools: form.toolsRaw.split(",").map(s => s.trim()).filter(Boolean),
     externalLink: form.externalLink.trim() || null,
   });
@@ -285,6 +288,9 @@ export function AdminPortfolio() {
                 </Field>
                 <Field label="Images galerie (1 URL par ligne)">
                   <textarea value={form.imagesRaw} onChange={e => setForm(f => ({ ...f, imagesRaw: e.target.value }))} rows={3} placeholder={"/images/img1.jpg\n/images/img2.jpg"} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.8, fontFamily: "monospace", fontSize: "11px" }} />
+                </Field>
+                <Field label="Mockups navigateur (1 URL par ligne — projets web)">
+                  <textarea value={form.mockupImagesRaw} onChange={e => setForm(f => ({ ...f, mockupImagesRaw: e.target.value }))} rows={3} placeholder={"/images/mockup-home.jpg\n/images/mockup-detail.jpg"} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.8, fontFamily: "monospace", fontSize: "11px" }} />
                 </Field>
                 <Field label="Lien externe (optionnel)">
                   <input value={form.externalLink} onChange={e => setForm(f => ({ ...f, externalLink: e.target.value }))} placeholder="https://…" style={inputStyle} />

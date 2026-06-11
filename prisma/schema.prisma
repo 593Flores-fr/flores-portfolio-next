@@ -29,7 +29,7 @@ model User {
 model Report {
   id          String   @id @default(cuid())
   title       String
-  type        String   @default("bug")  // "bug" | "suggestion" | "autre"
+  type        String   @default("bug") // "bug" | "suggestion" | "autre"
   description String
   url         String?
   status      String   @default("open")
@@ -42,8 +42,8 @@ model Report {
 model Invoice {
   id            String    @id @default(cuid())
   number        String    @unique
-  type          String    @default("devis")   // "devis" | "facture"
-  status        String    @default("draft")   // "draft" | "sent" | "paid" | "cancelled"
+  type          String    @default("devis") // "devis" | "facture"
+  status        String    @default("draft") // "draft" | "sent" | "paid" | "cancelled"
   clientName    String    @default("")
   clientEmail   String    @default("")
   clientAddress String    @default("")
@@ -74,30 +74,30 @@ model Message {
 // "completed"= projet livré
 // "rejected" = devis refusé
 model Project {
-  id           String         @id @default(cuid())
-  title        String
-  description  String?
-  type         String
-  budget       String?
-  deadline     String?
-  references   String?
-  contact      String?
-  status        String         @default("pending")
-  paid          Boolean        @default(false)
-  adminNotes      String?
-  kanbanNotes     String?
-  kanbanVisible   Boolean        @default(false)
-  projectSummary  String?
-  phone         String?
-  callSlots     String?
-  briefFile     String?
-  briefFileName String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  userId       String
-  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  columns      KanbanColumn[]
-  review       Review?
+  id             String         @id @default(cuid())
+  title          String
+  description    String?
+  type           String
+  budget         String?
+  deadline       String?
+  references     String?
+  contact        String?
+  status         String         @default("pending")
+  paid           Boolean        @default(false)
+  adminNotes     String?
+  kanbanNotes    String?
+  kanbanVisible  Boolean        @default(false)
+  projectSummary String?
+  phone          String?
+  callSlots      String?
+  briefFile      String?
+  briefFileName  String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  columns        KanbanColumn[]
+  review         Review?
 }
 
 model PageView {
@@ -127,6 +127,7 @@ model PortfolioProject {
   fullDescription String   @default("")
   challenge       String   @default("")
   images          Json     @default("[]")
+  mockupImages    Json     @default("[]")
   tools           Json     @default("[]")
   externalLink    String?
   accentColor     String   @default("")
