@@ -129,6 +129,8 @@ function AboutEditor({ value, onChange }: {
   value: SiteContentMap["about"];
   onChange: (v: SiteContentMap["about"]) => void;
 }) {
+  const [uploading, setUploading] = useState(false);
+
   const setField = (key: keyof SiteContentMap["about"]) => (val: string) =>
     onChange({ ...value, [key]: val });
   const setPoint = (i: number, field: "title" | "text") => (val: string) => {
@@ -141,6 +143,19 @@ function AboutEditor({ value, onChange }: {
     stats[i] = { ...stats[i], [field]: val };
     onChange({ ...value, stats });
   };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/admin/about-image", { method: "POST", body: fd });
+    const data = await res.json();
+    if (data.url) setField("imageSrc")(data.url);
+    setUploading(false);
+  };
+
   return (
     <>
       <Field label="Badge flottant">
@@ -149,8 +164,24 @@ function AboutEditor({ value, onChange }: {
       <Field label="Titre section">
         <input style={inputStyle} value={value.heading} onChange={e => setField("heading")(e.target.value)} />
       </Field>
-      <Field label="Photo (chemin ou URL)">
-        <input style={inputStyle} value={value.imageSrc ?? ""} onChange={e => setField("imageSrc")(e.target.value)} placeholder="/images/about.jpg" />
+      <Field label="Photo">
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {value.imageSrc && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={value.imageSrc} alt="" style={{ width: "100%", aspectRatio: "4/5", objectFit: "cover", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)" }} />
+          )}
+          <label style={{
+            display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+            padding: "9px 14px", borderRadius: "8px", cursor: uploading ? "not-allowed" : "pointer",
+            border: "1px dashed rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.03)",
+            fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 500,
+            color: uploading ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.5)",
+          }}>
+            {uploading ? "Upload en cours…" : "📎 Choisir une image"}
+            <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleImageUpload} disabled={uploading} />
+          </label>
+          <input style={{ ...inputStyle, fontSize: "10px", color: "rgba(255,255,255,0.35)" }} value={value.imageSrc ?? ""} onChange={e => setField("imageSrc")(e.target.value)} placeholder="/images/about.jpg ou URL externe" />
+        </div>
       </Field>
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         <label style={labelStyle}>Points bio (3)</label>

@@ -59,9 +59,32 @@ export function Footer({ content = SITE_DEFAULTS.footer }: { content?: SiteConte
         >
           {/* Brand */}
           <div style={{ flex: "1 1 200px", minWidth: 0 }}>
-            <p style={{ fontSize: "16px", fontWeight: 700, color: "white", letterSpacing: "-0.01em", margin: "0 0 6px" }}>
-              {content.brandName}
-            </p>
+            {/* Flores logotype */}
+            <div style={{ fontFamily: "var(--font-six-caps), sans-serif", fontSize: "30px", lineHeight: 0.78, display: "inline-flex", alignItems: "center", gap: "0.045em", color: "#F4F6F8", marginBottom: "10px" }}>
+              <span>F</span><span>L</span>
+              <svg viewBox="0 0 100 100" style={{ height: "0.74em", width: "0.52em", flexShrink: 0, overflow: "visible" }}>
+                <defs>
+                  <linearGradient id="footSteel" x1="0" y1="1" x2="1" y2="0">
+                    <stop offset="0" stopColor="#0a1a33"/>
+                    <stop offset=".28" stopColor="#173f74"/>
+                    <stop offset=".46" stopColor="#3f86cf"/>
+                    <stop offset=".54" stopColor="#7cb4e8"/>
+                    <stop offset=".64" stopColor="#2f6fb0"/>
+                    <stop offset=".82" stopColor="#12325f"/>
+                    <stop offset="1" stopColor="#091628"/>
+                  </linearGradient>
+                  <mask id="footHole">
+                    <path d="M50,4C51.93,45.93 51.93,45.93 82.53,17.47C54.24,48.49 54.24,48.49 96,50C54.07,51.93 54.07,51.93 82.53,82.53C51.51,54.24 51.51,54.24 50,96C48.07,54.07 48.07,54.07 17.47,82.53C45.76,51.51 45.76,51.51 4,50C45.93,48.07 45.93,48.07 17.47,17.47C48.49,45.76 48.49,45.76 50,4Z" fill="#fff"/>
+                    <circle cx="50" cy="50" r="3" fill="#000"/>
+                  </mask>
+                </defs>
+                <g mask="url(#footHole)">
+                  <path d="M50,4C51.93,45.93 51.93,45.93 82.53,17.47C54.24,48.49 54.24,48.49 96,50C54.07,51.93 54.07,51.93 82.53,82.53C51.51,54.24 51.51,54.24 50,96C48.07,54.07 48.07,54.07 17.47,82.53C45.76,51.51 45.76,51.51 4,50C45.93,48.07 45.93,48.07 17.47,17.47C48.49,45.76 48.49,45.76 50,4Z" fill="url(#footSteel)"/>
+                  <path d="M50,4C51.93,45.93 51.93,45.93 82.53,17.47C54.24,48.49 54.24,48.49 96,50C54.07,51.93 54.07,51.93 82.53,82.53C51.51,54.24 51.51,54.24 50,96C48.07,54.07 48.07,54.07 17.47,82.53C45.76,51.51 45.76,51.51 4,50C45.93,48.07 45.93,48.07 17.47,17.47C48.49,45.76 48.49,45.76 50,4Z" fill="none" stroke="#bcd8f5" strokeOpacity=".35" strokeWidth=".6"/>
+                </g>
+              </svg>
+              <span>R</span><span>E</span><span>S</span>
+            </div>
             <p style={{ fontSize: "11px", fontWeight: 300, color: "rgba(255,255,255,0.25)", lineHeight: 1.65, margin: 0, maxWidth: "220px" }}>
               {content.brandDesc}
             </p>
