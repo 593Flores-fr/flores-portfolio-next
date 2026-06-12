@@ -4,6 +4,7 @@ import Script from "next/script";
 import { Providers } from "@/components/providers";
 import { Dock } from "@/components/ui/dock";
 import { PageViewTracker } from "@/components/ui/page-view-tracker";
+import { PageLoader } from "@/components/ui/page-loader";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -23,6 +24,10 @@ const sixCaps = Six_Caps({
 export const metadata: Metadata = {
   title: "Flores — Graphiste & Développeur Web",
   description: "Allan, graphiste freelance & développeur web autodidacte. Identité visuelle, direction artistique, covers, accompagnement créatif.",
+  icons: {
+    icon: "/icon-512.png",
+    apple: "/icon-512.png",
+  },
 };
 
 export default function RootLayout({
@@ -32,6 +37,7 @@ export default function RootLayout({
     <html lang="fr" className={`${poppins.variable} ${sixCaps.variable}`}>
       <body style={{ fontFamily: "var(--font-poppins), sans-serif", background: "#060a0e" }}>
         <Providers>
+          <PageLoader />
           {children}
           <Dock />
           <PageViewTracker />

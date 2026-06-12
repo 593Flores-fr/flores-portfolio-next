@@ -112,8 +112,30 @@ export function HeroHome({ content = SITE_DEFAULTS.hero }: { content?: SiteConte
           {content.subtitle}
         </motion.p>
 
-        <motion.h1 custom={2} variants={fadeUp} initial="hidden" animate="show" style={{ fontFamily: "var(--font-six-caps), sans-serif", fontSize: "clamp(7rem, 13vw, 14rem)", fontWeight: 400, lineHeight: 0.92, letterSpacing: "0.05em", color: "white", marginBottom: "1.8rem", textTransform: "uppercase" }}>
-          Flores
+        <motion.h1 custom={2} variants={fadeUp} initial="hidden" animate="show" style={{ fontFamily: "var(--font-six-caps), sans-serif", fontSize: "clamp(7rem, 13vw, 14rem)", fontWeight: 400, lineHeight: 0.92, color: "white", marginBottom: "1.8rem", display: "flex", alignItems: "center", gap: "0.045em" }}>
+          <span>F</span><span>L</span>
+          <svg viewBox="0 0 100 100" style={{ height: "0.74em", width: "0.52em", flexShrink: 0, overflow: "visible" }}>
+            <defs>
+              <linearGradient id="heroSteel" x1="0" y1="1" x2="1" y2="0">
+                <stop offset="0" stopColor="#0a1a33"/>
+                <stop offset=".28" stopColor="#173f74"/>
+                <stop offset=".46" stopColor="#3f86cf"/>
+                <stop offset=".54" stopColor="#7cb4e8"/>
+                <stop offset=".64" stopColor="#2f6fb0"/>
+                <stop offset=".82" stopColor="#12325f"/>
+                <stop offset="1" stopColor="#091628"/>
+              </linearGradient>
+              <mask id="heroHole">
+                <path d="M50,4C51.93,45.93 51.93,45.93 82.53,17.47C54.24,48.49 54.24,48.49 96,50C54.07,51.93 54.07,51.93 82.53,82.53C51.51,54.24 51.51,54.24 50,96C48.07,54.07 48.07,54.07 17.47,82.53C45.76,51.51 45.76,51.51 4,50C45.93,48.07 45.93,48.07 17.47,17.47C48.49,45.76 48.49,45.76 50,4Z" fill="#fff"/>
+                <circle cx="50" cy="50" r="3" fill="#000"/>
+              </mask>
+            </defs>
+            <g mask="url(#heroHole)">
+              <path d="M50,4C51.93,45.93 51.93,45.93 82.53,17.47C54.24,48.49 54.24,48.49 96,50C54.07,51.93 54.07,51.93 82.53,82.53C51.51,54.24 51.51,54.24 50,96C48.07,54.07 48.07,54.07 17.47,82.53C45.76,51.51 45.76,51.51 4,50C45.93,48.07 45.93,48.07 17.47,17.47C48.49,45.76 48.49,45.76 50,4Z" fill="url(#heroSteel)"/>
+              <path d="M50,4C51.93,45.93 51.93,45.93 82.53,17.47C54.24,48.49 54.24,48.49 96,50C54.07,51.93 54.07,51.93 82.53,82.53C51.51,54.24 51.51,54.24 50,96C48.07,54.07 48.07,54.07 17.47,82.53C45.76,51.51 45.76,51.51 4,50C45.93,48.07 45.93,48.07 17.47,17.47C48.49,45.76 48.49,45.76 50,4Z" fill="none" stroke="#bcd8f5" strokeOpacity=".35" strokeWidth=".6"/>
+            </g>
+          </svg>
+          <span>R</span><span>E</span><span>S</span>
         </motion.h1>
 
         <motion.p custom={3} variants={fadeUp} initial="hidden" animate="show" style={{ fontFamily: "var(--font-poppins)", fontSize: "14px", color: "rgba(255,255,255,0.38)", fontWeight: 300, lineHeight: 1.9, maxWidth: "340px", marginBottom: "2.5rem" }}>
