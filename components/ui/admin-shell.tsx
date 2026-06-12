@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { MessageSquare, FolderOpen, Kanban, Users, Star, LogOut, ShieldCheck, BarChart2, Image, ArrowUpLeft, Receipt, Globe } from "lucide-react";
+import { MessageSquare, FolderOpen, Kanban, Users, Star, LogOut, ShieldCheck, BarChart2, Image, ArrowUpLeft, Receipt, Globe, Flag } from "lucide-react";
 
 const navItems = [
   { href: "/admin/devis",     icon: FolderOpen,    label: "Devis"      },
@@ -14,7 +14,8 @@ const navItems = [
   { href: "/admin/factures",  icon: Receipt,       label: "Factures"   },
   { href: "/admin/portfolio", icon: Image,         label: "Portfolio"  },
   { href: "/admin/contenu",   icon: Globe,         label: "Contenu site" },
-  { href: "/admin/analytics", icon: BarChart2,     label: "Analytics"  },
+  { href: "/admin/analytics",    icon: BarChart2,     label: "Analytics"     },
+  { href: "/admin/signalements", icon: Flag,          label: "Signalements"  },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
