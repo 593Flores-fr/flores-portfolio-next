@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 
@@ -71,38 +70,16 @@ function ReviewCard({ r }: { r: Avis }) {
   );
 }
 
-export function ReviewsSection() {
-  const [reviews, setReviews] = useState<Avis[]>([]);
+export function ReviewsSection({ initialReviews = [] }: { initialReviews?: Avis[] }) {
+  if (initialReviews.length === 0) return null;
 
-  useEffect(() => {
-    fetch("/api/avis")
-      .then(r => r.json())
-      .then(d => { if (Array.isArray(d) && d.length > 0) setReviews(d); })
-      .catch(() => {});
-  }, []);
-
-  if (reviews.length === 0) return null;
-
-  // Duplicate for seamless loop — at least 4 copies to fill wide screens
-  const copies = Math.max(4, Math.ceil(1800 / ((CARD_W + GAP) * reviews.length)) + 1);
-  const items = Array.from({ length: copies }, () => reviews).flat();
-  const setWidth = reviews.length * (CARD_W + GAP);
-  const duration = reviews.length * 7;
+  const copies = Math.max(4, Math.ceil(1800 / ((CARD_W + GAP) * initialReviews.length)) + 1);
+  const items = Array.from({ length: copies }, () => initialReviews).flat();
+  const setWidth = initialReviews.length * (CARD_W + GAP);
+  const duration = initialReviews.length * 7;
 
   return (
     <section style={{ background: "#060a0e", padding: "100px 0 120px", overflow: "hidden" }}>
-      <style>{`
-        @keyframes avis-marquee {
-          from { transform: translateX(0); }
-          to   { transform: translateX(-${setWidth}px); }
-        }
-        .avis-track {
-          animation: avis-marquee ${duration}s linear infinite;
-          will-change: transform;
-        }
-        .avis-track:hover { animation-play-state: paused; }
-      `}</style>
-
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 24 }}
@@ -119,11 +96,18 @@ export function ReviewsSection() {
         </h2>
       </motion.div>
 
-      {/* Marquee */}
+      {/* Marquee — keyframes définis dans globals.css */}
       <div style={{ position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "160px", background: "linear-gradient(90deg, #060a0e 0%, transparent 100%)", zIndex: 2, pointerEvents: "none" }} />
         <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "160px", background: "linear-gradient(270deg, #060a0e 0%, transparent 100%)", zIndex: 2, pointerEvents: "none" }} />
-        <div className="avis-track" style={{ display: "flex", gap: `${GAP}px`, paddingLeft: "6vw", width: "max-content" }}>
+        <div
+          className="avis-track"
+          style={{
+            ["--marquee-end" as string]: `-${setWidth}px`,
+            ["--marquee-dur" as string]: `${duration}s`,
+            display: "flex", gap: `${GAP}px`, paddingLeft: "6vw", width: "max-content",
+          }}
+        >
           {items.map((r, i) => <ReviewCard key={i} r={r} />)}
         </div>
       </div>

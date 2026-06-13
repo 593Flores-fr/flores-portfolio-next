@@ -1,10 +1,35 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import { SITE_DEFAULTS } from "@/lib/site-content";
 import type { SiteContentMap } from "@/lib/site-content";
+
+function CountUp({ value }: { value: string }) {
+  const num = parseInt(value, 10);
+  const suffix = value.replace(/\d+/, "");
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-40px" });
+
+  useEffect(() => {
+    if (!inView || isNaN(num)) return;
+    const steps = 40;
+    const interval = 900 / steps;
+    let step = 0;
+    const timer = setInterval(() => {
+      step++;
+      if (step >= steps) { setCount(num); clearInterval(timer); return; }
+      setCount(Math.round((num * step) / steps));
+    }, interval);
+    return () => clearInterval(timer);
+  }, [inView, num]);
+
+  if (isNaN(num)) return <span>{value}</span>;
+  return <span ref={ref}>{count}{suffix}</span>;
+}
 
 const fadeUp = {
   hidden: { opacity: 0, y: 32 },
@@ -96,7 +121,7 @@ export function AboutSection({ content = SITE_DEFAULTS.about }: { content?: Site
           }}>
             {stats.map(({ val, label }) => (
               <div key={label} style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                <span style={{ fontFamily: "var(--font-six-caps)", fontSize: "2rem", color: "white", lineHeight: 1, letterSpacing: "0.05em" }}>{val}</span>
+                <span style={{ fontFamily: "var(--font-six-caps)", fontSize: "2rem", color: "white", lineHeight: 1, letterSpacing: "0.05em" }}><CountUp value={val} /></span>
                 <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.14em", fontWeight: 300 }}>{label}</span>
               </div>
             ))}
@@ -112,7 +137,7 @@ export function AboutSection({ content = SITE_DEFAULTS.about }: { content?: Site
             whileInView="show" viewport={{ once: true, margin: "-100px" }}
             style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.28em", color: "rgba(255,255,255,0.25)", fontWeight: 300, marginBottom: "16px" }}
           >
-            A propos
+            À propos
           </motion.p>
 
           {/* Titre */}

@@ -21,9 +21,30 @@ const sixCaps = Six_Caps({
   display: "swap",
 });
 
+const BASE = process.env.NEXT_PUBLIC_URL ?? "https://flores.fr";
+
 export const metadata: Metadata = {
-  title: "Flores — Graphiste & Développeur Web",
+  title: {
+    default: "Flores — Graphiste & Développeur Web",
+    template: "%s — Flores",
+  },
   description: "Allan, graphiste freelance & développeur web autodidacte. Identité visuelle, direction artistique, covers, accompagnement créatif.",
+  metadataBase: new URL(BASE),
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    url: BASE,
+    siteName: "Flores",
+    title: "Flores — Graphiste & Développeur Web",
+    description: "Identité visuelle, direction artistique & développement web — des créations qui vous ressemblent vraiment.",
+    images: [{ url: "/og-image.jpg", width: 1200, height: 630, alt: "Flores — Graphiste & Développeur Web" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Flores — Graphiste & Développeur Web",
+    description: "Identité visuelle, direction artistique & développement web — des créations qui vous ressemblent vraiment.",
+    images: ["/og-image.jpg"],
+  },
 };
 
 export default function RootLayout({

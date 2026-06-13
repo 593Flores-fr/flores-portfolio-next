@@ -10,6 +10,8 @@ import prisma from "@/lib/prisma";
 import { SITE_DEFAULTS } from "@/lib/site-content";
 import type { SiteContentMap } from "@/lib/site-content";
 
+export const revalidate = 60;
+
 async function getSiteContent(): Promise<SiteContentMap> {
   try {
     const sections = await prisma.siteContent.findMany();
@@ -26,8 +28,26 @@ async function getSiteContent(): Promise<SiteContentMap> {
   }
 }
 
+async function getReviews() {
+  try {
+    return await prisma.review.findMany({
+      where: { status: "approved", content: { not: null } },
+      select: {
+        id: true,
+        content: true,
+        rating: true,
+        user: { select: { name: true, image: true } },
+        project: { select: { title: true } },
+      },
+      orderBy: { submittedAt: "desc" },
+    });
+  } catch {
+    return [];
+  }
+}
+
 export default async function Home() {
-  const content = await getSiteContent();
+  const [content, reviews] = await Promise.all([getSiteContent(), getReviews()]);
 
   return (
     <main>
@@ -35,9 +55,9 @@ export default async function Home() {
       <AboutSection content={content.about} />
       <FeaturesSection content={content.features} />
       <PortfolioSection />
-      <ReviewsSection />
+      <ReviewsSection initialReviews={reviews} />
       <TarifsSection content={content.tarifs} />
-      <ContactSection />
+      <ContactSection discordUrl={content.footer.discordUrl} />
       <Footer content={content.footer} />
     </main>
   );

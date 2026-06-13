@@ -22,7 +22,7 @@ const perks = [
   },
 ];
 
-export function ContactSection() {
+export function ContactSection({ discordUrl = "" }: { discordUrl?: string }) {
   return (
     <section
       style={{
@@ -148,7 +148,7 @@ export function ContactSection() {
               </Link>
 
               <a
-                href="https://discord.com"
+                href={discordUrl || "https://discord.com"}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{

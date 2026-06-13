@@ -5,10 +5,11 @@ import { SITE_DEFAULTS } from "@/lib/site-content";
 import type { SiteContentMap } from "@/lib/site-content";
 
 const navLinks = [
-  { label: "Accueil", href: "/" },
-  { label: "Portfolio", href: "/#portfolio" },
-  { label: "Tarifs", href: "/#tarifs" },
-  { label: "Espace client", href: "/espace" },
+  { label: "Accueil",      href: "/"          },
+  { label: "Portfolio",    href: "/portfolio" },
+  { label: "À propos",    href: "/about"     },
+  { label: "Tarifs",       href: "/tarif"     },
+  { label: "Espace client", href: "/espace"  },
 ];
 
 const SOCIAL_ICONS = {
@@ -38,7 +39,7 @@ export function Footer({ content = SITE_DEFAULTS.footer }: { content?: SiteConte
     { label: "Discord",   href: content.discordUrl,   icon: SOCIAL_ICONS.discord   },
     { label: "Instagram", href: content.instagramUrl, icon: SOCIAL_ICONS.instagram },
     { label: "Behance",   href: content.behanceUrl,   icon: SOCIAL_ICONS.behance   },
-  ];
+  ].filter(s => s.href && !["https://discord.com", "https://instagram.com", "https://behance.net"].includes(s.href));
 
   return (
     <footer

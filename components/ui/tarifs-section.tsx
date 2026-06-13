@@ -171,7 +171,7 @@ function CategoryPanel({
       {/* CTA */}
       <div style={{ marginTop: "24px" }}>
         <Link
-          href="/contact"
+          href="/espace"
           style={{
             display: "inline-flex",
             alignItems: "center",

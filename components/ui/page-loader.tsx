@@ -14,7 +14,7 @@ export function PageLoader() {
     const t = setTimeout(() => {
       setVisible(false);
       sessionStorage.setItem("flo_loaded", "1");
-    }, 2200);
+    }, 1400);
     return () => clearTimeout(t);
   }, []);
 
@@ -107,13 +107,6 @@ export function PageLoader() {
             </div>
           </div>
 
-          <style>{`
-            @keyframes flo-rot{to{transform:rotate(360deg);}}
-            @keyframes flo-breathe{0%,100%{transform:scale(1);}50%{transform:scale(.93);}}
-            @keyframes flo-glow{0%,100%{opacity:.35;transform:scale(1);}50%{opacity:.7;transform:scale(1.18);}}
-            @keyframes flo-dots{0%{opacity:.2;}50%{opacity:1;}100%{opacity:.2;}}
-            @keyframes flo-bar{0%{transform:translateX(-100%);}100%{transform:translateX(320%);}}
-          `}</style>
         </motion.div>
       )}
     </AnimatePresence>

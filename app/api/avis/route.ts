@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
+export const revalidate = 1800;
+
 export async function GET() {
   try {
     const reviews = await prisma.review.findMany({
