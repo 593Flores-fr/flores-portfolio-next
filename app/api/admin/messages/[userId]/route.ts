@@ -16,12 +16,13 @@ export async function GET(
   }
   const { userId } = await params;
 
-  try {
-    await prisma.message.updateMany({
-      where: { userId, fromAdmin: false, read: false },
-      data: { read: true },
-    });
+  // Fire-and-forget — ne bloque pas la réponse si ça échoue
+  prisma.message.updateMany({
+    where: { userId, fromAdmin: false, read: false },
+    data: { read: true },
+  }).catch(e => console.error("[messages/userId] mark-read failed:", e));
 
+  try {
     const [messages, user, projects, reports] = await Promise.all([
       prisma.message.findMany({
         where: { userId },
@@ -66,9 +67,13 @@ export async function POST(
     return NextResponse.json({ error: "Message vide" }, { status: 400 });
   }
 
-  const message = await prisma.message.create({
-    data: { content: content.trim(), userId, fromAdmin: true, read: true },
-  });
-
-  return NextResponse.json(message, { status: 201 });
+  try {
+    const message = await prisma.message.create({
+      data: { content: content.trim(), userId, fromAdmin: true, read: true },
+    });
+    return NextResponse.json(message, { status: 201 });
+  } catch (err) {
+    console.error("[admin/messages/userId] POST error:", err);
+    return NextResponse.json({ error: "Erreur serveur", details: String(err) }, { status: 500 });
+  }
 }

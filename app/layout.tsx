@@ -41,7 +41,7 @@ export default function RootLayout({
         {/* UnicornStudio SDK */}
         <Script
           src="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.1.9/dist/unicornStudio.umd.js"
-          strategy="beforeInteractive"
+          strategy="afterInteractive"
         />
       </body>
     </html>

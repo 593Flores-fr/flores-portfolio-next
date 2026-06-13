@@ -43,25 +43,26 @@ function UnicornPanel({ projectId }: { projectId: string }) {
     if (!el) return;
     const id = `unicorn-${projectId}`;
     el.id = id;
+    let timer: ReturnType<typeof setTimeout>;
     const tryInit = () => {
       if (window.UnicornStudio?.addScene) {
         window.UnicornStudio.addScene({ elementId: id, projectId, production: true, scale: 1, dpi: 1.5, fps: 60 });
       } else {
-        setTimeout(tryInit, 100);
+        timer = setTimeout(tryInit, 100);
       }
     };
     tryInit();
-    return () => { window.UnicornStudio?.destroy?.(); };
+    return () => {
+      clearTimeout(timer);
+      window.UnicornStudio?.destroy?.();
+    };
   }, [projectId]);
 
   return <div ref={containerRef} style={{ width: "100%", height: "100%" }} />;
 }
 
 export function HeroHome({ content = SITE_DEFAULTS.hero }: { content?: SiteContentMap["hero"] }) {
-  const showAuth = true;
-
   return (
-    // Section sans overflow:hidden — permet au panel d'être positionné librement
     <section style={{ position: "relative", height: "100dvh", background: "#060a0e" }}>
 
       {/* ── Wrapper contenant l'animation + effets — overflow:hidden ici seulement ── */}
@@ -99,7 +100,7 @@ export function HeroHome({ content = SITE_DEFAULTS.hero }: { content?: SiteConte
       </div>
 
       {/* ── Texte gauche ── */}
-      <div style={{ position: "absolute", top: 0, left: 0, width: "38%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 3vw 0 6vw", zIndex: 10 }}>
+      <div className="hero-text-col">
 
         <motion.div custom={0} variants={fadeUp} initial="hidden" animate="show" style={{ marginBottom: "2rem" }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "6px 14px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.06)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.2em", color: "rgba(255,255,255,0.5)", fontFamily: "var(--font-poppins)", fontWeight: 500 }}>
@@ -173,31 +174,12 @@ export function HeroHome({ content = SITE_DEFAULTS.hero }: { content?: SiteConte
           </div>
         </motion.div>
 
-        <style>{`
-          @keyframes logo-ticker-scroll {
-            from { transform: translateX(0); }
-            to { transform: translateX(-50%); }
-          }
-          .logo-ticker { animation: logo-ticker-scroll 20s linear infinite; }
-          .logo-ticker:hover { animation-play-state: paused; }
-        `}</style>
       </div>
 
       {/* ── CTA panel — centré verticalement dans la zone droite ── */}
-      {showAuth && (
-        <div style={{
-          position: "absolute",
-          top: 0,
-          bottom: 0,
-          left: "70%",
-          width: "380px",
-          display: "flex",
-          alignItems: "center",
-          zIndex: 20,
-        }}>
-          <HeroCtaPanel />
-        </div>
-      )}
+      <div className="hero-auth-panel">
+        <HeroCtaPanel />
+      </div>
 
     </section>
   );

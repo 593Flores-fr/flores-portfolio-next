@@ -148,3 +148,76 @@ html, body {
     @apply font-sans;
   }
 }
+
+/* ── Hero responsive ── */
+.hero-text-col {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 38%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 3vw 0 6vw;
+  z-index: 10;
+}
+
+.hero-auth-panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 70%;
+  width: 380px;
+  display: flex;
+  align-items: center;
+  z-index: 20;
+}
+
+@media (max-width: 768px) {
+  .hero-text-col {
+    width: 100%;
+    padding: 80px 6vw 40px;
+    justify-content: flex-start;
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  /* Titre FLORES redimensionné pour mobile */
+  .hero-text-col h1 {
+    font-size: clamp(4.5rem, 18vw, 7rem) !important;
+  }
+
+  .hero-auth-panel {
+    display: none;
+  }
+}
+
+/* ── Logo ticker ── */
+@keyframes logo-ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.logo-ticker {
+  animation: logo-ticker-scroll 20s linear infinite;
+}
+
+.logo-ticker:hover {
+  animation-play-state: paused;
+}
+
+/* ── Portfolio grid ── */
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .portfolio-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+  .portfolio-grid { grid-template-columns: 1fr; }
+}
