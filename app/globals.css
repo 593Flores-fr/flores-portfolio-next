@@ -243,3 +243,44 @@ html, body {
 @media (max-width: 600px) {
   .portfolio-grid { grid-template-columns: 1fr; }
 }
+
+/* ── Dock — labels mobiles ── */
+.dock-item-outer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dock-item-label {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .dock-container {
+    gap: 0 !important;
+    padding: 8px 4px 10px !important;
+  }
+
+  .dock-item-outer {
+    gap: 3px;
+    padding: 0 10px;
+  }
+
+  .dock-active-dot {
+    display: none;
+  }
+
+  .dock-item-label {
+    display: block;
+    font-family: var(--font-poppins);
+    font-size: 9px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .dock-item-label.active {
+    color: rgba(100,140,255,0.85);
+  }
+}

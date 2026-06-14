@@ -30,7 +30,7 @@ function DockItem({
   const Icon = item.icon;
 
   return (
-    <div style={{ position: "relative" }} onMouseEnter={onEnter} onMouseLeave={onLeave}>
+    <div className="dock-item-outer" style={{ position: "relative" }} onMouseEnter={onEnter} onMouseLeave={onLeave}>
       {/* Tooltip */}
       <AnimatePresence>
         {hovered && (
@@ -114,7 +114,7 @@ function DockItem({
 
       {/* Active dot */}
       {isActive && (
-        <div style={{
+        <div className="dock-active-dot" style={{
           position: "absolute",
           bottom: "-8px",
           left: "50%",
@@ -125,6 +125,8 @@ function DockItem({
           background: "rgba(100,140,255,0.7)",
         }} />
       )}
+      {/* Mobile label */}
+      <span className={`dock-item-label${isActive ? " active" : ""}`}>{item.label}</span>
     </div>
   );
 }
@@ -150,6 +152,7 @@ export function Dock() {
     }}>
       {/* Container */}
       <motion.div
+        className="dock-container"
         style={{
           display: "flex",
           alignItems: "center",

@@ -1,69 +1,21 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CardStack } from "./card-stack";
+import { CardStack, type CardStackItem } from "./card-stack";
 import Link from "next/link";
 
-const projects = [
-  {
-    id: "yevta",
-    title: "Yevta",
-    tag: "Direction artistique · 2024",
-    description: "Identité visuelle complète pour un artiste musical émergent — covers, charte graphique et assets de communication.",
-    imageSrc: "/images/01hero.jpg",
-    href: "/portfolio/yevta",
-  },
-  {
-    id: "vzx-build",
-    title: "VZX Build",
-    tag: "Branding & Dev Web · 2024",
-    description: "Branding moderne et site vitrine pour un assembleur PC. Identité forte, palette sombre et typographie percutante.",
-    imageSrc: "/images/jjj.jpg",
-    href: "/portfolio/vzx-build",
-  },
-  {
-    id: "vto-studio",
-    title: "V.T.O Studio",
-    tag: "Identité visuelle · 2024",
-    description: "Direction artistique pour un collectif créatif. Logo, supports de communication et présence digitale cohérente.",
-    imageSrc: "/images/vto.jpg",
-    href: "/portfolio/vto-studio",
-  },
-  {
-    id: "monica-dlr",
-    title: "Monica DLR",
-    tag: "Charte graphique · 2024",
-    description: "Identité visuelle pour une créatrice & couturière. Logo, univers de marque et visuels réseaux sociaux.",
-    imageSrc: "/images/Mdlr.png",
-    href: "/portfolio/monica-dlr",
-  },
-  {
-    id: "213-huma",
-    title: "213 HUMA",
-    tag: "Projet associatif · 2024",
-    description: "Direction artistique pour un projet associatif humanitaire. Identité visuelle engagée et supports imprimés.",
-    imageSrc: "/images/projects/huma.png",
-    href: "/portfolio/213-huma",
-  },
-  {
-    id: "muzey",
-    title: "Muzey",
-    tag: "Charte graphique · 2024",
-    description: "Identité visuelle complète pour un projet musical. Logotype, palette chromatique et assets digitaux.",
-    imageSrc: "/images/pdv1.png",
-    href: "/portfolio/muzey",
-  },
-  {
-    id: "cover-art",
-    title: "Cover Art",
-    tag: "Covers musicales · 2021–2024",
-    description: "Sélection de covers réalisées pour différents artistes. Illustrations sur mesure pour streaming et éditions physiques.",
-    imageSrc: "/images/wuk.png",
-    href: "/portfolio/cover-art",
-  },
+const FALLBACK: CardStackItem[] = [
+  { id: "yevta",      title: "Yevta",       tag: "Direction artistique · 2024", description: "Identité visuelle complète pour un artiste musical émergent — covers, charte graphique et assets de communication.", imageSrc: "/images/01hero.jpg",         href: "/portfolio/yevta" },
+  { id: "vzx-build",  title: "VZX Build",   tag: "Branding & Dev Web · 2024",   description: "Branding moderne et site vitrine pour un assembleur PC. Identité forte, palette sombre et typographie percutante.",    imageSrc: "/images/jjj.jpg",             href: "/portfolio/vzx-build" },
+  { id: "vto-studio", title: "V.T.O Studio",tag: "Identité visuelle · 2024",    description: "Direction artistique pour un collectif créatif. Logo, supports de communication et présence digitale cohérente.",         imageSrc: "/images/vto.jpg",             href: "/portfolio/vto-studio" },
+  { id: "monica-dlr", title: "Monica DLR",  tag: "Charte graphique · 2024",     description: "Identité visuelle pour une créatrice & couturière. Logo, univers de marque et visuels réseaux sociaux.",                imageSrc: "/images/Mdlr.png",            href: "/portfolio/monica-dlr" },
+  { id: "213-huma",   title: "213 HUMA",    tag: "Projet associatif · 2024",    description: "Direction artistique pour un projet associatif humanitaire. Identité visuelle engagée et supports imprimés.",             imageSrc: "/images/projects/huma.png",   href: "/portfolio/213-huma" },
+  { id: "muzey",      title: "Muzey",       tag: "Charte graphique · 2024",     description: "Identité visuelle complète pour un projet musical. Logotype, palette chromatique et assets digitaux.",                   imageSrc: "/images/pdv1.png",            href: "/portfolio/muzey" },
+  { id: "cover-art",  title: "Cover Art",   tag: "Covers musicales · 2021–2024",description: "Sélection de covers réalisées pour différents artistes. Illustrations sur mesure pour streaming et éditions physiques.", imageSrc: "/images/wuk.png",             href: "/portfolio/cover-art" },
 ];
 
-export function PortfolioSection() {
+export function PortfolioSection({ projects }: { projects?: CardStackItem[] }) {
+  const items = projects && projects.length > 0 ? projects : FALLBACK;
   return (
     <section id="portfolio" style={{ background: "#060a0e", padding: "120px 0 140px", overflow: "hidden" }}>
       <div style={{ maxWidth: "1300px", margin: "0 auto", padding: "0 6vw" }}>
@@ -117,7 +69,7 @@ export function PortfolioSection() {
           transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
         >
           <CardStack
-            items={projects}
+            items={items}
             cardWidth={500}
             cardHeight={340}
             overlap={0.45}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins, Six_Caps } from "next/font/google";
 import Script from "next/script";
+import { Analytics } from "@vercel/analytics/next";
 import { Providers } from "@/components/providers";
 import { Dock } from "@/components/ui/dock";
 import { PageViewTracker } from "@/components/ui/page-view-tracker";
@@ -64,6 +65,7 @@ export default function RootLayout({
           src="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.1.9/dist/unicornStudio.umd.js"
           strategy="afterInteractive"
         />
+        <Analytics />
       </body>
     </html>
   );

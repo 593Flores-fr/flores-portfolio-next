@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import { PortfolioClient } from "@/components/ui/portfolio-client";
 import prisma from "@/lib/prisma";
+
+export const metadata: Metadata = {
+  title: "Portfolio",
+  description: "Réalisations de Flores : identité visuelle, direction artistique, sites web, covers musicales. Projets pour artistes, collectifs et structures indépendantes.",
+};
 
 export const revalidate = 60;
 
