@@ -57,7 +57,7 @@ function ProjectCard({ p, index, featured }: { p: Project; index: number; featur
           <div style={{ position: "relative", aspectRatio: featured ? "auto" : "16/10", minHeight: featured ? 340 : undefined, overflow: "hidden", background: "rgba(255,255,255,0.04)", flexShrink: 0 }}>
             {p.imageSrc && (
               <motion.div style={{ position: "absolute", inset: 0 }} animate={{ scale: hovered ? 1.05 : 1 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}>
-                <Image src={p.imageSrc} alt={p.title} fill style={{ objectFit: "cover" }} sizes="(max-width: 768px) 100vw, 60vw" />
+                <Image src={p.imageSrc} alt={p.title} fill unoptimized={p.imageSrc.startsWith("http")} style={{ objectFit: "cover" }} sizes="(max-width: 768px) 100vw, 60vw" />
               </motion.div>
             )}
             <div style={{ position: "absolute", inset: 0, background: featured ? "linear-gradient(to right, transparent 60%, rgba(6,10,14,0.8) 100%)" : "linear-gradient(to top, rgba(6,10,14,0.55) 0%, transparent 60%)" }} />

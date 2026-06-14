@@ -24,6 +24,8 @@ function toStringArray(val: unknown): string[] {
   return [];
 }
 
+const isExt = (src: string) => src.startsWith("http");
+
 const fadeUp = {
   hidden: { opacity: 0, y: 40 },
   show: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.7, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } }),
@@ -70,7 +72,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
         {/* Background image with parallax */}
         {project.imageSrc && (
           <motion.div style={{ position: "absolute", inset: "-20%", y: yImg }}>
-            <Image src={project.imageSrc} alt={project.title} fill style={{ objectFit: "cover" }} priority sizes="100vw" />
+            <Image src={project.imageSrc} alt={project.title} fill unoptimized={isExt(project.imageSrc)} style={{ objectFit: "cover" }} priority sizes="100vw" />
           </motion.div>
         )}
         {/* Gradient overlays */}
@@ -236,7 +238,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
                     ...(i === 0 && images.length >= 3 ? { gridColumn: "1 / -1" } : {}),
                   }}
                 >
-                  <Image src={src} alt={`${project.title} — visuel ${i + 1}`} fill style={{ objectFit: "cover" }} sizes="(max-width: 768px) 100vw, 50vw" />
+                  <Image src={src} alt={`${project.title} — visuel ${i + 1}`} fill unoptimized={isExt(src)} style={{ objectFit: "cover" }} sizes="(max-width: 768px) 100vw, 50vw" />
                 </motion.div>
               ))}
             </div>
@@ -265,7 +267,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
                       </div>
                     </div>
                     <div style={{ position: "relative", aspectRatio: "16/9", overflow: "hidden" }}>
-                      <Image src={src} alt={`${project.title} — aperçu ${i + 1}`} fill style={{ objectFit: "cover", objectPosition: "top" }} sizes="100vw" />
+                      <Image src={src} alt={`${project.title} — aperçu ${i + 1}`} fill unoptimized={isExt(src)} style={{ objectFit: "cover", objectPosition: "top" }} sizes="100vw" />
                     </div>
                   </div>
                 </motion.div>

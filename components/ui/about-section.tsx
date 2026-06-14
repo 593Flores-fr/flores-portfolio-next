@@ -77,6 +77,7 @@ export function AboutSection({ content = SITE_DEFAULTS.about }: { content?: Site
               src={content.imageSrc || "/images/about.jpg"}
               alt="Flores — Allan"
               fill
+              unoptimized={!!content.imageSrc?.startsWith("http")}
               style={{ objectFit: "cover", objectPosition: "center top" }}
               sizes="(max-width: 768px) 100vw, 50vw"
             />
