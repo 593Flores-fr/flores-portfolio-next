@@ -574,6 +574,71 @@ function FooterEditor({ value, onChange }: {
   );
 }
 
+// ── Root component helpers (defined outside to avoid remount on every keystroke) ─
+
+function SaveBtn({ section, saving, saved, onSave }: {
+  section: Section;
+  saving: Section | null;
+  saved: Section | null;
+  onSave: (s: Section) => void;
+}) {
+  const isSaving = saving === section;
+  const isSaved = saved === section;
+  return (
+    <button
+      onClick={() => onSave(section)}
+      disabled={!!saving}
+      style={{
+        display: "flex", alignItems: "center", gap: "6px",
+        padding: "8px 14px", borderRadius: "8px",
+        border: `1px solid ${isSaved ? "rgba(74,222,128,0.3)" : "rgba(60,100,255,0.25)"}`,
+        background: isSaved ? "rgba(74,222,128,0.08)" : "rgba(60,100,255,0.12)",
+        fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600,
+        color: isSaved ? "rgba(74,222,128,0.85)" : "rgba(100,140,255,0.85)",
+        cursor: saving ? "not-allowed" : "pointer",
+        opacity: saving && !isSaving ? 0.5 : 1,
+      }}
+    >
+      {isSaved ? <Check size={12} /> : <Save size={12} />}
+      {isSaved ? "Enregistré ✓" : isSaving ? "Sauvegarde…" : "Sauvegarder"}
+    </button>
+  );
+}
+
+function GroupLabel({ label }: { label: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "28px 0 14px" }}>
+      <span style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 700, letterSpacing: "0.24em", textTransform: "uppercase", color: "rgba(255,255,255,0.28)" }}>
+        {label}
+      </span>
+      <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.05)" }} />
+    </div>
+  );
+}
+
+function SectionRow({ sectionKey, editor, defaultOpen = false, saving, saved, onSave }: {
+  sectionKey: Section;
+  editor: React.ReactNode;
+  defaultOpen?: boolean;
+  saving: Section | null;
+  saved: Section | null;
+  onSave: (s: Section) => void;
+}) {
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+        <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.45)", letterSpacing: "0.08em" }}>
+          {SECTION_LABELS[sectionKey]}
+        </span>
+        <SaveBtn section={sectionKey} saving={saving} saved={saved} onSave={onSave} />
+      </div>
+      <SectionPanel title={SECTION_LABELS[sectionKey]} defaultOpen={defaultOpen}>
+        {editor}
+      </SectionPanel>
+    </div>
+  );
+}
+
 // ── Root component ─────────────────────────────────────────────────────────────
 
 export function AdminContenu() {
@@ -588,7 +653,7 @@ export function AdminContenu() {
       .then(data => { setContent(data); setLoading(false); });
   }, []);
 
-  const save = async (section: Section) => {
+  const save = useCallback(async (section: Section) => {
     setSaving(section);
     await fetch("/api/admin/site-content", {
       method: "PUT",
@@ -598,65 +663,15 @@ export function AdminContenu() {
     setSaving(null);
     setSaved(section);
     setTimeout(() => setSaved(null), 2200);
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [content]);
 
   const setSection = useCallback(<K extends Section>(section: K) => (val: SiteContentMap[K]) => {
     setContent(prev => ({ ...prev, [section]: val }));
   }, []);
 
-  function SaveBtn({ section }: { section: Section }) {
-    const isSaving = saving === section;
-    const isSaved = saved === section;
-    return (
-      <button
-        onClick={() => save(section)}
-        disabled={!!saving}
-        style={{
-          display: "flex", alignItems: "center", gap: "6px",
-          padding: "8px 14px", borderRadius: "8px",
-          border: `1px solid ${isSaved ? "rgba(74,222,128,0.3)" : "rgba(60,100,255,0.25)"}`,
-          background: isSaved ? "rgba(74,222,128,0.08)" : "rgba(60,100,255,0.12)",
-          fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600,
-          color: isSaved ? "rgba(74,222,128,0.85)" : "rgba(100,140,255,0.85)",
-          cursor: saving ? "not-allowed" : "pointer",
-          opacity: saving && !isSaving ? 0.5 : 1,
-        }}
-      >
-        {isSaved ? <Check size={12} /> : <Save size={12} />}
-        {isSaved ? "Enregistré ✓" : isSaving ? "Sauvegarde…" : "Sauvegarder"}
-      </button>
-    );
-  }
-
   if (loading) {
     return <div style={{ padding: "40px", color: "rgba(255,255,255,0.2)", fontSize: "12px" }}>Chargement…</div>;
-  }
-
-  function GroupLabel({ label }: { label: string }) {
-    return (
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "28px 0 14px" }}>
-        <span style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 700, letterSpacing: "0.24em", textTransform: "uppercase", color: "rgba(255,255,255,0.28)" }}>
-          {label}
-        </span>
-        <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.05)" }} />
-      </div>
-    );
-  }
-
-  function SectionRow({ sectionKey, editor, defaultOpen = false }: { sectionKey: Section; editor: React.ReactNode; defaultOpen?: boolean }) {
-    return (
-      <div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
-          <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.45)", letterSpacing: "0.08em" }}>
-            {SECTION_LABELS[sectionKey]}
-          </span>
-          <SaveBtn section={sectionKey} />
-        </div>
-        <SectionPanel title={SECTION_LABELS[sectionKey]} defaultOpen={defaultOpen}>
-          {editor}
-        </SectionPanel>
-      </div>
-    );
   }
 
   return (
@@ -673,17 +688,17 @@ export function AdminContenu() {
       <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "760px" }}>
 
         <GroupLabel label="Accueil" />
-        <SectionRow sectionKey="hero"  editor={<HeroEditor value={content.hero} onChange={setSection("hero")} />} defaultOpen />
-        <SectionRow sectionKey="about" editor={<AboutEditor value={content.about} onChange={setSection("about")} />} />
+        <SectionRow sectionKey="hero"  editor={<HeroEditor value={content.hero} onChange={setSection("hero")} />} defaultOpen saving={saving} saved={saved} onSave={save} />
+        <SectionRow sectionKey="about" editor={<AboutEditor value={content.about} onChange={setSection("about")} />} saving={saving} saved={saved} onSave={save} />
 
         <GroupLabel label="À propos" />
-        <SectionRow sectionKey="aboutPage" editor={<AboutPageEditor value={content.aboutPage} onChange={setSection("aboutPage")} />} />
+        <SectionRow sectionKey="aboutPage" editor={<AboutPageEditor value={content.aboutPage} onChange={setSection("aboutPage")} />} saving={saving} saved={saved} onSave={save} />
 
         <GroupLabel label="Tarifs" />
-        <SectionRow sectionKey="tarifs" editor={<TarifsEditor value={content.tarifs} onChange={setSection("tarifs")} />} />
+        <SectionRow sectionKey="tarifs" editor={<TarifsEditor value={content.tarifs} onChange={setSection("tarifs")} />} saving={saving} saved={saved} onSave={save} />
 
         <GroupLabel label="Footer" />
-        <SectionRow sectionKey="footer" editor={<FooterEditor value={content.footer} onChange={setSection("footer")} />} />
+        <SectionRow sectionKey="footer" editor={<FooterEditor value={content.footer} onChange={setSection("footer")} />} saving={saving} saved={saved} onSave={save} />
 
       </div>
     </div>
