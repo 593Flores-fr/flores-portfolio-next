@@ -12,6 +12,7 @@ import {
   ImageIcon, FileSignature, LayoutGrid,
 } from "lucide-react";
 import type { Session } from "next-auth";
+import { useIsMobile } from "@/lib/hooks";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -167,7 +168,7 @@ function TabAccueil({ user, projects, goTab }: { user: Session["user"]; projects
   ];
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "40px", alignItems: "start", height: "100%" }}>
+    <div className="espace-accueil-grid" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "40px", alignItems: "start", height: "100%" }}>
 
       {/* Colonne principale */}
       <div>
@@ -1684,6 +1685,94 @@ function TabSignalements({ onGoMessages }: { onGoMessages: () => void }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// MOBILE MORE MENU
+// ─────────────────────────────────────────────────────────────────────────────
+
+function MobileMoreMenu({
+  navItems, currentTab, onSelect, active,
+}: {
+  navItems: { id: Tab; icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; label: string }[];
+  currentTab: Tab; onSelect: (t: Tab) => void; active: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      {open && (
+        <div
+          onClick={() => setOpen(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 59 }}
+        />
+      )}
+      {open && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 12 }}
+          style={{
+            position: "fixed", bottom: "68px", right: "8px", zIndex: 61,
+            background: "rgba(20,18,16,0.97)",
+            border: "1px solid rgba(255,255,255,0.09)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            borderRadius: "14px",
+            overflow: "hidden",
+            minWidth: "180px",
+          }}
+        >
+          {navItems.map(item => {
+            const Icon = item.icon;
+            const isActive = currentTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => { onSelect(item.id); setOpen(false); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: "12px",
+                  width: "100%", padding: "12px 18px",
+                  background: isActive ? "rgba(255,255,255,0.04)" : "none",
+                  border: "none", borderLeft: isActive ? "2px solid rgba(255,255,255,0.3)" : "2px solid transparent",
+                  cursor: "pointer",
+                }}
+              >
+                <Icon size={14} color={isActive ? "rgba(255,255,255,0.72)" : "rgba(255,255,255,0.3)"} strokeWidth={isActive ? 2 : 1.5} />
+                <span style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: isActive ? 600 : 400, color: isActive ? "rgba(255,255,255,0.82)" : "rgba(255,255,255,0.4)" }}>
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </motion.div>
+      )}
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          flex: 1, display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center", gap: "3px",
+          background: "none", border: "none", cursor: "pointer",
+          borderTop: active || open ? "2px solid rgba(255,255,255,0.35)" : "2px solid transparent",
+          transition: "border-color 0.15s",
+        }}
+      >
+        <ChevronUp
+          size={16}
+          color={active || open ? "rgba(255,255,255,0.78)" : "rgba(255,255,255,0.22)"}
+          strokeWidth={active || open ? 2 : 1.5}
+        />
+        <span style={{
+          fontFamily: "var(--font-poppins)",
+          fontSize: "8px", fontWeight: active || open ? 600 : 400,
+          letterSpacing: "0.5px",
+          color: active || open ? "rgba(255,255,255,0.72)" : "rgba(255,255,255,0.22)",
+        }}>
+          Plus
+        </span>
+      </button>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ROOT COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1691,6 +1780,7 @@ export function EspaceClient({ user, isAdmin = false }: { user: Session["user"];
   const [tab, setTab] = useState<Tab>("accueil");
   const [projects, setProjects] = useState<Project[]>([]);
   const [msgPrefill, setMsgPrefill] = useState("");
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     safeFetch<Project[]>("/api/projects", []).then(setProjects);
@@ -1712,10 +1802,13 @@ export function EspaceClient({ user, isAdmin = false }: { user: Session["user"];
     { id: "parametres",   icon: Settings,          label: "Paramètres"        },
   ];
 
+  // 5 onglets principaux visibles en permanence dans la barre mobile
+  const mobileNavPrimary = navItems.slice(0, 5);
+
   return (
     <div style={{ height: "100dvh", overflow: "hidden", background: "#0e0c0a", display: "flex", flexDirection: "column", fontFamily: "var(--font-poppins)" }}>
       {/* Top bar */}
-      <header style={{ position: "sticky", top: 0, zIndex: 50, borderBottom: "1px solid rgba(255,255,255,0.05)", background: "rgba(14,12,10,0.96)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", padding: "0 6vw", height: "56px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <header style={{ position: "sticky", top: 0, zIndex: 50, borderBottom: "1px solid rgba(255,255,255,0.05)", background: "rgba(14,12,10,0.96)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", padding: "0 4vw", height: "56px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <Avatar name={user?.name} image={user?.image} size={28} />
           <div>
@@ -1724,8 +1817,10 @@ export function EspaceClient({ user, isAdmin = false }: { user: Session["user"];
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <Link href="/" className="vto-cta-link" style={{ fontSize: "9px", letterSpacing: "2px" }}>← Retour au site</Link>
-          {isAdmin && (
+          {!isMobile && (
+            <Link href="/" className="vto-cta-link" style={{ fontSize: "9px", letterSpacing: "2px" }}>← Retour au site</Link>
+          )}
+          {isAdmin && !isMobile && (
             <Link href="/admin" style={{ display: "flex", alignItems: "center", gap: "6px", border: "1px solid rgba(255,255,255,0.08)", padding: "5px 12px", fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", textDecoration: "none", transition: "border-color 0.2s" }}>
               <Shield size={11} /> Admin
             </Link>
@@ -1738,8 +1833,8 @@ export function EspaceClient({ user, isAdmin = false }: { user: Session["user"];
 
       {/* Body */}
       <div style={{ flex: 1, display: "flex", width: "100%", overflow: "hidden" }}>
-        {/* Sidebar */}
-        <aside style={{ width: "220px", flexShrink: 0, paddingTop: "32px", paddingRight: "12px", paddingLeft: "24px", borderRight: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column" }}>
+        {/* Sidebar — masquée sur mobile via CSS */}
+        <aside className="espace-sidebar" style={{ width: "220px", flexShrink: 0, paddingTop: "32px", paddingRight: "12px", paddingLeft: "24px", borderRight: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column" }}>
           <nav style={{ display: "flex", flexDirection: "column", gap: "2px", flex: 1 }}>
             {navItems.map(item => <NavItem key={item.id} icon={item.icon} label={item.label} active={tab === item.id} onClick={() => setTab(item.id)} />)}
           </nav>
@@ -1754,7 +1849,14 @@ export function EspaceClient({ user, isAdmin = false }: { user: Session["user"];
         </aside>
 
         {/* Main content */}
-        <main style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: tab === "kanban" ? "20px 24px 0 28px" : "36px 48px 48px 40px", display: "flex", flexDirection: "column" }}>
+        <main style={{
+          flex: 1, minWidth: 0, overflowY: "auto",
+          padding: tab === "kanban"
+            ? (isMobile ? "16px 16px 0" : "20px 24px 0 28px")
+            : (isMobile ? "20px 16px 16px" : "36px 48px 48px 40px"),
+          display: "flex", flexDirection: "column",
+          paddingBottom: isMobile ? "72px" : undefined,
+        }}>
           <AnimatePresence mode="wait">
             <motion.div
               key={tab}
@@ -1776,6 +1878,58 @@ export function EspaceClient({ user, isAdmin = false }: { user: Session["user"];
           </AnimatePresence>
         </main>
       </div>
+
+      {/* ── Barre de navigation mobile (bottom tab bar) ── */}
+      {isMobile && (
+        <nav style={{
+          position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 60,
+          height: "60px",
+          background: "rgba(14,12,10,0.97)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderTop: "1px solid rgba(255,255,255,0.07)",
+          display: "flex", alignItems: "stretch",
+        }}>
+          {mobileNavPrimary.map(item => {
+            const Icon = item.icon;
+            const active = tab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setTab(item.id)}
+                style={{
+                  flex: 1, display: "flex", flexDirection: "column",
+                  alignItems: "center", justifyContent: "center", gap: "3px",
+                  background: "none", border: "none", cursor: "pointer",
+                  borderTop: active ? "2px solid rgba(255,255,255,0.35)" : "2px solid transparent",
+                  transition: "border-color 0.15s",
+                }}
+              >
+                <Icon
+                  size={16}
+                  color={active ? "rgba(255,255,255,0.78)" : "rgba(255,255,255,0.22)"}
+                  strokeWidth={active ? 2 : 1.5}
+                />
+                <span style={{
+                  fontFamily: "var(--font-poppins)",
+                  fontSize: "8px", fontWeight: active ? 600 : 400,
+                  letterSpacing: "0.5px",
+                  color: active ? "rgba(255,255,255,0.72)" : "rgba(255,255,255,0.22)",
+                }}>
+                  {item.label.split(" ")[0]}
+                </span>
+              </button>
+            );
+          })}
+          {/* Bouton "Plus" pour accéder aux autres onglets */}
+          <MobileMoreMenu
+            navItems={navItems.slice(5)}
+            currentTab={tab}
+            onSelect={t => setTab(t)}
+            active={navItems.slice(5).some(i => i.id === tab)}
+          />
+        </nav>
+      )}
     </div>
   );
 }

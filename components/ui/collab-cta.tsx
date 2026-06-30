@@ -71,10 +71,10 @@ export function CollabCTA({
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: "linear-gradient(to right, transparent, rgba(92,92,245,0.55) 30%, rgba(92,92,245,0.55) 70%, transparent)" }} />
 
       {/* Contenu */}
-      <div style={{ position: "relative", zIndex: 1, padding: "64px 60px 52px" }}>
+      <div className="collab-cta-content" style={{ position: "relative", zIndex: 1, padding: "64px 60px 52px" }}>
 
         {/* Label + titre */}
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "32px", flexWrap: "wrap", marginBottom: "52px" }}>
+        <div className="collab-cta-header" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "32px", flexWrap: "wrap", marginBottom: "52px" }}>
           <div>
             <div style={{ display: "inline-flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: "rgba(92,92,245,0.8)", boxShadow: "0 0 10px rgba(92,92,245,0.6)", flexShrink: 0, display: "inline-block" }} />

@@ -105,6 +105,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
             <motion.h1
               initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+              className="pd-title"
               style={{
                 fontFamily: "var(--font-six-caps)", fontSize: "clamp(5rem,14vw,14rem)",
                 fontWeight: 400, lineHeight: 0.88, letterSpacing: "0.04em",
@@ -141,7 +142,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
       <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "100px 6vw 160px" }}>
 
         {/* Overview — description + meta */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: "80px", marginBottom: "120px", alignItems: "start" }}>
+        <div className="pd-overview" style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: "80px", marginBottom: "120px", alignItems: "start" }}>
 
           {/* Left: full description */}
           <motion.div
@@ -158,6 +159,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
           {/* Right: meta card */}
           <motion.div
             variants={fadeUp} custom={1} initial="hidden" whileInView="show" viewport={{ once: true }}
+            className="pd-meta"
             style={{
               padding: "28px", borderRadius: "20px",
               border: `1px solid rgba(${accentRgb},0.12)`,
@@ -210,7 +212,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
             <p style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.25em", color: `rgba(${accentRgb},0.6)`, marginBottom: "24px" }}>
               Enjeu & Brief
             </p>
-            <div style={{ padding: "48px", borderRadius: "20px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", position: "relative", overflow: "hidden" }}>
+            <div className="pd-challenge" style={{ padding: "48px", borderRadius: "20px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", position: "relative", overflow: "hidden" }}>
               <div style={{ position: "absolute", top: 0, left: 0, width: "4px", height: "100%", background: `rgba(${accentRgb},0.6)`, borderRadius: "4px 0 0 4px" }} />
               <p style={{ fontFamily: "var(--font-poppins)", fontSize: "18px", fontWeight: 300, color: "rgba(255,255,255,0.6)", lineHeight: 1.85, margin: 0, fontStyle: "italic", whiteSpace: "pre-line" }}>
                 &ldquo;{project.challenge}&rdquo;
@@ -225,7 +227,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
             <p style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.25em", color: `rgba(${accentRgb},0.6)`, marginBottom: "28px" }}>
               Visuels
             </p>
-            <div style={{ display: "grid", gridTemplateColumns: images.length === 1 ? "1fr" : images.length === 2 ? "1fr 1fr" : "repeat(auto-fit, minmax(340px, 1fr))", gap: "16px" }}>
+            <div className="pd-gallery" style={{ display: "grid", gridTemplateColumns: images.length === 1 ? "1fr" : images.length === 2 ? "1fr 1fr" : "repeat(auto-fit, minmax(340px, 1fr))", gap: "16px" }}>
               {images.map((src, i) => (
                 <motion.div
                   key={i}

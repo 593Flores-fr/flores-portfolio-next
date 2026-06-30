@@ -63,7 +63,7 @@ export function HeroHome({ content }: { content?: HeroContent }) {
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(14,12,10,1) 0%, transparent 28%)" }} />
 
       {/* ── Contenu ── */}
-      <div style={{
+      <div className="hero-layout" style={{
         position: "relative", zIndex: 5,
         height: "100%",
         display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -127,7 +127,7 @@ export function HeroHome({ content }: { content?: HeroContent }) {
               paddingLeft: "16px",
             }}
           >
-            <p style={{
+            <p className="hero-description" style={{
               fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 400,
               color: "rgba(255,255,255,0.68)", lineHeight: 1.85, margin: 0,
               whiteSpace: "nowrap",
@@ -142,6 +142,7 @@ export function HeroHome({ content }: { content?: HeroContent }) {
           initial={{ opacity: 0, x: 16 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5, duration: 0.65, ease }}
+          className="hero-ctas-right"
           style={{ display: "flex", flexDirection: "column", gap: "22px", alignItems: "flex-end", flexShrink: 0 }}
         >
           <Link href="/portfolio" className="vto-cta-link vto-cta-link--accent">

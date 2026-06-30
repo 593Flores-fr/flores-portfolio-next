@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { CardStack, type CardStackItem } from "./card-stack";
 import Link from "next/link";
+import { useIsMobile } from "@/lib/hooks";
 
 const FALLBACK: CardStackItem[] = [
   { id: "yevta",      title: "Yevta",        tag: "Direction artistique · 2024", description: "Identité visuelle complète pour un artiste musical émergent. Covers, charte graphique et assets de communication.", imageSrc: "/images/01hero.jpg",         href: "/portfolio/yevta" },
@@ -16,6 +17,7 @@ const FALLBACK: CardStackItem[] = [
 
 export function PortfolioSection({ projects }: { projects?: CardStackItem[] }) {
   const items = projects && projects.length > 0 ? projects : FALLBACK;
+  const isMobile = useIsMobile();
 
   return (
     <section id="portfolio" style={{ background: "#0e0c0a", padding: "120px 0 140px", overflow: "hidden", position: "relative" }}>
@@ -53,13 +55,13 @@ export function PortfolioSection({ projects }: { projects?: CardStackItem[] }) {
         >
           <CardStack
             items={items}
-            cardWidth={500}
-            cardHeight={340}
-            overlap={0.45}
-            spreadDeg={44}
+            cardWidth={isMobile ? Math.min(320, typeof window !== "undefined" ? window.innerWidth - 48 : 320) : 500}
+            cardHeight={isMobile ? 240 : 340}
+            overlap={isMobile ? 0.35 : 0.45}
+            spreadDeg={isMobile ? 28 : 44}
             activeLiftPx={28}
             activeScale={1.04}
-            inactiveScale={0.93}
+            inactiveScale={isMobile ? 0.88 : 0.93}
             autoAdvance={false}
             showDots={true}
             loop={true}

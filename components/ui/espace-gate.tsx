@@ -35,7 +35,7 @@ export function EspaceGate() {
       </div>
 
       {/* Content */}
-      <div style={{
+      <div className="espace-gate-content" style={{
         flex: 1,
         display: "flex",
         alignItems: "center",
@@ -83,7 +83,7 @@ export function EspaceGate() {
         </div>
 
         {/* ── Droite — Auth panel ── */}
-        <div style={{ flex: "0 0 340px", width: "340px", maxWidth: "100%" }}>
+        <div className="espace-gate-auth" style={{ flex: "0 0 340px", width: "340px", maxWidth: "100%" }}>
           <AuthPanel />
         </div>
       </div>

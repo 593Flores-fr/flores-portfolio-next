@@ -18,7 +18,7 @@ export function Footer({ content = SITE_DEFAULTS.footer }: { content?: SiteConte
 
   return (
     <footer style={{ background: "#0e0c0a", borderTop: "1px solid rgba(255,255,255,0.04)", fontFamily: "var(--font-poppins)" }}>
-      <div style={{
+      <div className="footer-inner" style={{
         maxWidth: "1500px", margin: "0 auto", padding: "0 4vw",
         height: "44px", display: "flex", alignItems: "center",
         justifyContent: "space-between", gap: "20px",
@@ -30,10 +30,10 @@ export function Footer({ content = SITE_DEFAULTS.footer }: { content?: SiteConte
         </p>
 
         {/* Nav links — centre */}
-        <nav style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+        <nav className="footer-nav" style={{ display: "flex", alignItems: "center", gap: "20px" }}>
           {navLinks.map((l, i) => (
             <span key={l.label} style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-              {i > 0 && <span style={{ width: "1px", height: "8px", background: "rgba(255,255,255,0.08)", display: "block" }} />}
+              {i > 0 && <span className="footer-sep" style={{ width: "1px", height: "8px", background: "rgba(255,255,255,0.08)", display: "block" }} />}
               <Link
                 href={l.href}
                 style={{
@@ -53,7 +53,7 @@ export function Footer({ content = SITE_DEFAULTS.footer }: { content?: SiteConte
         </nav>
 
         {/* Mention légale */}
-        <p className="vto-label" style={{ fontSize: "8px", letterSpacing: "3px", color: "rgba(255,255,255,0.18)", margin: 0, whiteSpace: "nowrap" }}>
+        <p className="vto-label hide-mobile" style={{ fontSize: "8px", letterSpacing: "3px", color: "rgba(255,255,255,0.18)", margin: 0, whiteSpace: "nowrap" }}>
           {content.legalNote}
         </p>
 

@@ -389,3 +389,95 @@ html, body {
   color: rgba(255,255,255,0.75) !important;
 }
 
+/* ══════════════════════════════════════════════════
+   RESPONSIVE — mobile first overrides (≤ 768px)
+   Inline styles need !important to be overridden.
+   Desktop (≥ 769px) is completely unchanged.
+   ══════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+  /* ── Navbar ── */
+  .navbar-links   { display: none !important; }
+  .navbar-cta     { display: none !important; }
+  .navbar-hamburger { display: flex !important; }
+
+  .navbar-mobile-menu {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 198 !important;
+    background: rgba(14,12,10,0.97) !important;
+    backdrop-filter: blur(24px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 36px !important;
+  }
+
+  /* ── Hero ── */
+  .hero-layout {
+    flex-direction: column !important;
+    justify-content: flex-end !important;
+    align-items: flex-start !important;
+    padding-top: 80px !important;
+    gap: 24px !important;
+  }
+  .hero-description { white-space: normal !important; }
+  .hero-ctas-right  { align-items: flex-start !important; flex-direction: row !important; gap: 32px !important; }
+
+  /* ── Footer ── */
+  .footer-inner {
+    height: auto !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    padding: 16px 5vw !important;
+    text-align: center !important;
+  }
+  .footer-nav {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 10px 16px !important;
+  }
+  .footer-nav .footer-sep { display: none !important; }
+
+  /* ── EspaceTeaser ── */
+  .espace-teaser-grid   { grid-template-columns: 1fr !important; gap: 40px !important; }
+  .espace-teaser-sticky { position: static !important; }
+
+  /* ── CollabCTA ── */
+  .collab-cta-content  { padding: 36px 20px 28px !important; }
+  .collab-cta-header   { flex-direction: column !important; align-items: flex-start !important; gap: 20px !important; }
+
+  /* ── ContactSection ── */
+  .contact-flex { gap: 40px !important; }
+
+  /* ── EspaceGate ── */
+  .espace-gate-content { gap: 40px !important; padding: 0 5vw 40px !important; }
+  .espace-gate-auth    { flex: 0 0 auto !important; width: 100% !important; }
+
+  /* ── PortfolioDetail ── */
+  .pd-overview  { grid-template-columns: 1fr !important; gap: 40px !important; }
+  .pd-meta      { position: static !important; }
+  .pd-title     { font-size: clamp(2.8rem, 13vw, 4.5rem) !important; }
+  .pd-challenge { padding: 24px !important; }
+  .pd-gallery   { grid-template-columns: 1fr !important; }
+
+  /* ── EspaceClient sidebar + accueil grid ── */
+  .espace-sidebar        { display: none !important; }
+  .espace-accueil-grid   { grid-template-columns: 1fr !important; }
+
+  /* ── About page ── */
+  .about-hero-grid { grid-template-rows: auto 56vw; }
+  .about-editorial-text { padding: 48px 5vw !important; }
+
+  /* ── General ── */
+  .hide-mobile { display: none !important; }
+}
+
+@media (min-width: 769px) {
+  .navbar-hamburger    { display: none !important; }
+  .navbar-mobile-menu  { display: none !important; }
+  .show-mobile-only    { display: none !important; }
+}
+

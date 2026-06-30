@@ -19,7 +19,7 @@ export function ContactSection({ discordUrl = "" }: { discordUrl?: string }) {
       <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "700px", height: "350px", background: "radial-gradient(ellipse, rgba(92,92,245,0.05) 0%, transparent 70%)", pointerEvents: "none" }} />
 
       <div style={{ maxWidth: "1500px", margin: "0 auto", padding: "0 4vw" }}>
-        <div style={{ display: "flex", gap: "80px", alignItems: "flex-start", flexWrap: "wrap" }}>
+        <div className="contact-flex" style={{ display: "flex", gap: "80px", alignItems: "flex-start", flexWrap: "wrap" }}>
 
           {/* ── Gauche ── */}
           <div style={{ flex: "1 1 400px", minWidth: 0 }}>

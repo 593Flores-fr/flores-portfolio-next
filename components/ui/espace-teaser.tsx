@@ -32,13 +32,14 @@ export function EspaceTeaser() {
       <div style={{ maxWidth: "1500px", margin: "0 auto", padding: "0 4vw" }}>
 
         {/* Layout : pitch gauche + 3 cards droite */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "80px", alignItems: "start" }}>
+        <div className="espace-teaser-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "80px", alignItems: "start" }}>
 
           {/* Pitch */}
           <motion.div
             initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-60px" }}
             transition={{ duration: 0.7, ease }}
+            className="espace-teaser-sticky"
             style={{ position: "sticky", top: "100px" }}
           >
             {/* Badge */}
