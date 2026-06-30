@@ -173,13 +173,13 @@ export default function PortfolioDetail({ project }: { project: Project }) {
               project.tag ? { label: "Type", value: project.tag } : null,
             ].filter(Boolean).map((row, i) => (
               <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "12px 0", borderBottom: i < 3 ? "1px solid rgba(255,255,255,0.05)" : "none", gap: "16px" }}>
-                <span style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,255,255,0.22)", flexShrink: 0 }}>{row!.label}</span>
+                <span style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,255,255,0.45)", flexShrink: 0 }}>{row!.label}</span>
                 <span style={{ fontSize: "12px", fontWeight: 400, color: "rgba(255,255,255,0.62)", textAlign: "right", lineHeight: 1.5 }}>{row!.value}</span>
               </div>
             ))}
             {tools.length > 0 && (
               <div style={{ paddingTop: "16px" }}>
-                <span style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,255,255,0.22)", display: "block", marginBottom: "10px" }}>Outils</span>
+                <span style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,255,255,0.45)", display: "block", marginBottom: "10px" }}>Outils</span>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
                   {tools.map(t => (
                     <span key={t} style={{ fontSize: "10px", padding: "3px 10px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.45)" }}>{t}</span>

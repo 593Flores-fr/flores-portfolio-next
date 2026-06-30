@@ -6,22 +6,23 @@ function isAdmin(email?: string | null) {
   return email === process.env.ADMIN_EMAIL;
 }
 
+const fullInclude = {
+  user: { select: { id: true, name: true, email: true, image: true } },
+  review: true,
+  columns: {
+    orderBy: { order: "asc" as const },
+    include: { tasks: { orderBy: { order: "asc" as const } } },
+  },
+  deliverables: { orderBy: { createdAt: "desc" as const } },
+  moodboard: { orderBy: { createdAt: "asc" as const } },
+};
+
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!isAdmin(session?.user?.email)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
-  const project = await prisma.project.findUnique({
-    where: { id },
-    include: {
-      user: { select: { id: true, name: true, email: true, image: true } },
-      review: true,
-      columns: {
-        orderBy: { order: "asc" },
-        include: { tasks: { orderBy: { order: "asc" } } },
-      },
-    },
-  });
+  const project = await prisma.project.findUnique({ where: { id }, include: fullInclude });
   if (!project) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
   return NextResponse.json(project);
 }
@@ -52,7 +53,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     await prisma.project.update({ where: { id }, data });
   }
 
-  // Auto-create default kanban columns when becoming active or forced via initColumns
   if (data.status === "active" || body.initColumns === true) {
     const existingCols = await prisma.kanbanColumn.count({ where: { projectId: id } });
     if (existingCols === 0) {
@@ -65,17 +65,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
   }
 
-  // Return full project with relations
-  const fullProject = await prisma.project.findUnique({
-    where: { id },
-    include: {
-      user: { select: { id: true, name: true, email: true, image: true } },
-      review: true,
-      columns: {
-        orderBy: { order: "asc" },
-        include: { tasks: { orderBy: { order: "asc" } } },
-      },
-    },
-  });
+  const fullProject = await prisma.project.findUnique({ where: { id }, include: fullInclude });
   return NextResponse.json(fullProject);
 }

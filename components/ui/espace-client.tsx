@@ -1,20 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { signOut } from "next-auth/react";
+import { signOut, signIn } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
   Send, LogOut, MessageSquare, Kanban, Star,
   Settings, PlusCircle, ChevronRight, CheckCircle2,
   Circle, Clock, AlertCircle, Eye, EyeOff, Paperclip, FolderOpen,
-  LayoutDashboard, ChevronDown, ChevronUp, Pin, Shield, Bug,
+  LayoutDashboard, ChevronDown, ChevronUp, Pin, Shield, Bug, Camera,
+  ImageIcon, FileSignature, LayoutGrid,
 } from "lucide-react";
 import type { Session } from "next-auth";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type Tab = "accueil" | "messages" | "devis" | "projets" | "kanban" | "avis" | "signalements" | "parametres";
+type Tab = "accueil" | "messages" | "devis" | "projets" | "kanban" | "galerie" | "moodboard" | "avis" | "signalements" | "parametres";
 
 type Report = {
   id: string; title: string; type: string; description: string;
@@ -25,15 +26,30 @@ type Msg = { id: string; content: string; fromAdmin: boolean; createdAt: string 
 
 type KanbanTask = { id: string; title: string; description?: string | null; done: boolean; order: number; category?: string | null; priority?: string };
 type KanbanColumn = { id: string; title: string; order: number; tasks: KanbanTask[] };
+type Deliverable = { id: string; fileName: string; fileUrl: string; fileType: string; version: number; notes?: string | null; status: string; approvedAt?: string | null; createdAt: string };
+type MoodboardItem = { id: string; imageUrl: string; note?: string | null; fromAdmin: boolean; createdAt: string };
 type Project = {
   id: string; title: string; description?: string | null; type: string;
   budget?: string | null; status: string; paid: boolean; kanbanVisible: boolean;
-  adminNotes?: string | null; projectSummary?: string | null; createdAt: string;
+  adminNotes?: string | null; projectSummary?: string | null; signedAt?: string | null; createdAt: string;
   columns: KanbanColumn[];
-  review?: { status: string } | null;
+  deliverables: Deliverable[];
+  review?: { status: string; content?: string | null; rating?: number } | null;
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+async function safeFetch<T>(url: string, fallback: T): Promise<T> {
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return fallback;
+    const text = await r.text();
+    if (!text) return fallback;
+    return JSON.parse(text) as T;
+  } catch {
+    return fallback;
+  }
+}
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -88,11 +104,18 @@ function NavItem({ active, icon: Icon, label, badge, onClick }: {
   label: string; badge?: number; onClick: () => void;
 }) {
   return (
-    <button onClick={onClick} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", borderRadius: "10px", border: "none", background: active ? "rgba(60,100,255,0.15)" : "transparent", cursor: "pointer", width: "100%", textAlign: "left", fontFamily: "var(--font-poppins)", transition: "background 0.15s" }}>
-      <Icon size={15} color={active ? "rgba(100,140,255,0.9)" : "rgba(255,255,255,0.3)"} strokeWidth={active ? 2 : 1.5} />
-      <span style={{ fontSize: "12px", fontWeight: active ? 600 : 400, color: active ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.35)", flex: 1 }}>{label}</span>
+    <button onClick={onClick} style={{
+      display: "flex", alignItems: "center", gap: "10px",
+      padding: "9px 16px", border: "none",
+      borderLeft: active ? "2px solid rgba(255,255,255,0.35)" : "2px solid transparent",
+      background: active ? "rgba(255,255,255,0.03)" : "transparent",
+      cursor: "pointer", width: "100%", textAlign: "left",
+      fontFamily: "var(--font-poppins)", transition: "all 0.15s ease",
+    }}>
+      <Icon size={14} color={active ? "rgba(255,255,255,0.72)" : "rgba(255,255,255,0.22)"} strokeWidth={active ? 2 : 1.5} />
+      <span style={{ fontSize: "11px", fontWeight: active ? 600 : 400, color: active ? "rgba(255,255,255,0.82)" : "rgba(255,255,255,0.3)", flex: 1, letterSpacing: "0.2px" }}>{label}</span>
       {badge != null && badge > 0 && (
-        <span style={{ fontSize: "10px", fontWeight: 600, color: "rgba(96,165,250,0.9)", background: "rgba(96,165,250,0.12)", border: "1px solid rgba(96,165,250,0.2)", borderRadius: "999px", padding: "1px 6px" }}>{badge}</span>
+        <span style={{ fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.07)", padding: "1px 6px", letterSpacing: "1px" }}>{badge}</span>
       )}
     </button>
   );
@@ -110,132 +133,203 @@ function SectionSub({ children }: { children: React.ReactNode }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const NAV_DESCRIPTIONS: Record<Tab, { icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; desc: string }> = {
-  accueil:      { icon: LayoutDashboard, desc: "Vue d'ensemble de votre espace" },
-  devis:        { icon: PlusCircle,      desc: "Soumettre une nouvelle demande de devis" },
-  projets:      { icon: FolderOpen,      desc: "Consulter vos projets et leur statut" },
-  kanban:       { icon: Kanban,          desc: "Suivre l'avancement en temps réel" },
-  messages:     { icon: MessageSquare,   desc: "Échanger directement avec Flores" },
-  signalements: { icon: Bug,             desc: "Signaler un bug ou faire une suggestion" },
-  avis:         { icon: Star,            desc: "Laisser un avis sur votre projet" },
-  parametres:   { icon: Settings,        desc: "Gérer votre profil et mot de passe" },
+  accueil:      { icon: LayoutDashboard,  desc: "Vue d'ensemble de votre espace" },
+  devis:        { icon: PlusCircle,       desc: "Soumettre une nouvelle demande de devis" },
+  projets:      { icon: FolderOpen,       desc: "Consulter vos projets et leur statut" },
+  kanban:       { icon: Kanban,           desc: "Suivre l'avancement en temps réel" },
+  galerie:      { icon: ImageIcon,        desc: "Livrables et approbations en ligne" },
+  moodboard:    { icon: LayoutGrid,       desc: "Références et inspirations partagées" },
+  messages:     { icon: MessageSquare,    desc: "Échanger directement avec Flores" },
+  signalements: { icon: Bug,              desc: "Signaler un bug ou faire une suggestion" },
+  avis:         { icon: Star,             desc: "Laisser un avis sur votre projet" },
+  parametres:   { icon: Settings,         desc: "Gérer votre profil et mot de passe" },
 };
 
 function TabAccueil({ user, projects, goTab }: { user: Session["user"]; projects: Project[]; goTab: (t: Tab) => void }) {
   const activeProjects = projects.filter(p => p.status !== "rejected");
+  const inProgress = projects.filter(p => p.status === "active");
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+  const hasProjects = activeProjects.length > 0;
 
   const stats = [
     { label: "Projets", value: projects.length, color: "rgba(96,165,250,0.8)", tab: "projets" as Tab },
-    { label: "En cours", value: projects.filter(p => p.status === "active").length, color: "rgba(74,222,128,0.8)", tab: "kanban" as Tab },
+    { label: "En cours", value: inProgress.length, color: "rgba(74,222,128,0.8)", tab: "kanban" as Tab },
     { label: "Messages", value: 0, color: "rgba(167,139,250,0.8)", tab: "messages" as Tab },
   ];
 
+  const quickActions: { id: Tab; icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; label: string; desc: string }[] = [
+    { id: "devis",    icon: PlusCircle,    label: "Demande de devis",  desc: "Soumettre un nouveau brief" },
+    { id: "projets",  icon: FolderOpen,    label: "Mes projets",       desc: "Suivre vos demandes" },
+    { id: "galerie",  icon: ImageIcon,     label: "Livrables",         desc: "Approuver les fichiers" },
+    { id: "kanban",   icon: Kanban,        label: "Kanban",            desc: "Avancement en temps réel" },
+    { id: "messages", icon: MessageSquare, label: "Messagerie",        desc: "Écrire à Flores" },
+  ];
+
   return (
-    <div>
-      {/* Welcome */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} style={{ marginBottom: "32px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "20px" }}>
-          <Avatar name={user?.name} image={user?.image} size={48} />
-          <div>
-            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 300, color: "rgba(255,255,255,0.3)", margin: "0 0 3px", textTransform: "uppercase", letterSpacing: "0.12em" }}>{greeting}</p>
-            <h1 style={{ fontFamily: "var(--font-poppins)", fontSize: "22px", fontWeight: 800, color: "white", letterSpacing: "-0.02em", margin: 0 }}>
-              {user?.name ?? "Bienvenue"} 👋
-            </h1>
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "40px", alignItems: "start", height: "100%" }}>
+
+      {/* Colonne principale */}
+      <div>
+        {/* Greeting */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} style={{ marginBottom: "32px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "24px" }}>
+            <Avatar name={user?.name} image={user?.image} size={52} />
+            <div>
+              <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.28)", margin: "0 0 3px", textTransform: "uppercase", letterSpacing: "0.14em" }}>{greeting}</p>
+              <h1 style={{ fontFamily: "var(--font-poppins)", fontSize: "24px", fontWeight: 800, color: "white", letterSpacing: "-0.02em", margin: 0 }}>
+                {user?.name ?? "Bienvenue"} 👋
+              </h1>
+            </div>
           </div>
-        </div>
 
-        {/* Stats row */}
-        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-          {stats.map((s, i) => (
-            <motion.button
-              key={s.label}
-              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.07, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              onClick={() => goTab(s.tab)}
-              style={{
-                flex: "1 1 100px", padding: "16px 18px", borderRadius: "14px",
-                border: `1px solid ${s.color.replace("0.8)", "0.2)")}`,
-                background: s.color.replace("0.8)", "0.07)"),
-                cursor: "pointer", textAlign: "left", fontFamily: "var(--font-poppins)",
-                transition: "border-color 0.2s",
-              }}
-            >
-              <p style={{ fontSize: "28px", fontWeight: 800, color: "white", margin: "0 0 4px", letterSpacing: "-0.03em" }}>{s.value}</p>
-              <p style={{ fontSize: "11px", fontWeight: 400, color: s.color, margin: 0, letterSpacing: "0.02em" }}>{s.label}</p>
-            </motion.button>
-          ))}
-        </div>
-      </motion.div>
+          {/* Stats */}
+          <div style={{ display: "flex", gap: "10px" }}>
+            {stats.map((s, i) => (
+              <motion.button
+                key={s.label}
+                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.07, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                onClick={() => goTab(s.tab)}
+                style={{
+                  flex: "1 1 80px", padding: "16px 18px",
+                  border: `1px solid ${s.color.replace("0.8)", "0.18)")}`,
+                  background: s.color.replace("0.8)", "0.06)"),
+                  cursor: "pointer", textAlign: "left", fontFamily: "var(--font-poppins)",
+                  transition: "border-color 0.2s",
+                }}
+              >
+                <p style={{ fontSize: "28px", fontWeight: 800, color: "white", margin: "0 0 4px", letterSpacing: "-0.03em" }}>{s.value}</p>
+                <p style={{ fontSize: "10px", fontWeight: 500, color: s.color, margin: 0, letterSpacing: "0.08em", textTransform: "uppercase" }}>{s.label}</p>
+              </motion.button>
+            ))}
+          </div>
+        </motion.div>
 
-      {/* Active projects */}
-      {activeProjects.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.45 }} style={{ marginBottom: "32px" }}>
-          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.2em", color: "rgba(255,255,255,0.2)", margin: "0 0 12px" }}>Vos projets</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {activeProjects.slice(0, 3).map((p, i) => {
-              const total = p.columns.flatMap(c => c.tasks).length;
-              const done = p.columns.flatMap(c => c.tasks).filter(t => t.done).length;
-              const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-              return (
-                <motion.div
-                  key={p.id}
-                  initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.25 + i * 0.06 }}
-                  onClick={() => goTab("projets")}
-                  style={{ padding: "14px 16px", borderRadius: "13px", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)", cursor: "pointer", transition: "border-color 0.15s" }}
-                >
-                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", marginBottom: "8px" }}>
-                    <p style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.85)", margin: 0 }}>{p.title}</p>
-                    <span style={{ fontSize: "9px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: STATUS_COLOR[p.status], background: STATUS_BG[p.status], padding: "3px 8px", borderRadius: "999px", flexShrink: 0 }}>
-                      {STATUS_LABEL[p.status] ?? p.status}
-                    </span>
-                  </div>
-                  {total > 0 && (
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <div style={{ flex: 1, height: "3px", borderRadius: "99px", background: "rgba(255,255,255,0.06)" }}>
-                        <div style={{ height: "100%", width: `${pct}%`, borderRadius: "99px", background: pct === 100 ? "rgba(74,222,128,0.6)" : "rgba(100,140,255,0.6)", transition: "width 0.4s" }} />
+        {/* Projets actifs */}
+        {hasProjects ? (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18, duration: 0.45 }} style={{ marginBottom: "32px" }}>
+            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.2em", color: "rgba(255,255,255,0.2)", margin: "0 0 12px" }}>Vos projets</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {activeProjects.slice(0, 3).map((p, i) => {
+                const total = p.columns.flatMap(c => c.tasks).length;
+                const done = p.columns.flatMap(c => c.tasks).filter(t => t.done).length;
+                const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+                return (
+                  <motion.div
+                    key={p.id}
+                    initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.22 + i * 0.06 }}
+                    onClick={() => goTab("projets")}
+                    style={{ padding: "16px 18px", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)", cursor: "pointer", transition: "border-color 0.15s" }}
+                  >
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", marginBottom: total > 0 ? "12px" : 0 }}>
+                      <div>
+                        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.85)", margin: "0 0 3px" }}>{p.title}</p>
+                        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.28)", margin: 0 }}>{p.type}</p>
                       </div>
-                      <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", color: "rgba(255,255,255,0.3)", flexShrink: 0 }}>{pct}%</span>
+                      <span style={{ fontSize: "8px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: STATUS_COLOR[p.status], background: STATUS_BG[p.status], padding: "3px 10px", flexShrink: 0 }}>
+                        {STATUS_LABEL[p.status] ?? p.status}
+                      </span>
                     </div>
-                  )}
+                    {total > 0 && (
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <div style={{ flex: 1, height: "2px", background: "rgba(255,255,255,0.06)" }}>
+                          <div style={{ height: "100%", width: `${pct}%`, background: pct === 100 ? "rgba(74,222,128,0.6)" : "rgba(92,92,245,0.6)", transition: "width 0.4s" }} />
+                        </div>
+                        <span style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", color: "rgba(255,255,255,0.28)", flexShrink: 0 }}>{pct}%</span>
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        ) : (
+          /* Onboarding — pas encore de projet */
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18, duration: 0.45 }} style={{ marginBottom: "28px" }}>
+            <div style={{ border: "1px solid rgba(92,92,245,0.2)", background: "rgba(92,92,245,0.04)", padding: "32px 36px", marginBottom: "12px", position: "relative", overflow: "hidden" }}>
+              <span aria-hidden style={{ position: "absolute", bottom: "-16px", right: "24px", fontFamily: "var(--font-six-caps), sans-serif", fontSize: "clamp(5rem, 8vw, 9rem)", color: "rgba(92,92,245,0.06)", lineHeight: 1, pointerEvents: "none", userSelect: "none", letterSpacing: "4px" }}>DÉMARRER</span>
+              <p style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.2em", color: "rgba(92,92,245,0.55)", margin: "0 0 10px" }}>Pas encore de projet</p>
+              <h2 style={{ fontFamily: "var(--font-poppins)", fontSize: "18px", fontWeight: 800, color: "white", letterSpacing: "-0.02em", margin: "0 0 10px" }}>Prêt à démarrer ?</h2>
+              <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 300, color: "rgba(255,255,255,0.42)", lineHeight: 1.8, margin: "0 0 22px", maxWidth: "400px" }}>
+                Décrivez votre projet en quelques minutes. Flores vous répond sous 24h avec une proposition personnalisée.
+              </p>
+              <button onClick={() => goTab("devis")} style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "10px 20px", border: "1px solid rgba(92,92,245,0.5)", background: "rgba(92,92,245,0.15)", fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.85)", cursor: "pointer", letterSpacing: "0.5px", transition: "background 0.2s" }}>
+                <PlusCircle size={13} /> Faire une demande de devis
+              </button>
+            </div>
+
+            {/* 3 étapes */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "1px", background: "rgba(255,255,255,0.05)" }}>
+              {[
+                { num: "01", title: "Brief",   desc: "Décrivez votre projet via le formulaire." },
+                { num: "02", title: "Devis",   desc: "Recevez une proposition sous 24h." },
+                { num: "03", title: "Suivi",   desc: "Avancement visible ici, en temps réel." },
+              ].map((step, i) => (
+                <motion.div key={step.num} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 + i * 0.07 }} style={{ background: "#0e0c0a", padding: "20px 22px" }}>
+                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "8px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.2em", color: "rgba(92,92,245,0.45)", margin: "0 0 8px" }}>{step.num}</p>
+                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 700, color: "rgba(255,255,255,0.75)", margin: "0 0 5px" }}>{step.title}</p>
+                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.28)", margin: 0, lineHeight: 1.6 }}>{step.desc}</p>
                 </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Colonne droite */}
+      <motion.div initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25, duration: 0.45 }} style={{ display: "flex", flexDirection: "column", gap: "12px", position: "sticky", top: "36px" }}>
+
+        {/* Accès rapide */}
+        <div style={{ border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.01)" }}>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "8px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.2em", color: "rgba(255,255,255,0.18)", margin: 0, padding: "16px 18px 12px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>Accès rapide</p>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {quickActions.map((a, i) => {
+              const Icon = a.icon;
+              return (
+                <button key={a.id} onClick={() => goTab(a.id)} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 18px", background: "transparent", border: "none", borderBottom: i < quickActions.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none", cursor: "pointer", textAlign: "left", transition: "background 0.15s" }}>
+                  <Icon size={13} color="rgba(255,255,255,0.25)" strokeWidth={1.5} />
+                  <div>
+                    <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.65)", margin: 0 }}>{a.label}</p>
+                    <p style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 300, color: "rgba(255,255,255,0.22)", margin: 0, lineHeight: 1.4 }}>{a.desc}</p>
+                  </div>
+                  <ChevronRight size={12} color="rgba(255,255,255,0.12)" style={{ marginLeft: "auto", flexShrink: 0 }} />
+                </button>
               );
             })}
           </div>
-        </motion.div>
-      )}
+        </div>
 
-      {/* Quick navigation */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35, duration: 0.45 }}>
-        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.2em", color: "rgba(255,255,255,0.2)", margin: "0 0 12px" }}>Navigation rapide</p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-          {(["devis", "projets", "kanban", "messages", "avis", "parametres"] as Tab[]).map((t, i) => {
+        {/* Contact rapide */}
+        <div style={{ border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.01)", padding: "20px 18px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+            <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "rgba(74,222,128,0.7)", flexShrink: 0 }} />
+            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, color: "rgba(255,255,255,0.55)", margin: 0 }}>Flores est disponible</p>
+          </div>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.28)", lineHeight: 1.7, margin: "0 0 14px" }}>
+            Une question sur votre projet ? Réponse généralement sous quelques heures.
+          </p>
+          <button onClick={() => goTab("messages")} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", padding: "9px 14px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, color: "rgba(255,255,255,0.55)", cursor: "pointer", letterSpacing: "0.5px", transition: "background 0.2s" }}>
+            <MessageSquare size={12} /> Ouvrir la messagerie
+          </button>
+        </div>
+
+        {/* Autres sections */}
+        <div style={{ border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.01)" }}>
+          {(["signalements", "avis", "parametres"] as Tab[]).map((t, i) => {
             const item = NAV_DESCRIPTIONS[t];
             const Icon = item.icon;
             return (
-              <motion.button
-                key={t}
-                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.38 + i * 0.05 }}
-                onClick={() => goTab(t)}
-                style={{
-                  display: "flex", alignItems: "center", gap: "10px", padding: "12px 14px", borderRadius: "12px",
-                  border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)",
-                  cursor: "pointer", textAlign: "left", fontFamily: "var(--font-poppins)", transition: "border-color 0.15s",
-                }}
-              >
-                <Icon size={15} color="rgba(255,255,255,0.3)" strokeWidth={1.5} />
-                <div>
-                  <p style={{ fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.7)", margin: 0 }}>
-                    {t.charAt(0).toUpperCase() + t.slice(1)}
-                  </p>
-                  <p style={{ fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.25)", margin: 0, lineHeight: 1.4 }}>{item.desc}</p>
-                </div>
-              </motion.button>
+              <button key={t} onClick={() => goTab(t)} style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "11px 18px", background: "transparent", border: "none", borderBottom: i < 2 ? "1px solid rgba(255,255,255,0.04)" : "none", cursor: "pointer", textAlign: "left" }}>
+                <Icon size={12} color="rgba(255,255,255,0.2)" strokeWidth={1.5} />
+                <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 500, color: "rgba(255,255,255,0.38)", margin: 0 }}>{t.charAt(0).toUpperCase() + t.slice(1)}</p>
+                <ChevronRight size={11} color="rgba(255,255,255,0.1)" style={{ marginLeft: "auto" }} />
+              </button>
             );
           })}
         </div>
+
       </motion.div>
     </div>
   );
@@ -293,13 +387,13 @@ function TabMessages({ user }: { user: Session["user"] }) {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/messages").then(r => r.json()),
-      fetch("/api/projects").then(r => r.json()),
-      fetch("/api/reports").then(r => r.json()),
+      safeFetch<Msg[]>("/api/messages", []),
+      safeFetch<Project[]>("/api/projects", []),
+      safeFetch<Report[]>("/api/reports", []),
     ]).then(([msgs, projs, reps]) => {
-      setMessages(Array.isArray(msgs) ? msgs : []);
-      setProjects((Array.isArray(projs) ? projs as Project[] : []).filter(p => p.status !== "rejected"));
-      setReports(Array.isArray(reps) ? reps : []);
+      setMessages(msgs);
+      setProjects(projs.filter(p => p.status !== "rejected"));
+      setReports(reps);
       setLoading(false);
     });
   }, []);
@@ -362,16 +456,16 @@ function TabMessages({ user }: { user: Session["user"] }) {
             ))}
             <div style={{ display: "flex", alignItems: "center", gap: "10px", margin: "4px 0" }}>
               <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.05)" }} />
-              <span style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(255,255,255,0.15)" }}>Échanges</span>
+              <span style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(255,255,255,0.38)" }}>Échanges</span>
               <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.05)" }} />
             </div>
           </div>
         )}
 
         {loading ? (
-          <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px", textAlign: "center", padding: "40px 0" }}>Chargement...</div>
+          <div style={{ color: "rgba(255,255,255,0.40)", fontSize: "12px", textAlign: "center", padding: "40px 0" }}>Chargement...</div>
         ) : messages.length === 0 ? (
-          <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px", textAlign: "center", padding: "48px 0" }}>Aucun message — envoyez le premier !</div>
+          <div style={{ color: "rgba(255,255,255,0.40)", fontSize: "12px", textAlign: "center", padding: "48px 0" }}>Aucun message — envoyez le premier !</div>
         ) : (
           <AnimatePresence initial={false}>
             {messages.map(msg => (
@@ -388,7 +482,7 @@ function TabMessages({ user }: { user: Session["user"] }) {
                   <div style={{ padding: "10px 14px", whiteSpace: "pre-wrap", wordBreak: "break-word", borderRadius: msg.fromAdmin ? "14px 14px 14px 3px" : "14px 14px 3px 14px", background: msg.fromAdmin ? "rgba(60,100,255,0.12)" : "rgba(255,255,255,0.07)", border: `1px solid ${msg.fromAdmin ? "rgba(60,100,255,0.2)" : "rgba(255,255,255,0.07)"}`, fontSize: "13px", fontWeight: 300, color: "rgba(255,255,255,0.82)", lineHeight: 1.65 }}>
                     {msg.content}
                   </div>
-                  <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.18)", margin: "4px 4px 0", textAlign: msg.fromAdmin ? "left" : "right" }}>{fmtDate(msg.createdAt)}</p>
+                  <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.38)", margin: "4px 4px 0", textAlign: msg.fromAdmin ? "left" : "right" }}>{fmtDate(msg.createdAt)}</p>
                 </div>
               </motion.div>
             ))}
@@ -447,25 +541,117 @@ const PROJECT_TYPES = [{ value: "web", label: "Site web / Application" }, { valu
 const DEADLINES = [{ value: "urgent", label: "Urgent (moins de 2 semaines)" }, { value: "1mois", label: "1 mois environ" }, { value: "3mois", label: "2 à 3 mois" }, { value: "flexible", label: "Flexible / Pas de contrainte" }];
 const CONTACTS = [{ value: "email", label: "E-mail" }, { value: "discord", label: "Discord" }, { value: "phone", label: "Téléphone" }, { value: "other", label: "Peu importe" }];
 
+function CustomSelect({ value, onChange, options, placeholder = "Sélectionner…" }: {
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = options.find(o => o.value === value);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  const base: React.CSSProperties = { fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 300 };
+
+  return (
+    <div ref={ref} style={{ position: "relative", width: "100%" }}>
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        style={{
+          ...base, width: "100%", padding: "10px 13px",
+          border: `1px solid ${open ? "rgba(92,92,245,0.35)" : "rgba(255,255,255,0.08)"}`,
+          background: "rgba(255,255,255,0.04)",
+          color: selected ? "white" : "rgba(255,255,255,0.25)",
+          outline: "none", textAlign: "left", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          transition: "border-color 0.15s",
+        }}
+      >
+        <span>{selected ? selected.label : placeholder}</span>
+        <ChevronDown
+          size={13}
+          color="rgba(255,255,255,0.25)"
+          style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s", flexShrink: 0 }}
+        />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.15 }}
+            style={{
+              position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 100,
+              background: "#161414", border: "1px solid rgba(255,255,255,0.1)",
+              overflow: "hidden",
+            }}
+          >
+            {options.map((o, i) => (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => { onChange(o.value); setOpen(false); }}
+                style={{
+                  ...base, width: "100%", padding: "10px 14px",
+                  background: value === o.value ? "rgba(92,92,245,0.1)" : "transparent",
+                  border: "none",
+                  borderBottom: i < options.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none",
+                  borderLeft: value === o.value ? "2px solid rgba(92,92,245,0.55)" : "2px solid transparent",
+                  color: value === o.value ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.5)",
+                  fontWeight: value === o.value ? 500 : 300,
+                  textAlign: "left", cursor: "pointer", transition: "background 0.1s",
+                  display: "block",
+                }}
+              >
+                {o.label}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+const BRIEF_TYPES = [
+  { value: "web", label: "Site web / App", desc: "Vitrine, portfolio, SaaS, outil sur mesure", emoji: "🌐" },
+  { value: "visual", label: "Création visuelle", desc: "Logo, charte, cover art, print, réseaux sociaux", emoji: "🎨" },
+  { value: "other", label: "Autre / Je ne sais pas encore", desc: "Décrivez votre projet librement", emoji: "💡" },
+];
+
 function TabDevis({ onSuccess }: { onSuccess: () => void }) {
-  const [title, setTitle] = useState("");
+  const [step, setStep] = useState(1);
+  const TOTAL = 3;
+
   const [type, setType] = useState("");
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+
   const [budget, setBudget] = useState(500);
   const [deadline, setDeadline] = useState("");
   const [references, setReferences] = useState("");
+
   const [contact, setContact] = useState("");
   const [phone, setPhone] = useState("");
   const [callSlots, setCallSlots] = useState<string[]>([]);
   const [briefFile, setBriefFile] = useState("");
   const [briefFileName, setBriefFileName] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
 
-  const inputStyle: React.CSSProperties = { width: "100%", padding: "10px 13px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "white", fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 300, outline: "none", boxSizing: "border-box" };
-  const labelStyle: React.CSSProperties = { display: "block", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 500, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "6px" };
-  const selectStyle: React.CSSProperties = { ...inputStyle, appearance: "none", cursor: "pointer", colorScheme: "dark", backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,0.2)'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 13px center" };
+  const inputStyle: React.CSSProperties = { width: "100%", padding: "10px 13px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "white", fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 300, outline: "none", boxSizing: "border-box" as const };
+  const labelStyle: React.CSSProperties = { display: "block", fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.28)", textTransform: "uppercase" as const, letterSpacing: "0.18em", marginBottom: "8px" };
 
   const toggleSlot = (v: string) => setCallSlots(prev => prev.includes(v) ? prev.filter(s => s !== v) : [...prev, v]);
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -478,82 +664,289 @@ function TabDevis({ onSuccess }: { onSuccess: () => void }) {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setError(""); setLoading(true);
-    const res = await fetch("/api/projects", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title, type, description, budget: budget >= 5000 ? "5000€+" : `${budget}€`, deadline, references, contact, phone: contact === "phone" ? phone : undefined, callSlots: contact === "phone" && callSlots.length > 0 ? callSlots : undefined, briefFile: briefFile || undefined, briefFileName: briefFileName || undefined }) });
+  const canNext = step === 1 ? (!!type && !!title.trim()) : step === 2 ? !!deadline : true;
+
+  const handleSubmit = async () => {
+    setError(""); setLoading(true);
+    const res = await fetch("/api/projects", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: title.trim(), type, description: description.trim() || null, budget: budget >= 5000 ? "5000€+" : `${budget}€`, deadline, references: references.trim() || null, contact: contact || null, phone: contact === "phone" ? phone : undefined, callSlots: contact === "phone" && callSlots.length > 0 ? callSlots : undefined, briefFile: briefFile || undefined, briefFileName: briefFileName || undefined }),
+    });
     setLoading(false);
     if (!res.ok) { const d = await res.json(); setError(d.error ?? "Erreur"); return; }
     setDone(true);
-    setTimeout(onSuccess, 1800);
+    setTimeout(onSuccess, 2000);
   };
 
   if (done) return (
-    <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, gap: "16px" }}>
-      <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <CheckCircle2 size={24} color="rgba(74,222,128,0.8)" />
+    <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, gap: "16px", textAlign: "center" }}>
+      <div style={{ width: 60, height: 60, background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <CheckCircle2 size={26} color="rgba(74,222,128,0.8)" />
       </div>
-      <p style={{ fontFamily: "var(--font-poppins)", fontSize: "15px", fontWeight: 600, color: "white", margin: 0 }}>Demande envoyée !</p>
-      <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.3)", margin: 0 }}>Je vous réponds sous 24h.</p>
+      <div>
+        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "18px", fontWeight: 800, color: "white", margin: "0 0 6px", letterSpacing: "-0.02em" }}>Demande envoyée.</p>
+        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.3)", margin: 0 }}>Flores vous répond sous 24h avec une proposition.</p>
+      </div>
     </motion.div>
   );
 
   return (
-    <div>
-      <SectionTitle>Demande de devis</SectionTitle>
-      <SectionSub>Décrivez votre projet — je vous réponds sous 24h avec une estimation.</SectionSub>
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "18px", maxWidth: "560px" }}>
-        <div><label style={labelStyle}>Intitulé du projet *</label><input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="ex : Site vitrine restaurant" required style={inputStyle} /></div>
-        <div>
-          <label style={labelStyle}>Type de prestation *</label>
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            {PROJECT_TYPES.map(pt => (
-              <label key={pt.value} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 13px", borderRadius: "10px", border: `1px solid ${type === pt.value ? "rgba(60,100,255,0.35)" : "rgba(255,255,255,0.07)"}`, background: type === pt.value ? "rgba(60,100,255,0.1)" : "rgba(255,255,255,0.02)", cursor: "pointer", transition: "all 0.15s" }}>
-                <input type="radio" name="type" value={pt.value} checked={type === pt.value} onChange={() => setType(pt.value)} style={{ display: "none" }} />
-                <div style={{ width: 14, height: 14, borderRadius: "50%", border: `1.5px solid ${type === pt.value ? "rgba(100,140,255,0.8)" : "rgba(255,255,255,0.2)"}`, background: type === pt.value ? "rgba(100,140,255,0.25)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  {type === pt.value && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "rgba(100,140,255,0.9)" }} />}
-                </div>
-                <span style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 400, color: "rgba(255,255,255,0.65)" }}>{pt.label}</span>
-              </label>
-            ))}
-          </div>
+    <div style={{ maxWidth: "620px" }}>
+      {/* Header + progress */}
+      <div style={{ marginBottom: "32px" }}>
+        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.2em", color: "rgba(92,92,245,0.55)", margin: "0 0 8px" }}>
+          Étape {step} sur {TOTAL}
+        </p>
+        <div style={{ display: "flex", gap: "4px", marginBottom: "20px" }}>
+          {Array.from({ length: TOTAL }, (_, i) => (
+            <div key={i} style={{ flex: 1, height: "2px", background: i < step ? "rgba(92,92,245,0.7)" : "rgba(255,255,255,0.08)", transition: "background 0.3s" }} />
+          ))}
         </div>
-        <div><label style={labelStyle}>Description du projet</label><textarea value={description} onChange={e => setDescription(e.target.value)} rows={4} placeholder="Décrivez votre projet, vos objectifs, votre cible…" style={{ ...inputStyle, resize: "vertical", minHeight: "90px" }} /></div>
-        <div><label style={labelStyle}>Budget envisagé</label><div style={{ padding: "12px 14px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)" }}><BudgetSlider value={budget} onChange={setBudget} /></div></div>
-        <div><label style={labelStyle}>Délai souhaité</label><select value={deadline} onChange={e => setDeadline(e.target.value)} style={selectStyle}><option value="">Sélectionner…</option>{DEADLINES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}</select></div>
-        <div><label style={labelStyle}>Références / Inspirations</label><textarea value={references} onChange={e => setReferences(e.target.value)} rows={2} placeholder="Liens, noms de sites, styles appréciés…" style={{ ...inputStyle, resize: "vertical", minHeight: "60px" }} /></div>
-        <div>
-          <label style={labelStyle}>Brief / Document (optionnel)</label>
-          <label style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 13px", borderRadius: "10px", border: `1px solid ${briefFileName ? "rgba(100,140,255,0.25)" : "rgba(255,255,255,0.07)"}`, background: briefFileName ? "rgba(60,100,255,0.06)" : "rgba(255,255,255,0.02)", cursor: "pointer" }}>
-            <Paperclip size={14} color={briefFileName ? "rgba(100,140,255,0.6)" : "rgba(255,255,255,0.25)"} />
-            <span style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", color: briefFileName ? "rgba(100,140,255,0.8)" : "rgba(255,255,255,0.25)", flex: 1 }}>{briefFileName || "Joindre un PDF ou Word (max 5 Mo)"}</span>
-            {briefFileName && <button type="button" onClick={e => { e.preventDefault(); setBriefFile(""); setBriefFileName(""); }} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.2)", padding: 0, display: "flex" }}>✕</button>}
-            <input type="file" accept=".pdf,.docx,.doc" onChange={handleFile} style={{ display: "none" }} />
-          </label>
-        </div>
-        <div>
-          <label style={labelStyle}>Moyen de contact préféré</label>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-            {CONTACTS.map(c => (
-              <button key={c.value} type="button" onClick={() => setContact(c.value)} style={{ padding: "8px 14px", borderRadius: "9px", cursor: "pointer", border: `1px solid ${contact === c.value ? "rgba(60,100,255,0.35)" : "rgba(255,255,255,0.07)"}`, background: contact === c.value ? "rgba(60,100,255,0.12)" : "rgba(255,255,255,0.02)", fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: contact === c.value ? 600 : 400, color: contact === c.value ? "rgba(100,140,255,0.9)" : "rgba(255,255,255,0.4)", transition: "all 0.15s" }}>{c.label}</button>
-            ))}
-          </div>
-          {contact === "phone" && (
-            <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "10px" }}>
-              <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Votre numéro de téléphone" style={inputStyle} />
+        <h2 style={{ fontFamily: "var(--font-six-caps), sans-serif", fontSize: "clamp(1.8rem, 3vw, 2.8rem)", fontWeight: 400, letterSpacing: "4px", textTransform: "uppercase", color: "white", margin: 0, lineHeight: 1 }}>
+          {step === 1 ? "Votre projet." : step === 2 ? "Budget & délai." : "Pour vous contacter."}
+        </h2>
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div key={step} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.2 }}>
+
+          {step === 1 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
               <div>
-                <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 500, color: "rgba(255,255,255,0.25)", textTransform: "uppercase", letterSpacing: "0.15em", margin: "0 0 6px" }}>Créneaux disponibles (optionnel)</p>
-                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                  {TIME_SLOTS.map(s => <button key={s.value} type="button" onClick={() => toggleSlot(s.value)} style={{ padding: "6px 12px", borderRadius: "8px", cursor: "pointer", border: `1px solid ${callSlots.includes(s.value) ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.06)"}`, background: callSlots.includes(s.value) ? "rgba(74,222,128,0.08)" : "rgba(255,255,255,0.02)", fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: callSlots.includes(s.value) ? 600 : 400, color: callSlots.includes(s.value) ? "rgba(74,222,128,0.85)" : "rgba(255,255,255,0.35)", transition: "all 0.15s" }}>{s.label}</button>)}
+                <p style={labelStyle}>Quel type de projet ?</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  {BRIEF_TYPES.map(t => (
+                    <button key={t.value} type="button" onClick={() => setType(t.value)} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "14px 16px", border: `1px solid ${type === t.value ? "rgba(92,92,245,0.45)" : "rgba(255,255,255,0.07)"}`, background: type === t.value ? "rgba(92,92,245,0.08)" : "rgba(255,255,255,0.02)", cursor: "pointer", textAlign: "left", transition: "all 0.15s", borderLeft: type === t.value ? "3px solid rgba(92,92,245,0.6)" : "3px solid transparent" }}>
+                      <span style={{ fontSize: "20px", flexShrink: 0 }}>{t.emoji}</span>
+                      <div>
+                        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600, color: type === t.value ? "white" : "rgba(255,255,255,0.6)", margin: "0 0 2px" }}>{t.label}</p>
+                        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.3)", margin: 0 }}>{t.desc}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p style={labelStyle}>Nommez votre projet *</p>
+                <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder={type === "web" ? "ex : Site vitrine restaurant" : type === "visual" ? "ex : Logo pour une marque de streetwear" : "ex : Refonte de mon image de marque"} style={inputStyle} />
+              </div>
+              <div>
+                <p style={labelStyle}>Décrivez-le en quelques mots</p>
+                <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} placeholder={type === "web" ? "Cible visée, fonctionnalités souhaitées, ton de la marque…" : type === "visual" ? "Univers souhaité, concurrents à éviter, valeurs de la marque…" : "Décrivez librement votre besoin, votre contexte, vos objectifs…"} style={{ ...inputStyle, resize: "vertical" as const, minHeight: "80px" }} />
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "22px" }}>
+              <div>
+                <p style={labelStyle}>Budget envisagé</p>
+                <div style={{ padding: "14px 16px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)" }}>
+                  <BudgetSlider value={budget} onChange={setBudget} />
+                </div>
+              </div>
+              <div>
+                <p style={labelStyle}>Délai souhaité *</p>
+                <CustomSelect value={deadline} onChange={setDeadline} options={DEADLINES} />
+              </div>
+              <div>
+                <p style={labelStyle}>Références ou inspirations</p>
+                <textarea value={references} onChange={e => setReferences(e.target.value)} rows={2} placeholder="Liens, noms de projets, styles qui vous parlent…" style={{ ...inputStyle, resize: "vertical" as const, minHeight: "60px" }} />
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "22px" }}>
+              <div>
+                <p style={labelStyle}>Comment préférez-vous être contacté ?</p>
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" as const }}>
+                  {CONTACTS.map(c => (
+                    <button key={c.value} type="button" onClick={() => setContact(c.value)} style={{ padding: "9px 16px", border: `1px solid ${contact === c.value ? "rgba(92,92,245,0.4)" : "rgba(255,255,255,0.07)"}`, background: contact === c.value ? "rgba(92,92,245,0.1)" : "rgba(255,255,255,0.02)", fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: contact === c.value ? 600 : 300, color: contact === c.value ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)", cursor: "pointer", transition: "all 0.15s" }}>{c.label}</button>
+                  ))}
+                </div>
+                {contact === "phone" && (
+                  <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                    <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Votre numéro" style={inputStyle} />
+                    <div>
+                      <p style={labelStyle}>Créneaux disponibles</p>
+                      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" as const }}>
+                        {TIME_SLOTS.map(s => <button key={s.value} type="button" onClick={() => toggleSlot(s.value)} style={{ padding: "7px 12px", border: `1px solid ${callSlots.includes(s.value) ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.06)"}`, background: callSlots.includes(s.value) ? "rgba(74,222,128,0.07)" : "transparent", fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: callSlots.includes(s.value) ? 600 : 300, color: callSlots.includes(s.value) ? "rgba(74,222,128,0.85)" : "rgba(255,255,255,0.35)", cursor: "pointer", transition: "all 0.15s" }}>{s.label}</button>)}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div>
+                <p style={labelStyle}>Brief ou document (optionnel)</p>
+                <label style={{ display: "flex", alignItems: "center", gap: "10px", padding: "11px 14px", border: `1px solid ${briefFileName ? "rgba(92,92,245,0.25)" : "rgba(255,255,255,0.07)"}`, background: briefFileName ? "rgba(92,92,245,0.06)" : "rgba(255,255,255,0.02)", cursor: "pointer" }}>
+                  <Paperclip size={13} color={briefFileName ? "rgba(92,92,245,0.6)" : "rgba(255,255,255,0.25)"} />
+                  <span style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", color: briefFileName ? "rgba(92,92,245,0.8)" : "rgba(255,255,255,0.25)", flex: 1 }}>{briefFileName || "PDF, Word ou image (max 5 Mo)"}</span>
+                  {briefFileName && <button type="button" onClick={e => { e.preventDefault(); setBriefFile(""); setBriefFileName(""); }} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.2)", padding: 0 }}>✕</button>}
+                  <input type="file" accept=".pdf,.docx,.doc,.jpg,.jpeg,.png" onChange={handleFile} style={{ display: "none" }} />
+                </label>
+              </div>
+
+              {/* Recap */}
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "20px" }}>
+                <p style={labelStyle}>Récapitulatif</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  {[
+                    { k: "Type", v: BRIEF_TYPES.find(t => t.value === type)?.label ?? type },
+                    { k: "Projet", v: title },
+                    { k: "Budget", v: budget >= 5000 ? "5 000€+" : `${budget}€` },
+                    { k: "Délai", v: DEADLINES.find(d => d.value === deadline)?.label ?? deadline },
+                  ].map(row => (
+                    <div key={row.k} style={{ display: "flex", gap: "12px", fontFamily: "var(--font-poppins)", fontSize: "11px" }}>
+                      <span style={{ color: "rgba(255,255,255,0.28)", minWidth: "60px", fontWeight: 500, textTransform: "uppercase" as const, letterSpacing: "0.08em", fontSize: "9px", paddingTop: "1px" }}>{row.k}</span>
+                      <span style={{ color: "rgba(255,255,255,0.65)" }}>{row.v}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           )}
+
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Error */}
+      {error && (
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 13px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.18)", marginTop: "16px" }}>
+          <AlertCircle size={12} color="rgba(239,68,68,0.8)" />
+          <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(239,68,68,0.85)" }}>{error}</span>
         </div>
-        {error && <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 13px", borderRadius: "10px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}><AlertCircle size={13} color="rgba(239,68,68,0.8)" /><span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(239,68,68,0.85)" }}>{error}</span></div>}
-        <button type="submit" disabled={loading || !title || !type} style={{ padding: "11px 24px", borderRadius: "10px", border: "1px solid rgba(60,100,255,0.35)", background: "rgba(60,100,255,0.65)", fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600, color: "white", cursor: (loading || !title || !type) ? "not-allowed" : "pointer", opacity: (loading || !title || !type) ? 0.5 : 1, transition: "opacity 0.2s", alignSelf: "flex-start" }}>
-          {loading ? "Envoi…" : "Envoyer ma demande →"}
-        </button>
-      </form>
+      )}
+
+      {/* Nav */}
+      <div style={{ display: "flex", gap: "10px", marginTop: "28px", alignItems: "center" }}>
+        {step > 1 && (
+          <button type="button" onClick={() => setStep(s => s - 1)} style={{ padding: "10px 18px", border: "1px solid rgba(255,255,255,0.1)", background: "transparent", fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 500, color: "rgba(255,255,255,0.4)", cursor: "pointer" }}>
+            ← Retour
+          </button>
+        )}
+        {step < TOTAL ? (
+          <button type="button" onClick={() => setStep(s => s + 1)} disabled={!canNext} style={{ padding: "10px 22px", border: `1px solid ${canNext ? "rgba(92,92,245,0.5)" : "rgba(255,255,255,0.08)"}`, background: canNext ? "rgba(92,92,245,0.2)" : "rgba(255,255,255,0.03)", fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: canNext ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.2)", cursor: canNext ? "pointer" : "not-allowed", transition: "all 0.2s" }}>
+            Continuer →
+          </button>
+        ) : (
+          <button type="button" onClick={handleSubmit} disabled={loading} style={{ padding: "11px 24px", border: "1px solid rgba(92,92,245,0.5)", background: "rgba(92,92,245,0.65)", fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600, color: "white", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.6 : 1, transition: "opacity 0.2s" }}>
+            {loading ? "Envoi…" : "Envoyer ma demande →"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TAB: GALERIE DE LIVRABLES
+// ─────────────────────────────────────────────────────────────────────────────
+
+const DLVR_STATUS_LABEL: Record<string, string> = { pending: "En attente", approved: "Approuvé", revision: "Révision demandée" };
+const DLVR_STATUS_COLOR: Record<string, string> = { pending: "rgba(250,204,21,0.8)", approved: "rgba(74,222,128,0.8)", revision: "rgba(248,113,113,0.8)" };
+const DLVR_STATUS_BG: Record<string, string> = { pending: "rgba(250,204,21,0.07)", approved: "rgba(74,222,128,0.07)", revision: "rgba(248,113,113,0.07)" };
+
+function TabGalerie({ projects }: { projects: Project[] }) {
+  const [selectedProject, setSelectedProject] = useState<string>(projects[0]?.id ?? "");
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
+  const [localProjects, setLocalProjects] = useState(projects);
+
+  useEffect(() => { setLocalProjects(projects); }, [projects]);
+
+  const project = localProjects.find(p => p.id === selectedProject);
+  const deliverables = project?.deliverables ?? [];
+
+  const handleAction = async (deliverableId: string, action: "approve" | "request_revision") => {
+    setLoadingAction(deliverableId);
+    const res = await fetch(`/api/deliverables/${deliverableId}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }),
+    });
+    setLoadingAction(null);
+    if (!res.ok) return;
+    const updated = await res.json();
+    setLocalProjects(prev => prev.map(p => ({
+      ...p,
+      deliverables: p.deliverables.map(d => d.id === deliverableId ? { ...d, status: updated.status, approvedAt: updated.approvedAt } : d),
+    })));
+  };
+
+  const activeProjects = localProjects.filter(p => p.status !== "rejected" && p.deliverables.length > 0);
+
+  if (activeProjects.length === 0) {
+    return (
+      <div>
+        <SectionTitle>Livrables</SectionTitle>
+        <SectionSub>Retrouvez ici tous les fichiers que je vous envoie, avec possibilité d'approbation en ligne.</SectionSub>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", paddingTop: "60px", gap: "12px", opacity: 0.4 }}>
+          <FolderOpen size={36} color="rgba(255,255,255,0.3)" strokeWidth={1} />
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.3)", margin: 0 }}>Aucun livrable pour l'instant</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <SectionTitle>Livrables</SectionTitle>
+      <SectionSub>Approuvez ou demandez une révision directement ici. Chaque approbation est horodatée.</SectionSub>
+
+      {activeProjects.length > 1 && (
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "24px" }}>
+          {activeProjects.map(p => (
+            <button key={p.id} onClick={() => setSelectedProject(p.id)} style={{ padding: "7px 14px", border: `1px solid ${selectedProject === p.id ? "rgba(92,92,245,0.45)" : "rgba(255,255,255,0.07)"}`, background: selectedProject === p.id ? "rgba(92,92,245,0.1)" : "transparent", fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: selectedProject === p.id ? 600 : 300, color: selectedProject === p.id ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.35)", cursor: "pointer" }}>
+              {p.title}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        {deliverables.length === 0 ? (
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.25)", margin: 0 }}>Aucun livrable pour ce projet.</p>
+        ) : deliverables.map(d => (
+          <motion.div key={d.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} style={{ display: "flex", alignItems: "center", gap: "16px", padding: "16px 18px", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)" }}>
+            {/* Preview ou icône */}
+            <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+              {d.fileType === "image" ? (
+                <img src={d.fileUrl} alt={d.fileName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                <span style={{ fontSize: "18px" }}>{d.fileType === "pdf" ? "📄" : "📦"}</span>
+              )}
+            </div>
+
+            {/* Infos */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.82)", margin: "0 0 3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.fileName}</p>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.1em", color: DLVR_STATUS_COLOR[d.status] ?? "rgba(255,255,255,0.4)", background: DLVR_STATUS_BG[d.status] ?? "transparent", padding: "2px 8px" }}>
+                  {DLVR_STATUS_LABEL[d.status] ?? d.status}
+                </span>
+                {d.version > 1 && <span style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", color: "rgba(255,255,255,0.25)" }}>v{d.version}</span>}
+                {d.approvedAt && <span style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", color: "rgba(74,222,128,0.5)" }}>✓ {fmtDateShort(d.approvedAt)}</span>}
+              </div>
+              {d.notes && <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.3)", margin: "4px 0 0", lineHeight: 1.5 }}>{d.notes}</p>}
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+              <a href={d.fileUrl} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: "5px", padding: "6px 12px", border: "1px solid rgba(255,255,255,0.1)", background: "transparent", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 500, color: "rgba(255,255,255,0.45)", textDecoration: "none" }}>
+                <Eye size={11} /> Voir
+              </a>
+              {d.status === "pending" && (
+                <>
+                  <button onClick={() => handleAction(d.id, "approve")} disabled={loadingAction === d.id} style={{ display: "flex", alignItems: "center", gap: "5px", padding: "6px 12px", border: "1px solid rgba(74,222,128,0.3)", background: "rgba(74,222,128,0.07)", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, color: "rgba(74,222,128,0.85)", cursor: "pointer", transition: "all 0.15s" }}>
+                    <CheckCircle2 size={11} /> Approuver
+                  </button>
+                  <button onClick={() => handleAction(d.id, "request_revision")} disabled={loadingAction === d.id} style={{ padding: "6px 12px", border: "1px solid rgba(248,113,113,0.25)", background: "rgba(248,113,113,0.06)", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 500, color: "rgba(248,113,113,0.7)", cursor: "pointer" }}>
+                    Révision
+                  </button>
+                </>
+              )}
+            </div>
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -585,42 +978,80 @@ function TabProjets({ onRequestDevis, onMessage }: { onRequestDevis: () => void;
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Project | null>(null);
+  const [signing, setSigning] = useState(false);
+  const [signedNow, setSignedNow] = useState(false);
 
   useEffect(() => {
-    fetch("/api/projects").then(r => r.json()).then(data => { setProjects(data); setLoading(false); });
+    safeFetch<Project[]>("/api/projects", []).then(data => { setProjects(data); setLoading(false); });
   }, []);
 
+  const handleSign = async (projectId: string) => {
+    setSigning(true);
+    const res = await fetch(`/api/projects/${projectId}/sign`, { method: "POST" });
+    setSigning(false);
+    if (!res.ok) return;
+    const { signedAt } = await res.json();
+    setSelected(prev => prev ? { ...prev, signedAt } : prev);
+    setProjects(prev => prev.map(p => p.id === projectId ? { ...p, signedAt } : p));
+    setSignedNow(true);
+    setTimeout(() => setSignedNow(false), 3000);
+  };
+
   if (selected) return (
-    <div>
-      <button onClick={() => setSelected(null)} style={{ display: "flex", alignItems: "center", gap: "6px", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "20px", padding: 0 }}>← Retour</button>
+    <div style={{ maxWidth: "640px" }}>
+      <button onClick={() => setSelected(null)} style={{ display: "flex", alignItems: "center", gap: "6px", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "20px", padding: 0 }}>← Retour aux projets</button>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", marginBottom: "6px" }}>
         <SectionTitle>{selected.title}</SectionTitle>
-        <span style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: STATUS_COLOR[selected.status], background: STATUS_BG[selected.status], padding: "4px 10px", borderRadius: "999px", fontFamily: "var(--font-poppins)", flexShrink: 0 }}>{STATUS_LABEL[selected.status] ?? selected.status}</span>
+        <span style={{ fontSize: "9px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: STATUS_COLOR[selected.status], background: STATUS_BG[selected.status], padding: "4px 10px", fontFamily: "var(--font-poppins)", flexShrink: 0 }}>{STATUS_LABEL[selected.status] ?? selected.status}</span>
       </div>
       <SectionSub>{fmtDateShort(selected.createdAt)} · {selected.type === "web" ? "Web" : selected.type === "visual" ? "Visuel" : "Autre"}{selected.budget ? ` · ${selected.budget}` : ""}</SectionSub>
+
       {selected.description && (
-        <div style={{ padding: "14px 16px", borderRadius: "12px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: "16px" }}>
+        <div style={{ padding: "14px 16px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: "16px" }}>
           <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.45)", lineHeight: 1.7, margin: 0 }}>{selected.description}</p>
         </div>
       )}
+
       {selected.adminNotes && (
-        <div style={{ padding: "14px 16px", borderRadius: "12px", background: "rgba(60,100,255,0.05)", border: "1px solid rgba(60,100,255,0.15)", marginBottom: "16px" }}>
-          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(100,140,255,0.6)", margin: "0 0 6px" }}>Note de Flores</p>
+        <div style={{ padding: "14px 16px", background: "rgba(92,92,245,0.04)", border: "1px solid rgba(92,92,245,0.15)", marginBottom: "16px" }}>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.14em", color: "rgba(92,92,245,0.55)", margin: "0 0 6px" }}>Note de Flores</p>
           <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, margin: 0 }}>{selected.adminNotes}</p>
         </div>
       )}
+
+      {/* Signature de devis */}
+      {selected.status === "accepted" && !selected.signedAt && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ padding: "20px 22px", border: "1px solid rgba(92,92,245,0.3)", background: "rgba(92,92,245,0.05)", marginBottom: "16px" }}>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(92,92,245,0.6)", margin: "0 0 8px" }}>Devis accepté · En attente de signature</p>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.5)", lineHeight: 1.7, margin: "0 0 16px" }}>
+            Signez le devis en ligne pour valider votre commande et permettre à Flores de démarrer le projet.
+          </p>
+          <button onClick={() => handleSign(selected.id)} disabled={signing} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 20px", border: "1px solid rgba(92,92,245,0.5)", background: "rgba(92,92,245,0.18)", fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 700, color: "rgba(255,255,255,0.9)", cursor: signing ? "not-allowed" : "pointer", opacity: signing ? 0.6 : 1, transition: "all 0.2s" }}>
+            <FileSignature size={14} /> {signing ? "Signature en cours…" : "Je signe et valide ce devis"}
+          </button>
+        </motion.div>
+      )}
+
+      {(selected.signedAt || signedNow) && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "12px 16px", border: "1px solid rgba(74,222,128,0.2)", background: "rgba(74,222,128,0.05)", marginBottom: "16px" }}>
+          <CheckCircle2 size={14} color="rgba(74,222,128,0.7)" />
+          <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(74,222,128,0.7)" }}>
+            Devis signé le {fmtDateShort(selected.signedAt!)}
+          </span>
+        </motion.div>
+      )}
+
       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "8px" }}>
-        <button onClick={onMessage} style={{ display: "flex", alignItems: "center", gap: "7px", padding: "9px 14px", borderRadius: "9px", border: "1px solid rgba(60,100,255,0.25)", background: "rgba(60,100,255,0.08)", fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 500, color: "rgba(100,140,255,0.8)", cursor: "pointer" }}>
-          <MessageSquare size={13} /> Contacter l'admin
+        <button onClick={onMessage} style={{ display: "flex", alignItems: "center", gap: "7px", padding: "9px 14px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)", fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 500, color: "rgba(255,255,255,0.45)", cursor: "pointer" }}>
+          <MessageSquare size={13} /> Contacter Flores
         </button>
       </div>
-      {!selected.paid && (
-        <div style={{ marginTop: "16px", padding: "14px 16px", borderRadius: "12px", background: "rgba(250,204,21,0.04)", border: "1px solid rgba(250,204,21,0.1)" }}>
+
+      {!selected.paid && !selected.signedAt && selected.status === "pending" && (
+        <div style={{ marginTop: "16px", padding: "12px 16px", background: "rgba(250,204,21,0.03)", border: "1px solid rgba(250,204,21,0.08)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
-            <Clock size={13} color="rgba(250,204,21,0.5)" />
-            <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>
-              {selected.status === "pending" ? "En attente de réponse — je vous reviens sous 24h." : selected.status === "accepted" ? "Devis accepté — en attente de paiement pour démarrer." : "Projet en attente."}
-            </span>
+            <Clock size={12} color="rgba(250,204,21,0.45)" />
+            <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(255,255,255,0.28)" }}>En attente de réponse. Flores vous répond sous 24h.</span>
           </div>
         </div>
       )}
@@ -637,7 +1068,7 @@ function TabProjets({ onRequestDevis, onMessage }: { onRequestDevis: () => void;
       </div>
       <SectionSub>Retrouvez toutes vos demandes et leur statut.</SectionSub>
       {loading ? (
-        <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px", textAlign: "center", padding: "40px 0" }}>Chargement...</div>
+        <div style={{ color: "rgba(255,255,255,0.40)", fontSize: "12px", textAlign: "center", padding: "40px 0" }}>Chargement...</div>
       ) : projects.length === 0 ? (
         <div style={{ textAlign: "center", padding: "48px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
           <div style={{ width: 48, height: 48, borderRadius: "12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -670,7 +1101,7 @@ function TabKanban({ goMessages, setMsgPrefill }: { goMessages: () => void; setM
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/projects").then(r => r.json()).then((data: Project[]) => {
+    safeFetch<Project[]>("/api/projects", []).then(data => {
       setProjects(data);
       setLoading(false);
       const first = data.find(p => p.kanbanVisible);
@@ -696,14 +1127,14 @@ function TabKanban({ goMessages, setMsgPrefill }: { goMessages: () => void; setM
       </div>
 
       {loading ? (
-        <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px", textAlign: "center", padding: "40px 0" }}>Chargement...</div>
+        <div style={{ color: "rgba(255,255,255,0.40)", fontSize: "12px", textAlign: "center", padding: "40px 0" }}>Chargement...</div>
       ) : activeProjects.length === 0 ? (
         <div style={{ textAlign: "center", padding: "56px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: "14px" }}>
           <div style={{ width: 56, height: 56, borderRadius: "14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Kanban size={22} color="rgba(255,255,255,0.12)" />
           </div>
           <p style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.3)", margin: 0 }}>Aucun kanban disponible</p>
-          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(255,255,255,0.15)", margin: 0 }}>Le kanban apparaîtra dès que Flores l&apos;aura activé sur votre projet.</p>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(255,255,255,0.45)", margin: 0 }}>Le kanban apparaîtra dès que Flores l&apos;aura activé sur votre projet.</p>
         </div>
       ) : (
         <>
@@ -792,6 +1223,106 @@ function TabKanban({ goMessages, setMsgPrefill }: { goMessages: () => void; setM
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// TAB: MOODBOARD
+// ─────────────────────────────────────────────────────────────────────────────
+
+function TabMoodboard({ projects }: { projects: Project[] }) {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [items, setItems] = useState<MoodboardItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [lightbox, setLightbox] = useState<string | null>(null);
+
+  const withDeliverables = projects.filter(p => p.status !== "rejected");
+
+  useEffect(() => {
+    const first = withDeliverables[0]?.id ?? null;
+    if (first && !selectedId) setSelectedId(first);
+  }, [projects]);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    setLoading(true);
+    safeFetch<MoodboardItem[]>(`/api/moodboard/${selectedId}`, []).then(data => {
+      setItems(data);
+      setLoading(false);
+    });
+  }, [selectedId]);
+
+  return (
+    <div>
+      <SectionTitle>Moodboard</SectionTitle>
+      <SectionSub>Références visuelles et inspirations partagées par Flores pour votre projet.</SectionSub>
+
+      {/* Project selector */}
+      {withDeliverables.length > 1 && (
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "28px" }}>
+          {withDeliverables.map(p => (
+            <button
+              key={p.id}
+              onClick={() => setSelectedId(p.id)}
+              style={{
+                padding: "6px 16px", border: "none", cursor: "pointer",
+                fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: selectedId === p.id ? 600 : 400,
+                color: selectedId === p.id ? "white" : "rgba(255,255,255,0.35)",
+                background: selectedId === p.id ? "rgba(92,92,245,0.18)" : "rgba(255,255,255,0.03)",
+                borderBottom: selectedId === p.id ? "1px solid rgba(92,92,245,0.5)" : "1px solid transparent",
+                transition: "all 0.15s",
+              }}
+            >
+              {p.title}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div
+          onClick={() => setLightbox(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px", cursor: "zoom-out" }}
+        >
+          <img src={lightbox} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", borderRadius: "6px" }} onClick={e => e.stopPropagation()} />
+        </div>
+      )}
+
+      {loading ? (
+        <div style={{ color: "rgba(255,255,255,0.3)", fontSize: "12px", textAlign: "center", padding: "40px 0" }}>Chargement…</div>
+      ) : items.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "52px 0" }}>
+          <LayoutGrid size={26} color="rgba(255,255,255,0.08)" style={{ marginBottom: "14px" }} />
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.2)", margin: 0, lineHeight: 1.65 }}>
+            Aucune image pour l&apos;instant.<br />Flores partage ici les références de votre projet.
+          </p>
+        </div>
+      ) : (
+        <div style={{ columns: "3 180px", gap: "10px" }}>
+          {items.map(item => (
+            <div
+              key={item.id}
+              onClick={() => setLightbox(item.imageUrl)}
+              style={{ breakInside: "avoid", marginBottom: "10px", cursor: "zoom-in", position: "relative", overflow: "hidden", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
+            >
+              <img
+                src={item.imageUrl}
+                alt={item.note ?? ""}
+                style={{ width: "100%", display: "block", objectFit: "cover", transition: "transform 0.3s ease" }}
+                onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.03)")}
+                onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
+              />
+              {item.note && (
+                <div style={{ padding: "8px 10px", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>
+                  {item.note}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // TAB: AVIS
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -817,7 +1348,7 @@ function TabAvis() {
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
 
-  useEffect(() => { fetch("/api/projects").then(r => r.json()).then(data => { setProjects(data); setLoading(false); }); }, []);
+  useEffect(() => { safeFetch<Project[]>("/api/projects", []).then(data => { setProjects(data); setLoading(false); }); }, []);
 
   const reviewableProject = projects.find(p => p.review?.status === "requested");
   const submittedProjects = projects.filter(p => p.review?.status === "submitted" || p.review?.status === "approved");
@@ -831,12 +1362,12 @@ function TabAvis() {
     setDone(true);
   };
 
-  if (loading) return <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px", textAlign: "center", padding: "40px 0" }}>Chargement...</div>;
+  if (loading) return <div style={{ color: "rgba(255,255,255,0.40)", fontSize: "12px", textAlign: "center", padding: "40px 0" }}>Chargement...</div>;
 
   return (
     <div>
       <SectionTitle>Avis</SectionTitle>
-      <SectionSub>Partagez votre expérience — votre avis peut apparaître sur le portfolio.</SectionSub>
+      <SectionSub>Partagez votre expérience avec Flores.</SectionSub>
       {reviewableProject && !done && (
         <div style={{ marginBottom: "32px" }}>
           <div style={{ padding: "12px 16px", borderRadius: "10px", background: "rgba(96,165,250,0.06)", border: "1px solid rgba(96,165,250,0.15)", marginBottom: "20px" }}>
@@ -864,11 +1395,27 @@ function TabAvis() {
         <div>
           <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(255,255,255,0.2)", margin: "0 0 14px" }}>Avis soumis</p>
           {submittedProjects.map(p => (
-            <div key={p.id} style={{ padding: "14px 16px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)", marginBottom: "8px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.65)", margin: 0 }}>{p.title}</p>
-                <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", color: p.review?.status === "approved" ? "rgba(74,222,128,0.7)" : "rgba(250,204,21,0.6)" }}>{p.review?.status === "approved" ? "✓ Publié" : "En attente de validation"}</span>
+            <div key={p.id} style={{ padding: "18px 20px", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)", marginBottom: "10px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: p.review?.content ? "12px" : 0 }}>
+                <div>
+                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.65)", margin: "0 0 6px" }}>{p.title}</p>
+                  {p.review?.rating != null && (
+                    <div style={{ display: "flex", gap: "3px" }}>
+                      {[1,2,3,4,5].map(n => (
+                        <Star key={n} size={12} fill={n <= (p.review?.rating ?? 0) ? "rgba(250,204,21,0.8)" : "none"} color={n <= (p.review?.rating ?? 0) ? "rgba(250,204,21,0.8)" : "rgba(255,255,255,0.12)"} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, color: p.review?.status === "approved" ? "rgba(74,222,128,0.7)" : "rgba(250,204,21,0.6)", flexShrink: 0, marginLeft: "12px" }}>
+                  {p.review?.status === "approved" ? "✓ Validé" : "En attente"}
+                </span>
               </div>
+              {p.review?.content && (
+                <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.45)", margin: 0, lineHeight: 1.7, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "12px" }}>
+                  {p.review.content}
+                </p>
+              )}
             </div>
           ))}
         </div>
@@ -887,17 +1434,46 @@ function TabAvis() {
 // TAB: PARAMÈTRES
 // ─────────────────────────────────────────────────────────────────────────────
 
+function DiscordLogo() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ color: "rgba(173,179,255,0.9)", flexShrink: 0 }}>
+      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.014.043.031.055a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
+    </svg>
+  );
+}
+
 function TabParametres({ user }: { user: Session["user"] }) {
   const [name, setName] = useState(user?.name ?? "");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(user?.image ?? null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [showNew, setShowNew] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [discordLinked, setDiscordLinked] = useState<boolean | null>(null);
 
   const inputStyle: React.CSSProperties = { width: "100%", padding: "10px 13px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "white", fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 300, outline: "none", boxSizing: "border-box" };
   const labelStyle: React.CSSProperties = { display: "block", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 500, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "6px" };
+
+  useEffect(() => {
+    safeFetch<{ discordId?: string }>("/api/profile", {}).then(d => setDiscordLinked(!!d?.discordId));
+  }, []);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarUploading(true);
+    setError(""); setSuccess("");
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/profile/avatar", { method: "POST", body: fd });
+    setAvatarUploading(false);
+    e.target.value = "";
+    if (res.ok) { const d = await res.json(); setAvatarUrl(d.image); setSuccess("Photo de profil mise à jour."); }
+    else setError("Erreur lors de l'upload.");
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault(); setError(""); setSuccess(""); setLoading(true);
@@ -916,15 +1492,33 @@ function TabParametres({ user }: { user: Session["user"] }) {
       <SectionTitle>Paramètres</SectionTitle>
       <SectionSub>Modifiez votre profil et vos informations de connexion.</SectionSub>
       <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "20px", maxWidth: "480px" }}>
+
+        {/* Avatar + identity */}
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <Avatar name={user?.name} image={user?.image} size={52} />
+          <div style={{ position: "relative", display: "inline-block", flexShrink: 0 }}>
+            <Avatar name={user?.name} image={avatarUrl} size={56} />
+            <label style={{
+              position: "absolute", bottom: -2, right: -2,
+              width: 22, height: 22, borderRadius: "50%",
+              background: "rgba(60,100,255,0.85)", border: "2px solid #0e0c0a",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: avatarUploading ? "not-allowed" : "pointer",
+            }}>
+              <Camera size={11} color="white" />
+              <input type="file" accept="image/*,image/webp,image/avif" style={{ display: "none" }} onChange={handleAvatarUpload} disabled={avatarUploading} />
+            </label>
+          </div>
           <div>
             <p style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.75)", margin: "0 0 3px" }}>{user?.name}</p>
             <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 300, color: "rgba(255,255,255,0.25)", margin: 0 }}>{user?.email}</p>
+            {avatarUploading && <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", color: "rgba(96,165,250,0.6)", margin: "4px 0 0" }}>Upload en cours…</p>}
           </div>
         </div>
+
         <div style={{ height: "1px", background: "rgba(255,255,255,0.05)" }} />
+
         <div><label style={labelStyle}>Nom affiché</label><input type="text" value={name} onChange={e => setName(e.target.value)} style={inputStyle} /></div>
+
         <div style={{ height: "1px", background: "rgba(255,255,255,0.05)" }} />
         <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.25)", margin: "0 -4px", textTransform: "uppercase", letterSpacing: "0.14em" }}>Changer le mot de passe</p>
         <div><label style={labelStyle}>Mot de passe actuel</label><input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder="••••••••" style={inputStyle} autoComplete="current-password" /></div>
@@ -936,13 +1530,46 @@ function TabParametres({ user }: { user: Session["user"] }) {
             </button>
           </div>
         </div>
+
         {error && <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(239,68,68,0.8)", margin: 0 }}>{error}</p>}
         {success && <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(74,222,128,0.75)", margin: 0 }}>✓ {success}</p>}
         <button type="submit" disabled={loading} style={{ padding: "11px 24px", borderRadius: "10px", border: "1px solid rgba(60,100,255,0.3)", background: "rgba(60,100,255,0.6)", fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600, color: "white", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.5 : 1, alignSelf: "flex-start" }}>
           {loading ? "Enregistrement…" : "Sauvegarder"}
         </button>
       </form>
-      <div style={{ marginTop: "40px", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+
+      {/* Comptes liés */}
+      <div style={{ marginTop: "36px", paddingTop: "24px", borderTop: "1px solid rgba(255,255,255,0.05)", maxWidth: "480px" }}>
+        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, color: "rgba(255,255,255,0.2)", textTransform: "uppercase", letterSpacing: "0.18em", margin: "0 0 14px" }}>Comptes liés</p>
+        {discordLinked === null ? (
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(255,255,255,0.15)" }}>Chargement…</p>
+        ) : discordLinked ? (
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "14px 16px", borderRadius: "12px", border: "1px solid rgba(88,101,242,0.3)", background: "rgba(88,101,242,0.07)" }}>
+            <DiscordLogo />
+            <div style={{ flex: 1 }}>
+              <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "rgba(173,179,255,0.9)", margin: 0 }}>Discord</p>
+              <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 300, color: "rgba(173,179,255,0.45)", margin: "2px 0 0" }}>Compte associé</p>
+            </div>
+            <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 700, color: "rgba(74,222,128,0.75)", letterSpacing: "0.1em" }}>✓ LIÉ</span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => signIn("discord", { callbackUrl: "/espace" })}
+            style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "14px 16px", borderRadius: "12px", border: "1px solid rgba(88,101,242,0.22)", background: "rgba(88,101,242,0.06)", cursor: "pointer", textAlign: "left", transition: "border-color 0.15s, background 0.15s" }}
+          >
+            <DiscordLogo />
+            <div style={{ flex: 1 }}>
+              <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "rgba(173,179,255,0.8)", margin: 0 }}>Lier mon compte Discord</p>
+              <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 300, color: "rgba(173,179,255,0.35)", margin: "2px 0 0" }}>Connectez-vous via Discord pour lier les deux comptes</p>
+            </div>
+            <ChevronRight size={14} color="rgba(173,179,255,0.4)" />
+          </button>
+        )}
+      </div>
+
+      {/* Déconnexion */}
+      <div style={{ marginTop: "28px", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.05)", maxWidth: "480px" }}>
         <button onClick={() => signOut({ callbackUrl: "/" })} style={{ display: "flex", alignItems: "center", gap: "8px", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 500, color: "rgba(248,113,113,0.55)", padding: 0 }}>
           <LogOut size={13} /> Se déconnecter
         </button>
@@ -983,7 +1610,7 @@ function TabSignalements({ onGoMessages }: { onGoMessages: () => void }) {
   const labelStyle: React.CSSProperties = { display: "block", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 500, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "6px" };
 
   useEffect(() => {
-    fetch("/api/reports").then(r => r.json()).then(data => { setReports(Array.isArray(data) ? data : []); setLoading(false); }).catch(() => setLoading(false));
+    safeFetch<Report[]>("/api/reports", []).then(data => { setReports(data); setLoading(false); });
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1066,66 +1693,68 @@ export function EspaceClient({ user, isAdmin = false }: { user: Session["user"];
   const [msgPrefill, setMsgPrefill] = useState("");
 
   useEffect(() => {
-    fetch("/api/projects").then(r => r.json()).then(setProjects).catch(() => {});
+    safeFetch<Project[]>("/api/projects", []).then(setProjects);
   }, []);
 
   const goMessages = () => setTab("messages");
   const goTab = (t: Tab) => setTab(t);
 
   const navItems: { id: Tab; icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; label: string }[] = [
-    { id: "accueil",      icon: LayoutDashboard, label: "Accueil"           },
-    { id: "devis",        icon: PlusCircle,      label: "Demande de devis"  },
-    { id: "projets",      icon: FolderOpen,      label: "Mes projets"       },
-    { id: "kanban",       icon: Kanban,          label: "Kanban"            },
-    { id: "messages",     icon: MessageSquare,   label: "Messagerie"        },
-    { id: "signalements", icon: Bug,             label: "Signalements"      },
-    { id: "avis",         icon: Star,            label: "Avis"              },
-    { id: "parametres",   icon: Settings,        label: "Paramètres"        },
+    { id: "accueil",      icon: LayoutDashboard,  label: "Accueil"           },
+    { id: "devis",        icon: PlusCircle,        label: "Demande de devis"  },
+    { id: "projets",      icon: FolderOpen,        label: "Mes projets"       },
+    { id: "kanban",       icon: Kanban,            label: "Kanban"            },
+    { id: "galerie",      icon: ImageIcon,         label: "Livrables"         },
+    { id: "moodboard",   icon: LayoutGrid,        label: "Moodboard"         },
+    { id: "messages",     icon: MessageSquare,     label: "Messagerie"        },
+    { id: "signalements", icon: Bug,               label: "Signalements"      },
+    { id: "avis",         icon: Star,              label: "Avis"              },
+    { id: "parametres",   icon: Settings,          label: "Paramètres"        },
   ];
 
   return (
-    <div style={{ minHeight: "100dvh", background: "#060a0e", display: "flex", flexDirection: "column", fontFamily: "var(--font-poppins)" }}>
+    <div style={{ height: "100dvh", overflow: "hidden", background: "#0e0c0a", display: "flex", flexDirection: "column", fontFamily: "var(--font-poppins)" }}>
       {/* Top bar */}
-      <header style={{ position: "sticky", top: 0, zIndex: 50, borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(6,10,14,0.92)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", padding: "0 6vw", height: "60px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <Avatar name={user?.name} image={user?.image} size={32} />
+      <header style={{ position: "sticky", top: 0, zIndex: 50, borderBottom: "1px solid rgba(255,255,255,0.05)", background: "rgba(14,12,10,0.96)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", padding: "0 6vw", height: "56px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <Avatar name={user?.name} image={user?.image} size={28} />
           <div>
-            <p style={{ fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.85)", margin: 0, lineHeight: 1.2 }}>{user?.name ?? "Utilisateur"}</p>
-            <p style={{ fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.25)", margin: 0, textTransform: "uppercase", letterSpacing: "0.1em" }}>Espace client</p>
+            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.72)", margin: 0, lineHeight: 1.2 }}>{user?.name ?? "Utilisateur"}</p>
+            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "8px", fontWeight: 400, letterSpacing: "3px", textTransform: "uppercase", color: "rgba(255,255,255,0.40)", margin: 0 }}>Espace client</p>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", padding: "6px 12px", fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 500, color: "rgba(255,255,255,0.3)", textDecoration: "none" }}>← Site</Link>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <Link href="/" className="vto-cta-link" style={{ fontSize: "9px", letterSpacing: "2px" }}>← Retour au site</Link>
           {isAdmin && (
-            <Link href="/admin" style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(60,100,255,0.12)", border: "1px solid rgba(60,100,255,0.3)", borderRadius: "8px", padding: "6px 12px", fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, color: "rgba(100,140,255,0.9)", textDecoration: "none" }}>
-              <Shield size={12} /> Admin
+            <Link href="/admin" style={{ display: "flex", alignItems: "center", gap: "6px", border: "1px solid rgba(255,255,255,0.08)", padding: "5px 12px", fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", textDecoration: "none", transition: "border-color 0.2s" }}>
+              <Shield size={11} /> Admin
             </Link>
           )}
-          <button onClick={() => signOut({ callbackUrl: "/" })} style={{ display: "flex", alignItems: "center", gap: "7px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 12px", cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 500, color: "rgba(255,255,255,0.4)" }}>
-            <LogOut size={13} />
+          <button onClick={() => signOut({ callbackUrl: "/" })} style={{ display: "flex", alignItems: "center", gap: "7px", background: "none", border: "1px solid rgba(255,255,255,0.06)", padding: "5px 10px", cursor: "pointer" }}>
+            <LogOut size={12} color="rgba(248,113,113,0.4)" />
           </button>
         </div>
       </header>
 
       {/* Body */}
-      <div style={{ flex: 1, display: "flex", width: "100%", ...(tab !== "kanban" ? { maxWidth: "1100px", margin: "0 auto", padding: "0 6vw" } : {}) }}>
+      <div style={{ flex: 1, display: "flex", width: "100%", overflow: "hidden" }}>
         {/* Sidebar */}
-        <aside style={{ width: "200px", flexShrink: 0, paddingTop: "32px", paddingRight: "16px", paddingLeft: tab === "kanban" ? "20px" : "0", borderRight: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column" }}>
+        <aside style={{ width: "220px", flexShrink: 0, paddingTop: "32px", paddingRight: "12px", paddingLeft: "24px", borderRight: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column" }}>
           <nav style={{ display: "flex", flexDirection: "column", gap: "2px", flex: 1 }}>
             {navItems.map(item => <NavItem key={item.id} icon={item.icon} label={item.label} active={tab === item.id} onClick={() => setTab(item.id)} />)}
           </nav>
           {isAdmin && (
-            <div style={{ paddingBottom: "24px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-              <Link href="/admin" style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", borderRadius: "10px", background: "rgba(60,100,255,0.08)", border: "1px solid rgba(60,100,255,0.2)", textDecoration: "none" }}>
-                <Shield size={15} color="rgba(100,140,255,0.7)" />
-                <span style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "rgba(100,140,255,0.8)" }}>Panel Admin</span>
+            <div style={{ paddingBottom: "20px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+              <Link href="/admin" style={{ display: "flex", alignItems: "center", gap: "9px", padding: "9px 16px", borderLeft: "2px solid rgba(255,255,255,0.12)", textDecoration: "none" }}>
+                <Shield size={13} color="rgba(255,255,255,0.3)" />
+                <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 500, color: "rgba(255,255,255,0.35)", letterSpacing: "0.3px" }}>Panel Admin</span>
               </Link>
             </div>
           )}
         </aside>
 
         {/* Main content */}
-        <main style={{ flex: 1, minWidth: 0, padding: tab === "kanban" ? "20px 16px 0 20px" : "32px 0 32px 32px", display: "flex", flexDirection: "column" }}>
+        <main style={{ flex: 1, minWidth: 0, overflowY: "auto", padding: tab === "kanban" ? "20px 24px 0 28px" : "36px 48px 48px 40px", display: "flex", flexDirection: "column" }}>
           <AnimatePresence mode="wait">
             <motion.div
               key={tab}
@@ -1137,6 +1766,8 @@ export function EspaceClient({ user, isAdmin = false }: { user: Session["user"];
               {tab === "devis"        && <TabDevis onSuccess={() => setTab("projets")} />}
               {tab === "projets"      && <TabProjets onRequestDevis={() => setTab("devis")} onMessage={goMessages} />}
               {tab === "kanban"       && <TabKanban goMessages={goMessages} setMsgPrefill={setMsgPrefill} />}
+              {tab === "galerie"      && <TabGalerie projects={projects} />}
+              {tab === "moodboard"   && <TabMoodboard projects={projects} />}
               {tab === "messages"     && <TabMessagesWithPrefill user={user} prefill={msgPrefill} clearPrefill={() => setMsgPrefill("")} />}
               {tab === "signalements" && <TabSignalements onGoMessages={goMessages} />}
               {tab === "avis"         && <TabAvis />}
@@ -1170,13 +1801,13 @@ function TabMessagesWithPrefill({ user, prefill, clearPrefill }: { user: Session
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/messages").then(r => r.json()),
-      fetch("/api/projects").then(r => r.json()),
-      fetch("/api/reports").then(r => r.json()),
+      safeFetch<Msg[]>("/api/messages", []),
+      safeFetch<Project[]>("/api/projects", []),
+      safeFetch<Report[]>("/api/reports", []),
     ]).then(([msgs, projs, reps]) => {
-      setMessages(Array.isArray(msgs) ? msgs : []);
-      setProjects((Array.isArray(projs) ? projs as Project[] : []).filter(p => p.status !== "rejected"));
-      setReports(Array.isArray(reps) ? reps : []);
+      setMessages(msgs);
+      setProjects(projs.filter(p => p.status !== "rejected"));
+      setReports(reps);
       setLoading(false);
     });
   }, []);
@@ -1232,15 +1863,15 @@ function TabMessagesWithPrefill({ user, prefill, clearPrefill }: { user: Session
             ))}
             <div style={{ display: "flex", alignItems: "center", gap: "10px", margin: "4px 0" }}>
               <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.05)" }} />
-              <span style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(255,255,255,0.15)" }}>Échanges</span>
+              <span style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(255,255,255,0.38)" }}>Échanges</span>
               <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.05)" }} />
             </div>
           </div>
         )}
         {loading ? (
-          <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px", textAlign: "center", padding: "40px 0" }}>Chargement...</div>
+          <div style={{ color: "rgba(255,255,255,0.40)", fontSize: "12px", textAlign: "center", padding: "40px 0" }}>Chargement...</div>
         ) : messages.length === 0 ? (
-          <div style={{ color: "rgba(255,255,255,0.15)", fontSize: "12px", textAlign: "center", padding: "48px 0" }}>Aucun message — envoyez le premier !</div>
+          <div style={{ color: "rgba(255,255,255,0.40)", fontSize: "12px", textAlign: "center", padding: "48px 0" }}>Aucun message — envoyez le premier !</div>
         ) : (
           <AnimatePresence initial={false}>
             {messages.map(msg => (
@@ -1253,7 +1884,7 @@ function TabMessagesWithPrefill({ user, prefill, clearPrefill }: { user: Session
                   <div style={{ padding: "10px 14px", whiteSpace: "pre-wrap", wordBreak: "break-word", borderRadius: msg.fromAdmin ? "14px 14px 14px 3px" : "14px 14px 3px 14px", background: msg.fromAdmin ? "rgba(60,100,255,0.12)" : "rgba(255,255,255,0.07)", border: `1px solid ${msg.fromAdmin ? "rgba(60,100,255,0.2)" : "rgba(255,255,255,0.07)"}`, fontSize: "13px", fontWeight: 300, color: "rgba(255,255,255,0.82)", lineHeight: 1.65 }}>
                     {msg.content}
                   </div>
-                  <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.18)", margin: "4px 4px 0", textAlign: msg.fromAdmin ? "left" : "right" }}>{fmtDate(msg.createdAt)}</p>
+                  <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.38)", margin: "4px 4px 0", textAlign: msg.fromAdmin ? "left" : "right" }}>{fmtDate(msg.createdAt)}</p>
                 </div>
               </motion.div>
             ))}

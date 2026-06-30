@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import Image from "next/image";
 import { SquareArrowOutUpRight } from "lucide-react";
 import Link from "next/link";
 
@@ -251,8 +252,7 @@ function DefaultFanCard({ item, active }: { item: CardStackItem; active: boolean
     <div className="relative h-full w-full">
       <div className="absolute inset-0">
         {item.imageSrc ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.imageSrc} alt={item.title} className="h-full w-full object-cover" draggable={false} loading="eager" />
+          <Image src={item.imageSrc} alt={item.title} fill sizes="(max-width: 768px) 100vw, 500px" style={{ objectFit: "cover" }} draggable={false} priority={false} />
         ) : (
           <div className="flex h-full w-full items-center justify-center" style={{ background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.3)", fontSize: "13px" }}>
             Pas d&apos;image

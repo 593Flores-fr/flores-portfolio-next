@@ -2,181 +2,367 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import Image from "next/image";
-import { ArrowLeft } from "lucide-react";
+import { ExternalLink } from "lucide-react";
+import { CollabCTA } from "@/components/ui/collab-cta";
+import { SITE_DEFAULTS } from "@/lib/site-content";
+import type { SiteContentMap } from "@/lib/site-content";
 
-type ToolIcon = { bg: string; label: string; color?: string; border?: string };
-type Tool = { name: string; icon: ToolIcon; desc: string };
-type ToolGroup = { category: string; accent: string; tools: Tool[] };
-
-const toolGroups: ToolGroup[] = [
+const toolGroups = [
   {
     category: "Design",
-    accent: "rgba(167,139,250,0.7)",
     tools: [
-      { name: "Photoshop",   icon: { bg: "#31A8FF",  label: "Ps" }, desc: "Retouche photo, compositions et visuels digitaux haute qualité." },
-      { name: "Illustrator", icon: { bg: "#FF7C00",  label: "Ai" }, desc: "Création vectorielle — logos, icônes et éléments de charte graphique." },
-      { name: "Figma",       icon: { bg: "#A259FF",  label: "Fg" }, desc: "Maquettes UI/UX, prototypage et systèmes de design collaboratifs." },
-    ],
-  },
-  {
-    category: "Motion",
-    accent: "rgba(96,165,250,0.7)",
-    tools: [
-      { name: "After Effects", icon: { bg: "#9999FF", label: "Ae" }, desc: "Motion design, animations graphiques et effets visuels sur mesure." },
-      { name: "Premiere Pro",  icon: { bg: "#EA77FF", label: "Pr" }, desc: "Montage vidéo, reels et contenus créatifs pour les réseaux sociaux." },
+      { label: "Ps", bg: "#31A8FF",  name: "Photoshop",   desc: "Retouche photo, compositions et visuels digitaux haute qualité." },
+      { label: "Ai", bg: "#FF7C00",  name: "Illustrator", desc: "Création vectorielle : logos, icônes et éléments de charte graphique." },
+      { label: "Fg", bg: "#A259FF",  name: "Figma",       desc: "Maquettes UI/UX, prototypage et systèmes de design collaboratifs." },
     ],
   },
   {
     category: "Dev",
-    accent: "rgba(74,222,128,0.7)",
     tools: [
-      { name: "Next.js",       icon: { bg: "#1a1a1a", label: "▲", color: "rgba(255,255,255,0.85)", border: "1px solid rgba(255,255,255,0.1)" }, desc: "Framework React full-stack — App Router, SSR/SSG, performances optimales." },
-      { name: "TypeScript",    icon: { bg: "#3178C6", label: "TS" }, desc: "Typage statique pour un code robuste, erreurs détectées en amont." },
-      { name: "Prisma",        icon: { bg: "#0C344B", label: "◆", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.08)" }, desc: "ORM type-safe — modélisation de données et migrations simplifiées." },
-      { name: "Tailwind",      icon: { bg: "#0EA5E9", label: "TW" }, desc: "Utility-first CSS, design system cohérent et itérations ultra-rapides." },
-      { name: "Framer Motion", icon: { bg: "#0055FF", label: "FM" }, desc: "Animations fluides et micro-interactions React, déclaratives et performantes." },
+      { label: "▲",  bg: "#111",     name: "Next.js",       desc: "Framework React full-stack. App Router, SSR/SSG, performances optimales.", color: "rgba(255,255,255,0.85)" },
+      { label: "TS", bg: "#3178C6",  name: "TypeScript",    desc: "Typage statique pour un code robuste, erreurs détectées en amont." },
+      { label: "◆",  bg: "#0C344B",  name: "Prisma",        desc: "ORM type-safe. Modélisation de données et migrations simplifiées.", color: "rgba(255,255,255,0.7)" },
+      { label: "TW", bg: "#0EA5E9",  name: "Tailwind",      desc: "Utility-first CSS, design system cohérent et itérations ultra-rapides." },
+      { label: "FM", bg: "#0055FF",  name: "Framer Motion", desc: "Animations fluides et micro-interactions React, déclaratives et performantes." },
     ],
   },
 ];
 
-const process = [
-  { num: "01", title: "Écoute & cadrage", text: "Un brief approfondi pour comprendre votre univers, vos contraintes et vos ambitions. Rien de générique." },
-  { num: "02", title: "Concept & maquette", text: "Je propose une direction artistique claire — moodboard, wireframe ou prototype — avant de coder ou dessiner." },
-  { num: "03", title: "Création & itérations", text: "Livraisons régulières, retours intégrés rapidement. Vous voyez le projet avancer en temps réel depuis votre espace." },
-  { num: "04", title: "Livraison & suivi", text: "Fichiers sources, code déployé, documentation légère. Je reste disponible après la livraison." },
-];
-
 const fadeUp = {
-  hidden: { opacity: 0, y: 28 },
-  show: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.65, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } }),
+  hidden: { opacity: 0, y: 20 },
+  show: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.07, duration: 0.6, ease: [0.22, 1, 0.36, 1] as [number,number,number,number] } }),
 };
 
-export function AboutPageContent() {
+type Content = SiteContentMap["aboutPage"];
+
+export function AboutPageContent({ content = SITE_DEFAULTS.aboutPage }: { content?: Content }) {
+  const parcours = content.parcours;
+  const process  = content.process;
+
   return (
-    <div style={{ background: "#060a0e", minHeight: "100dvh", color: "white" }}>
+    <div style={{ background: "#0e0c0a", minHeight: "100dvh", color: "white", paddingTop: "64px" }}>
 
-      {/* Minimal header */}
-      <header style={{ padding: "24px 6vw", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: "8px", textDecoration: "none", fontFamily: "var(--font-poppins)", fontSize: "12px", color: "rgba(255,255,255,0.35)", fontWeight: 500 }}>
-          <ArrowLeft size={14} /> Accueil
-        </Link>
-        <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.2em", color: "rgba(255,255,255,0.18)" }}>
-          À propos
-        </span>
-      </header>
+      {/* ── Hero split — texte gauche / image slash droite ── */}
+      <div className="about-hero-grid">
 
-      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "80px 6vw 160px" }}>
-
-        {/* Hero */}
-        <motion.div initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }} style={{ marginBottom: "100px" }}>
-          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.28em", color: "rgba(255,255,255,0.22)", marginBottom: "20px" }}>
-            Flores · Allan
-          </p>
-          <h1 style={{ fontFamily: "var(--font-poppins)", fontSize: "clamp(3rem,6vw,6rem)", fontWeight: 800, lineHeight: 0.95, letterSpacing: "-0.025em", margin: "0 0 28px" }}>
-            Graphiste freelance<br />
-            <span style={{ color: "rgba(100,140,255,0.85)" }}>&</span> développeur web.
+        {/* Texte */}
+        <motion.div
+          initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            padding: "100px 6vw 80px 4vw",
+            position: "relative",
+            zIndex: 2,
+          }}
+        >
+          <p className="vto-label" style={{ marginBottom: "28px" }}>Flores · Allan</p>
+          <h1 style={{
+            fontFamily: "var(--font-six-caps), sans-serif",
+            fontSize: "clamp(3.8rem, 6.5vw, 8rem)",
+            fontWeight: 400,
+            lineHeight: 0.88,
+            letterSpacing: "5px",
+            textTransform: "uppercase",
+            margin: "0 0 48px",
+          }}>
+            {content.heroTitle.split("&").map((part, i, arr) => (
+              i < arr.length - 1
+                ? <span key={i}>{part}<span style={{ color: "var(--vto-primary)" }}>&amp;</span></span>
+                : <span key={i}>{part}</span>
+            ))}
           </h1>
-          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "16px", fontWeight: 300, color: "rgba(255,255,255,0.4)", maxWidth: "520px", lineHeight: 1.75, margin: 0 }}>
-            Autodidacte depuis 5 ans, membre de V.T.O Studio. Je conçois des identités visuelles et des expériences web qui ont un caractère propre.
+          <p style={{
+            fontFamily: "var(--font-poppins)",
+            fontSize: "12px",
+            fontWeight: 400,
+            color: "rgba(255,255,255,0.60)",
+            maxWidth: "400px",
+            lineHeight: 2,
+            margin: 0,
+          }}>
+            {content.heroSubtitle.split("\n").map((line, i) => (
+              <span key={i}>{line}{i < content.heroSubtitle.split("\n").length - 1 && <br />}</span>
+            ))}
           </p>
         </motion.div>
 
-        {/* Photo + stats */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "60px", marginBottom: "120px", alignItems: "center" }}>
-          <motion.div initial={{ opacity: 0, x: -32 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}>
-            <div style={{ position: "relative", borderRadius: "20px", overflow: "hidden", aspectRatio: "4/5", border: "1px solid rgba(255,255,255,0.07)" }}>
-              <Image src="/images/about.jpg" alt="Allan" fill style={{ objectFit: "cover", objectPosition: "center top" }} sizes="50vw" />
-              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(6,10,14,0.65) 0%, transparent 50%)" }} />
-            </div>
-          </motion.div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
-            {[
-              { value: "30+", label: "Projets livrés", desc: "Identités visuelles, sites web, covers, overlays…" },
-              { value: "5+",  label: "Ans d'expérience", desc: "100% autodidacte, apprentissage constant." },
-              { value: "24h", label: "Délai de réponse", desc: "Devis gratuit, réponse rapide, suivi en direct." },
-            ].map((s, i) => (
-              <motion.div key={s.label} custom={i} variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ display: "flex", gap: "20px", alignItems: "flex-start" }}>
-                <span style={{ fontFamily: "var(--font-six-caps)", fontSize: "3.5rem", color: "rgba(100,140,255,0.7)", lineHeight: 1, letterSpacing: "0.05em", flexShrink: 0 }}>{s.value}</span>
-                <div>
-                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.8)", margin: "0 0 4px" }}>{s.label}</p>
-                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.32)", margin: 0, lineHeight: 1.6 }}>{s.desc}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
+        {/* Image avec bord slash "/" */}
+        <motion.div
+          initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+          className="about-hero-image"
+          style={{
+            position: "relative",
+            overflow: "hidden",
+            clipPath: "polygon(14% 0%, 100% 0%, 100% 100%, 0% 100%)",
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/images/about-hero.png"
+            alt=""
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "center 30%",
+            }}
+          />
+          <div style={{
+            position: "absolute", inset: 0,
+            background: "linear-gradient(to right, rgba(14,12,10,0.55) 0%, rgba(14,12,10,0.05) 40%, transparent 70%)",
+            zIndex: 2,
+          }} />
+          <div style={{
+            position: "absolute", inset: 0,
+            background: "linear-gradient(to top, rgba(14,12,10,0.85) 0%, transparent 35%)",
+            zIndex: 2,
+          }} />
+        </motion.div>
 
-        {/* Process */}
-        <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }} style={{ marginBottom: "100px" }}>
-          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.28em", color: "rgba(255,255,255,0.22)", marginBottom: "16px" }}>Processus</p>
-          <h2 style={{ fontFamily: "var(--font-poppins)", fontSize: "clamp(2rem,4vw,3.2rem)", fontWeight: 800, lineHeight: 1.05, letterSpacing: "-0.02em", marginBottom: "56px" }}>
+      </div>
+
+      <div style={{ maxWidth: "1500px", margin: "0 auto", padding: "80px 4vw 160px" }}>
+
+        {/* ── Parcours ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          style={{ marginBottom: "140px" }}
+        >
+          <div className="vto-sep" style={{ marginBottom: "64px" }} />
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "80px", alignItems: "start" }}>
+
+            {/* Titre gauche — fixe */}
+            <div style={{ position: "sticky", top: "80px" }}>
+              <p className="vto-label" style={{ marginBottom: "16px" }}>Mon parcours</p>
+              <h2 style={{ fontFamily: "var(--font-six-caps), sans-serif", fontSize: "clamp(2.8rem, 4vw, 4.5rem)", fontWeight: 400, lineHeight: 0.92, letterSpacing: "5px", textTransform: "uppercase", margin: 0 }}>
+                {content.parcoursHeading.split("\n").map((line, i, arr) => (
+                  <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+                ))}
+              </h2>
+            </div>
+
+            {/* Timeline droite */}
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {parcours.map((p, i) => (
+                <motion.div
+                  key={p.date}
+                  custom={i} variants={fadeUp} initial="hidden" whileInView="show"
+                  viewport={{ once: true, margin: "-40px" }}
+                  style={{
+                    padding: "36px 0",
+                    borderTop: "1px solid rgba(255,255,255,0.05)",
+                    display: "grid",
+                    gridTemplateColumns: "96px 1fr",
+                    gap: "32px",
+                  }}
+                >
+                  <span className="vto-label" style={{ fontSize: "8px", letterSpacing: "3px", color: "rgba(255,255,255,0.35)", paddingTop: "3px", lineHeight: 1.6 }}>
+                    {p.date}
+                  </span>
+                  <div>
+                    <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.80)", margin: "0 0 12px", letterSpacing: "0.3px" }}>
+                      {p.title}
+                    </p>
+                    <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 400, color: "rgba(255,255,255,0.55)", lineHeight: 1.9, margin: 0 }}>
+                      {p.text}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }} />
+            </div>
+
+          </div>
+        </motion.div>
+
+        {/* ── V.T.O Studio ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          style={{ marginBottom: "140px" }}
+        >
+          <div className="vto-sep" style={{ marginBottom: "64px" }} />
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1px", background: "rgba(255,255,255,0.06)" }}>
+
+            {/* Col 1 — Services */}
+            <div style={{ padding: "52px 44px", background: "#0e0c0a", display: "flex", flexDirection: "column" }}>
+              <p className="vto-label" style={{ marginBottom: "28px" }}>Ce qu&apos;on fait</p>
+              {content.vtoServices.map((item, i) => (
+                <motion.div
+                  key={item.label}
+                  custom={i} variants={fadeUp} initial="hidden" whileInView="show"
+                  viewport={{ once: true, margin: "-40px" }}
+                  style={{ padding: "16px 0", borderTop: "1px solid rgba(255,255,255,0.05)" }}
+                >
+                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.75)", margin: "0 0 5px", letterSpacing: "0.3px" }}>
+                    {item.label}
+                  </p>
+                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 400, color: "rgba(255,255,255,0.50)", lineHeight: 1.8, margin: 0 }}>
+                    {item.desc}
+                  </p>
+                </motion.div>
+              ))}
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }} />
+            </div>
+
+            {/* Col 2 — Cassette centrée */}
+            <div style={{ padding: "52px 44px", background: "#0e0c0a", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+              <p className="vto-label" style={{ marginBottom: "36px", textAlign: "center" }}>Association</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/vto-cassette.png"
+                alt="V.T.O Studio"
+                style={{
+                  width: "100%",
+                  maxWidth: "260px",
+                  height: "auto",
+                  display: "block",
+                  filter: "drop-shadow(0 8px 40px rgba(92,92,245,0.30))",
+                }}
+              />
+            </div>
+
+            {/* Col 3 — Description + liens */}
+            <div style={{ padding: "52px 44px", background: "#0e0c0a", display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "18px", marginBottom: "40px", flex: 1 }}>
+                <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 400, color: "rgba(255,255,255,0.60)", lineHeight: 1.9, margin: 0 }}>
+                  {content.vtoDesc1}
+                </p>
+                <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 400, color: "rgba(255,255,255,0.48)", lineHeight: 1.9, margin: 0 }}>
+                  {content.vtoDesc2}
+                </p>
+              </div>
+
+              {/* Liens VTO */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "1px", background: "rgba(255,255,255,0.06)" }}>
+                {content.vtoLinks.map((link) => (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="contact-perk"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "16px",
+                      padding: "14px 18px",
+                      background: "#0e0c0a",
+                      textDecoration: "none",
+                      transition: "background 0.2s ease",
+                    }}
+                  >
+                    <div>
+                      <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.75)", margin: "0 0 2px" }}>{link.label}</p>
+                      <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 400, color: "rgba(255,255,255,0.45)", margin: 0 }}>{link.desc}</p>
+                    </div>
+                    <ExternalLink size={10} color="rgba(255,255,255,0.28)" style={{ flexShrink: 0 }} />
+                  </a>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        </motion.div>
+
+        {/* ── Processus ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          style={{ marginBottom: "120px" }}
+        >
+          <p className="vto-label" style={{ marginBottom: "16px", textAlign: "center" }}>Processus</p>
+          <h2 style={{ fontFamily: "var(--font-six-caps), sans-serif", fontSize: "clamp(2.5rem, 4.5vw, 4.5rem)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "5px", textTransform: "uppercase", marginBottom: "56px", textAlign: "center" }}>
             Comment je travaille.
           </h2>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0" }}>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1px", background: "rgba(255,255,255,0.05)" }}>
             {process.map((p, i) => (
-              <motion.div key={p.num} custom={i} variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }}
-                style={{ padding: "32px 36px 32px 0", borderTop: "1px solid rgba(255,255,255,0.06)", borderRight: i % 2 === 0 ? "1px solid rgba(255,255,255,0.06)" : "none", paddingRight: i % 2 === 0 ? "48px" : "0", paddingLeft: i % 2 === 1 ? "48px" : "0" }}
+              <motion.div
+                key={p.num} custom={i} variants={fadeUp} initial="hidden" whileInView="show"
+                viewport={{ once: true, margin: "-60px" }}
+                style={{ padding: "40px 44px", background: "#0e0c0a" }}
               >
-                <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 500, color: "rgba(100,140,255,0.6)", letterSpacing: "0.12em", display: "block", marginBottom: "12px" }}>{p.num}</span>
-                <p style={{ fontFamily: "var(--font-poppins)", fontSize: "14px", fontWeight: 700, color: "rgba(255,255,255,0.85)", margin: "0 0 10px" }}>{p.title}</p>
-                <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.35)", lineHeight: 1.75, margin: 0 }}>{p.text}</p>
+                <span className="vto-label" style={{ fontSize: "9px", letterSpacing: "2px", color: "rgba(255,255,255,0.38)", display: "block", marginBottom: "16px" }}>{p.num}</span>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
+                  <span style={{ fontSize: "18px", lineHeight: 1 }}>{p.emoji}</span>
+                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.85)", margin: 0, letterSpacing: "0.2px" }}>
+                    {p.title}
+                  </p>
+                </div>
+
+                <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 400, color: "rgba(255,255,255,0.52)", lineHeight: 1.9, margin: 0 }}>
+                  {p.text}
+                </p>
               </motion.div>
             ))}
           </div>
         </motion.div>
 
-        {/* Tools */}
-        <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }} style={{ marginBottom: "100px" }}>
-          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.28em", color: "rgba(255,255,255,0.22)", marginBottom: "16px" }}>Stack & outils</p>
-          <h2 style={{ fontFamily: "var(--font-poppins)", fontSize: "clamp(2rem,4vw,3.2rem)", fontWeight: 800, lineHeight: 1.05, letterSpacing: "-0.02em", marginBottom: "56px" }}>
+        {/* ── Stack & outils ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          style={{ marginBottom: "120px" }}
+        >
+          <p className="vto-label" style={{ marginBottom: "16px" }}>Stack &amp; outils</p>
+          <h2 style={{ fontFamily: "var(--font-six-caps), sans-serif", fontSize: "clamp(2.5rem, 4.5vw, 4.5rem)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "5px", textTransform: "uppercase", marginBottom: "56px" }}>
             Ce que j&apos;utilise.
           </h2>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "40px" }}>
-            {toolGroups.map((group, gi) => (
+          <div style={{ display: "flex", flexDirection: "column", gap: "36px" }}>
+            {toolGroups.map((group) => (
               <div key={group.category}>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-                  <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.18em", color: group.accent }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "12px" }}>
+                  <p className="vto-label" style={{ fontSize: "8px", letterSpacing: "4px", color: "rgba(255,255,255,0.38)", margin: 0 }}>
                     {group.category}
-                  </span>
-                  <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.05)" }} />
+                  </p>
+                  <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.04)" }} />
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "10px" }}>
-                  {group.tools.map((t, i) => (
-                    <motion.div
+                <div style={{ display: "flex", gap: "1px", background: "rgba(255,255,255,0.05)", flexWrap: "wrap" }}>
+                  {group.tools.map((t) => (
+                    <div
                       key={t.name}
-                      custom={gi * 5 + i}
-                      variants={fadeUp}
-                      initial="hidden"
-                      whileInView="show"
-                      viewport={{ once: true }}
                       style={{
+                        flex: "1 1 200px", minWidth: 0,
                         display: "flex", gap: "14px", alignItems: "flex-start",
-                        padding: "16px 18px", borderRadius: "12px",
-                        border: "1px solid rgba(255,255,255,0.07)",
-                        background: "rgba(255,255,255,0.02)",
+                        padding: "20px 22px", background: "#0e0c0a",
                       }}
                     >
                       <div style={{
-                        width: 36, height: 36, borderRadius: "8px", flexShrink: 0,
-                        background: t.icon.bg, border: t.icon.border ?? "none",
+                        width: 32, height: 32, flexShrink: 0,
+                        background: t.bg,
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 700,
-                        color: t.icon.color ?? "white", letterSpacing: "-0.02em",
+                        fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 700,
+                        color: t.color ?? "white", letterSpacing: "-0.02em",
                       }}>
-                        {t.icon.label}
+                        {t.label}
                       </div>
                       <div>
-                        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.8)", margin: "0 0 5px" }}>
+                        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.72)", margin: "0 0 4px", letterSpacing: "0.2px" }}>
                           {t.name}
                         </p>
-                        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 300, color: "rgba(255,255,255,0.32)", lineHeight: 1.6, margin: 0 }}>
+                        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 400, color: "rgba(255,255,255,0.50)", lineHeight: 1.7, margin: 0 }}>
                           {t.desc}
                         </p>
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -184,18 +370,9 @@ export function AboutPageContent() {
           </div>
         </motion.div>
 
-        {/* CTA */}
-        <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }}
-          style={{ padding: "60px", borderRadius: "20px", border: "1px solid rgba(60,100,255,0.2)", background: "radial-gradient(ellipse at 60% 0%, rgba(60,100,255,0.08) 0%, transparent 70%)", textAlign: "center" }}
-        >
-          <h2 style={{ fontFamily: "var(--font-poppins)", fontSize: "clamp(2rem,4vw,3rem)", fontWeight: 800, letterSpacing: "-0.02em", margin: "0 0 16px" }}>Travaillons ensemble.</h2>
-          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "14px", fontWeight: 300, color: "rgba(255,255,255,0.35)", margin: "0 auto 32px", maxWidth: "400px", lineHeight: 1.7 }}>
-            Devis gratuit sous 24h, suivi en direct depuis votre espace client.
-          </p>
-          <Link href="/espace" style={{ display: "inline-flex", alignItems: "center", gap: "10px", padding: "14px 28px", borderRadius: "12px", border: "1px solid rgba(60,100,255,0.35)", background: "rgba(60,100,255,0.6)", fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600, color: "white", textDecoration: "none" }}>
-            Démarrer un projet →
-          </Link>
-        </motion.div>
+        {/* ── CTA ── */}
+        <CollabCTA title={content.ctaTitle} ctaLabel="Démarrer un projet" />
+
       </div>
     </div>
   );

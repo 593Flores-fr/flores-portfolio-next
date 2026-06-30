@@ -12,6 +12,7 @@ model User {
   email     String    @unique
   password  String?
   image     String?
+  discordId String?   @unique
   role      String    @default("member")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -74,7 +75,7 @@ model Message {
 // "completed"= projet livré
 // "rejected" = devis refusé
 model Project {
-  id             String         @id @default(cuid())
+  id             String          @id @default(cuid())
   title          String
   description    String?
   type           String
@@ -82,22 +83,25 @@ model Project {
   deadline       String?
   references     String?
   contact        String?
-  status         String         @default("pending")
-  paid           Boolean        @default(false)
+  status         String          @default("pending")
+  paid           Boolean         @default(false)
   adminNotes     String?
   kanbanNotes    String?
-  kanbanVisible  Boolean        @default(false)
+  kanbanVisible  Boolean         @default(false)
   projectSummary String?
   phone          String?
   callSlots      String?
   briefFile      String?
   briefFileName  String?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  signedAt       DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
   userId         String
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   columns        KanbanColumn[]
   review         Review?
+  deliverables   Deliverable[]
+  moodboard      MoodboardItem[]
 }
 
 model PageView {
@@ -183,4 +187,29 @@ model SiteContent {
   section   String   @unique
   data      Json     @default("{}")
   updatedAt DateTime @updatedAt
+}
+
+// status: "pending" | "approved" | "rejected"
+model Deliverable {
+  id         String    @id @default(cuid())
+  fileName   String
+  fileUrl    String
+  fileType   String    @default("file") // "image" | "pdf" | "file"
+  version    Int       @default(1)
+  notes      String?
+  status     String    @default("pending")
+  approvedAt DateTime?
+  createdAt  DateTime  @default(now())
+  projectId  String
+  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model MoodboardItem {
+  id        String   @id @default(cuid())
+  imageUrl  String
+  note      String?
+  fromAdmin Boolean  @default(true)
+  createdAt DateTime @default(now())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }

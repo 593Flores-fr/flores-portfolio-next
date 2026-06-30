@@ -34,7 +34,8 @@ export function AdminAnalytics() {
 
   if (!data) return <div style={{ padding: "32px 40px", color: "rgba(255,255,255,0.2)", fontSize: "12px" }}>Chargement...</div>;
 
-  const maxViews = Math.max(...data.viewsByDay.map(d => d.count), 1);
+  const viewsByDay: { date: string; count: number }[] = data.viewsByDay ?? [];
+  const maxViews = Math.max(...viewsByDay.map(d => d.count), 1);
 
   return (
     <div style={{ padding: "32px 40px", maxWidth: "960px" }}>
@@ -71,7 +72,7 @@ export function AdminAnalytics() {
             Vues — 14 derniers jours
           </p>
           <div style={{ display: "flex", alignItems: "flex-end", gap: "4px", height: "80px" }}>
-            {data.viewsByDay.map(d => (
+            {viewsByDay.map(d => (
               <div key={d.date} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", height: "100%" }}>
                 <div style={{ flex: 1, display: "flex", alignItems: "flex-end", width: "100%" }}>
                   <div style={{
@@ -85,8 +86,8 @@ export function AdminAnalytics() {
             ))}
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px" }}>
-            <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.15)" }}>{fmtDay(data.viewsByDay[0]?.date)}</span>
-            <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.15)" }}>{fmtDay(data.viewsByDay[data.viewsByDay.length - 1]?.date)}</span>
+            <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.15)" }}>{fmtDay(viewsByDay[0]?.date)}</span>
+            <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.15)" }}>{fmtDay(viewsByDay[viewsByDay.length - 1]?.date)}</span>
           </div>
         </div>
 

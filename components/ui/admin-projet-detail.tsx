@@ -3,16 +3,20 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Trash2, CheckCircle2, Circle, Star, StickyNote, Save, Eye, EyeOff, X, ChevronUp } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, CheckCircle2, Circle, Star, StickyNote, Save, Eye, EyeOff, X, ChevronUp, Upload, Kanban, ImageIcon, LayoutGrid, FileText, File, Link as LinkIcon, CheckCircle, XCircle } from "lucide-react";
 
 type Task = { id: string; title: string; description: string | null; category: string | null; priority: string; done: boolean; order: number };
 type Column = { id: string; title: string; order: number; tasks: Task[] };
+type Deliverable = { id: string; fileName: string; fileUrl: string; fileType: string; version: number; notes: string | null; status: string; approvedAt: string | null; createdAt: string };
+type MoodboardItem = { id: string; imageUrl: string; note: string | null; fromAdmin: boolean; createdAt: string };
 type Project = {
   id: string; title: string; status: string; paid: boolean; kanbanNotes: string | null;
   kanbanVisible: boolean;
   user: { id: string; name: string | null; email: string };
   columns: Column[];
   review: { id: string; status: string } | null;
+  deliverables: Deliverable[];
+  moodboard: MoodboardItem[];
 };
 
 const DEFAULT_COLS = ["À faire", "En cours", "Bloquée", "En review", "Fait"];
@@ -246,6 +250,8 @@ const labelStyle: React.CSSProperties = {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
+type DetailTab = "kanban" | "livrables" | "moodboard";
+
 export function AdminProjetDetail({ projectId, compact = false }: { projectId: string; compact?: boolean }) {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
@@ -256,6 +262,7 @@ export function AdminProjetDetail({ projectId, compact = false }: { projectId: s
   const [requestingReview, setRequestingReview] = useState(false);
   const [initingCols, setInitingCols] = useState(false);
   const [modal, setModal] = useState<ModalMode | null>(null);
+  const [detailTab, setDetailTab] = useState<DetailTab>("kanban");
   const router = useRouter();
 
   useEffect(() => {
@@ -474,8 +481,35 @@ export function AdminProjetDetail({ projectId, compact = false }: { projectId: s
         </div>
       )}
 
+      {/* Section tabs */}
+      <div style={{ display: "flex", gap: "0", marginBottom: "24px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        {([
+          { id: "kanban" as DetailTab,    icon: Kanban,      label: "Kanban" },
+          { id: "livrables" as DetailTab, icon: ImageIcon,   label: "Livrables" },
+          { id: "moodboard" as DetailTab, icon: LayoutGrid,  label: "Moodboard" },
+        ]).map(t => (
+          <button key={t.id} onClick={() => setDetailTab(t.id)} style={{
+            display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px",
+            background: "none", border: "none", cursor: "pointer",
+            fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: detailTab === t.id ? 700 : 400,
+            color: detailTab === t.id ? "white" : "rgba(255,255,255,0.3)",
+            borderBottom: detailTab === t.id ? "2px solid rgba(92,92,245,0.7)" : "2px solid transparent",
+            marginBottom: "-1px", transition: "color 0.15s",
+          }}>
+            <t.icon size={12} />
+            {t.label}
+            {t.id === "livrables" && (project?.deliverables.length ?? 0) > 0 && (
+              <span style={{ fontSize: "9px", background: "rgba(92,92,245,0.2)", color: "rgba(92,92,245,0.9)", padding: "1px 5px", borderRadius: "999px" }}>{project!.deliverables.length}</span>
+            )}
+            {t.id === "moodboard" && (project?.moodboard.length ?? 0) > 0 && (
+              <span style={{ fontSize: "9px", background: "rgba(92,92,245,0.2)", color: "rgba(92,92,245,0.9)", padding: "1px 5px", borderRadius: "999px" }}>{project!.moodboard.length}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
       {/* Main: kanban full width */}
-      <div style={{ overflowX: "auto", paddingBottom: "80px" }}>
+      {detailTab === "kanban" && <><div style={{ overflowX: "auto", paddingBottom: "80px" }}>
         <div style={{ display: "flex", gap: "14px", paddingBottom: "16px", alignItems: "flex-start", minWidth: `${sortedCols.length * 230 + (sortedCols.length - 1) * 14}px` }}>
             {sortedCols.map(col => {
               const accent = COL_COLOR[col.title] ?? "rgba(255,255,255,0.35)";
@@ -599,6 +633,278 @@ export function AdminProjetDetail({ projectId, compact = false }: { projectId: s
         saving={savingNotes}
         saved={notesSaved}
       />
+      </>}
+
+      {/* ── LIVRABLES ─────────────────────────────────────────────── */}
+      {detailTab === "livrables" && (
+        <AdminLivrables
+          projectId={projectId}
+          deliverables={project?.deliverables ?? []}
+          onUpdate={updated => setProject(p => p ? { ...p, deliverables: updated } : p)}
+        />
+      )}
+
+      {/* ── MOODBOARD ─────────────────────────────────────────────── */}
+      {detailTab === "moodboard" && (
+        <AdminMoodboard
+          projectId={projectId}
+          items={project?.moodboard ?? []}
+          onUpdate={updated => setProject(p => p ? { ...p, moodboard: updated } : p)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Admin Livrables Panel ─────────────────────────────────────────────────────
+
+function AdminLivrables({ projectId, deliverables, onUpdate }: {
+  projectId: string;
+  deliverables: Deliverable[];
+  onUpdate: (d: Deliverable[]) => void;
+}) {
+  const [file, setFile] = useState<File | null>(null);
+  const [notes, setNotes] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+
+  const STATUS_COLORS: Record<string, { color: string; bg: string }> = {
+    pending:          { color: "rgba(250,204,21,0.8)",  bg: "rgba(250,204,21,0.08)"  },
+    approved:         { color: "rgba(74,222,128,0.8)",  bg: "rgba(74,222,128,0.08)"  },
+    request_revision: { color: "rgba(248,113,113,0.8)", bg: "rgba(248,113,113,0.08)" },
+  };
+  const STATUS_LABELS: Record<string, string> = {
+    pending: "En attente", approved: "Approuvé", request_revision: "Révision demandée",
+  };
+
+  const upload = async () => {
+    if (!file) return;
+    setUploading(true); setError("");
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("projectId", projectId);
+    if (notes.trim()) fd.append("notes", notes.trim());
+    const res = await fetch("/api/admin/deliverables", { method: "POST", body: fd });
+    setUploading(false);
+    if (!res.ok) { setError("Erreur lors de l'upload"); return; }
+    const newDel: Deliverable = await res.json();
+    onUpdate([newDel, ...deliverables]);
+    setFile(null); setNotes("");
+  };
+
+  const remove = async (id: string) => {
+    await fetch(`/api/admin/deliverables/${id}`, { method: "DELETE" });
+    onUpdate(deliverables.filter(d => d.id !== id));
+  };
+
+  const isImage = (ft: string) => ft === "image";
+
+  return (
+    <div style={{ paddingBottom: "60px" }}>
+      {/* Upload form */}
+      <div style={{ border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)", padding: "20px", marginBottom: "28px" }}>
+        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.2em", color: "rgba(255,255,255,0.25)", margin: "0 0 14px" }}>Ajouter un livrable</p>
+        <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", flexWrap: "wrap" }}>
+          <label style={{
+            display: "flex", alignItems: "center", gap: "7px", padding: "8px 14px",
+            border: "1px dashed rgba(255,255,255,0.12)", cursor: "pointer",
+            fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(255,255,255,0.45)", flexShrink: 0,
+          }}>
+            <Upload size={13} />
+            {file ? file.name : "Choisir un fichier"}
+            <input type="file" style={{ display: "none" }} onChange={e => setFile(e.target.files?.[0] ?? null)} />
+          </label>
+          <input
+            value={notes} onChange={e => setNotes(e.target.value)}
+            placeholder="Note optionnelle…"
+            style={{ ...inputStyle, flex: 1, minWidth: "160px" }}
+          />
+          <button onClick={upload} disabled={!file || uploading} style={{
+            display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", flexShrink: 0,
+            border: "1px solid rgba(92,92,245,0.35)", background: (!file || uploading) ? "rgba(255,255,255,0.04)" : "rgba(92,92,245,0.15)",
+            fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600,
+            color: (!file || uploading) ? "rgba(255,255,255,0.2)" : "rgba(92,92,245,0.9)", cursor: (!file || uploading) ? "not-allowed" : "pointer",
+          }}>
+            <Upload size={12} /> {uploading ? "Upload…" : "Envoyer"}
+          </button>
+        </div>
+        {error && <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(248,113,113,0.7)", margin: "10px 0 0" }}>{error}</p>}
+      </div>
+
+      {/* List */}
+      {deliverables.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "40px 0" }}>
+          <ImageIcon size={22} color="rgba(255,255,255,0.08)" style={{ marginBottom: "10px" }} />
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", color: "rgba(255,255,255,0.2)", margin: 0 }}>Aucun livrable pour ce projet.</p>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {deliverables.map(d => {
+            const sc = STATUS_COLORS[d.status] ?? STATUS_COLORS.pending;
+            return (
+              <div key={d.id} style={{ display: "flex", gap: "14px", alignItems: "center", padding: "12px 16px", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)" }}>
+                {/* Preview / icon */}
+                <div style={{ width: 48, height: 48, flexShrink: 0, background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                  {isImage(d.fileType) ? (
+                    <img src={d.fileUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <File size={20} color="rgba(255,255,255,0.2)" />
+                  )}
+                </div>
+                {/* Info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "3px" }}>
+                    <a href={d.fileUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.75)", textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {d.fileName}
+                    </a>
+                    <span style={{ fontSize: "9px", fontWeight: 700, color: sc.color, background: sc.bg, padding: "2px 7px", flexShrink: 0 }}>
+                      {STATUS_LABELS[d.status] ?? d.status}
+                    </span>
+                  </div>
+                  {d.notes && <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.3)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.notes}</p>}
+                  {d.approvedAt && (
+                    <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", color: "rgba(74,222,128,0.5)", margin: "2px 0 0", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <CheckCircle size={10} /> Approuvé le {new Date(d.approvedAt).toLocaleDateString("fr-FR")}
+                    </p>
+                  )}
+                </div>
+                {/* Delete */}
+                <button onClick={() => remove(d.id)} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", display: "flex", color: "rgba(248,113,113,0.4)", flexShrink: 0 }}>
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Admin Moodboard Panel ─────────────────────────────────────────────────────
+
+function AdminMoodboard({ projectId, items, onUpdate }: {
+  projectId: string;
+  items: MoodboardItem[];
+  onUpdate: (items: MoodboardItem[]) => void;
+}) {
+  const [file, setFile] = useState<File | null>(null);
+  const [url, setUrl] = useState("");
+  const [note, setNote] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+  const [lightbox, setLightbox] = useState<string | null>(null);
+
+  const add = async () => {
+    if (!file && !url.trim()) return;
+    setUploading(true); setError("");
+    const fd = new FormData();
+    fd.append("projectId", projectId);
+    if (note.trim()) fd.append("note", note.trim());
+    if (file) {
+      fd.append("file", file);
+    } else {
+      fd.append("imageUrl", url.trim());
+    }
+    const res = await fetch("/api/admin/moodboard", { method: "POST", body: fd });
+    setUploading(false);
+    if (!res.ok) { setError("Erreur lors de l'ajout"); return; }
+    const newItem: MoodboardItem = await res.json();
+    onUpdate([...items, newItem]);
+    setFile(null); setUrl(""); setNote("");
+  };
+
+  const remove = async (id: string) => {
+    await fetch(`/api/admin/moodboard/${id}`, { method: "DELETE" });
+    onUpdate(items.filter(i => i.id !== id));
+  };
+
+  return (
+    <div style={{ paddingBottom: "60px" }}>
+      {/* Add form */}
+      <div style={{ border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)", padding: "20px", marginBottom: "28px" }}>
+        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.2em", color: "rgba(255,255,255,0.25)", margin: "0 0 14px" }}>Ajouter une référence</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            <label style={{
+              display: "flex", alignItems: "center", gap: "7px", padding: "8px 14px",
+              border: "1px dashed rgba(255,255,255,0.12)", cursor: "pointer",
+              fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(255,255,255,0.45)", flexShrink: 0,
+            }}>
+              <Upload size={13} />
+              {file ? file.name : "Fichier image"}
+              <input type="file" accept="image/*" style={{ display: "none" }} onChange={e => { setFile(e.target.files?.[0] ?? null); setUrl(""); }} />
+            </label>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", flex: 1, minWidth: "200px" }}>
+              <LinkIcon size={12} color="rgba(255,255,255,0.2)" style={{ flexShrink: 0 }} />
+              <input
+                value={url} onChange={e => { setUrl(e.target.value); setFile(null); }}
+                placeholder="ou URL d'une image…"
+                style={{ ...inputStyle, flex: 1 }}
+              />
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            <input
+              value={note} onChange={e => setNote(e.target.value)}
+              placeholder="Note / contexte (optionnel)…"
+              style={{ ...inputStyle, flex: 1 }}
+            />
+            <button onClick={add} disabled={(!file && !url.trim()) || uploading} style={{
+              display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", flexShrink: 0,
+              border: "1px solid rgba(92,92,245,0.35)", background: ((!file && !url.trim()) || uploading) ? "rgba(255,255,255,0.04)" : "rgba(92,92,245,0.15)",
+              fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600,
+              color: ((!file && !url.trim()) || uploading) ? "rgba(255,255,255,0.2)" : "rgba(92,92,245,0.9)",
+              cursor: ((!file && !url.trim()) || uploading) ? "not-allowed" : "pointer",
+            }}>
+              <Plus size={12} /> {uploading ? "Ajout…" : "Ajouter"}
+            </button>
+          </div>
+          {error && <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(248,113,113,0.7)", margin: 0 }}>{error}</p>}
+        </div>
+      </div>
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div onClick={() => setLightbox(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px", cursor: "zoom-out" }}>
+          <img src={lightbox} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} onClick={e => e.stopPropagation()} />
+        </div>
+      )}
+
+      {/* Grid */}
+      {items.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "40px 0" }}>
+          <LayoutGrid size={22} color="rgba(255,255,255,0.08)" style={{ marginBottom: "10px" }} />
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", color: "rgba(255,255,255,0.2)", margin: 0 }}>Aucune référence ajoutée.</p>
+        </div>
+      ) : (
+        <div style={{ columns: "4 140px", gap: "8px" }}>
+          {items.map(item => (
+            <div key={item.id} style={{ breakInside: "avoid", marginBottom: "8px", position: "relative", group: 1 } as React.CSSProperties}>
+              <div style={{ position: "relative", overflow: "hidden", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                <img
+                  src={item.imageUrl} alt={item.note ?? ""}
+                  style={{ width: "100%", display: "block", objectFit: "cover", cursor: "zoom-in", transition: "transform 0.25s" }}
+                  onClick={() => setLightbox(item.imageUrl)}
+                  onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.04)")}
+                  onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
+                />
+                <button onClick={() => remove(item.id)} style={{
+                  position: "absolute", top: "6px", right: "6px",
+                  width: 24, height: 24, borderRadius: "50%",
+                  background: "rgba(248,113,113,0.85)", border: "none", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <X size={11} color="white" />
+                </button>
+              </div>
+              {item.note && (
+                <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 300, color: "rgba(255,255,255,0.35)", margin: "5px 0 0", lineHeight: 1.4 }}>{item.note}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

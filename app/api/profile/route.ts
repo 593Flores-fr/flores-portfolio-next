@@ -3,6 +3,17 @@ import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
+export async function GET() {
+  const session = await auth();
+  if (!session?.user?.id) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { id: true, name: true, email: true, image: true, discordId: true },
+  });
+  return NextResponse.json(user);
+}
+
 export async function PATCH(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });

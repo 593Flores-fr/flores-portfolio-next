@@ -61,13 +61,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             token.email = process.env.ADMIN_EMAIL;
           } else if (user.email) {
             // Compte Discord normal → lier par email
+            const discordId = account.providerAccountId;
             let dbUser = await prisma.user.findUnique({ where: { email: user.email } });
             if (!dbUser) {
               dbUser = await prisma.user.create({
-                data: { email: user.email, name: user.name ?? null, image: user.image ?? null },
+                data: { email: user.email, name: user.name ?? null, image: user.image ?? null, discordId },
               });
-            } else if (user.image && !dbUser.image) {
-              await prisma.user.update({ where: { id: dbUser.id }, data: { image: user.image } });
+            } else {
+              const upd: Record<string, string> = { discordId };
+              if (user.image && !dbUser.image) upd.image = user.image;
+              await prisma.user.update({ where: { id: dbUser.id }, data: upd });
             }
             token.id = dbUser.id;
           }

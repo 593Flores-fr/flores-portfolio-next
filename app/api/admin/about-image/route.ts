@@ -14,6 +14,9 @@ export async function POST(req: NextRequest) {
   const file = formData.get("file") as File | null;
   if (!file) return NextResponse.json({ error: "Fichier manquant" }, { status: 400 });
 
-  const blob = await put(`about/${Date.now()}-${file.name}`, file, { access: "public" });
+  const { searchParams } = new URL(req.url);
+  const folder = searchParams.get("folder") ?? "about";
+
+  const blob = await put(`${folder}/${Date.now()}-${file.name}`, file, { access: "public" });
   return NextResponse.json({ url: blob.url });
 }

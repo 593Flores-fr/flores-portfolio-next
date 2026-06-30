@@ -95,18 +95,18 @@ function DockItem({
             alignItems: "center",
             justifyContent: "center",
             background: (isActive || hovered)
-              ? "rgba(60,100,255,0.18)"
+              ? "var(--accent-purple-hover)"
               : "rgba(255,255,255,0.05)",
-            border: `1px solid ${(isActive || hovered) ? "rgba(60,100,255,0.35)" : "rgba(255,255,255,0.08)"}`,
+            border: `1px solid ${(isActive || hovered) ? "var(--accent-purple-border)" : "rgba(255,255,255,0.08)"}`,
             cursor: "pointer",
-            boxShadow: (isActive || hovered) ? "0 0 0 1px rgba(60,100,255,0.15), 0 4px 20px rgba(60,100,255,0.12)" : "none",
+            boxShadow: (isActive || hovered) ? `0 0 0 1px var(--accent-purple-glow), 0 4px 20px var(--accent-purple-glow)` : "none",
             transition: "background 0.2s, border-color 0.2s, box-shadow 0.2s",
             backdropFilter: "blur(2px)",
           }}
         >
           <Icon
             size={18}
-            color={(isActive || hovered) ? "rgba(120,155,255,0.95)" : "rgba(255,255,255,0.38)"}
+            color={(isActive || hovered) ? "#a0a0ff" : "rgba(255,255,255,0.38)"}
             strokeWidth={(isActive || hovered) ? 2 : 1.6}
           />
         </motion.div>
@@ -122,7 +122,7 @@ function DockItem({
           width: "4px",
           height: "4px",
           borderRadius: "50%",
-          background: "rgba(100,140,255,0.7)",
+          background: "var(--accent-purple)",
         }} />
       )}
       {/* Mobile label */}
@@ -135,7 +135,7 @@ export function Dock() {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const pathname = usePathname();
 
-  if (pathname.startsWith("/admin") || pathname.startsWith("/espace")) return null;
+  if (pathname === "/" || pathname.startsWith("/admin") || pathname.startsWith("/espace")) return null;
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";

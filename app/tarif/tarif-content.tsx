@@ -1,137 +1,231 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { CollabCTA } from "@/components/ui/collab-cta";
 import { useState } from "react";
+import type { SiteContentMap, ServiceItem } from "@/lib/site-content";
 
-type Service = { name: string; description: string; price: string; badge?: string; soon?: boolean };
-
-const devServices: Service[] = [
-  { name: "Site vitrine", description: "Présentation professionnelle de votre activité — responsive, SEO soigné, zéro template. Design sur mesure, domaine + hébergement inclus si besoin.", price: "À partir de 500€" },
-  { name: "Portfolio artiste", description: "Vitrine dédiée à votre univers créatif, animations soignées et identité forte. Parfait pour les musiciens, photographes, illustrateurs.", price: "À partir de 350€" },
-  { name: "Landing page", description: "Page unique optimisée conversion pour un produit, un événement ou une campagne. Design impactant, chargement ultra-rapide.", price: "À partir de 250€" },
-  { name: "Application web", description: "Outil sur mesure, tableau de bord, espace client, SaaS — architecture pensée pour durer. Stack moderne : Next.js, TypeScript, PostgreSQL.", price: "Sur devis" },
-  { name: "Portfolio commercial", description: "Site catalogue, galerie produits ou landing page optimisée conversion.", price: "Bientôt", soon: true },
-];
-
-const visualServices: Service[] = [
-  { name: "Identité visuelle complète", description: "Logo (vectoriel, toutes déclinaisons), charte graphique, palette, typographies, mockups — tout ce qui forge une marque reconnaissable.", price: "À partir de 250€" },
-  { name: "Logo seul", description: "Création d'un logotype professionnel livré en formats SVG, PNG, PDF. 2 propositions + révisions incluses.", price: "À partir de 120€" },
-  { name: "Affiches & flyers", description: "Supports print percutants pour vos événements, concerts ou campagnes. Format au choix, impression-ready.", price: "À partir de 50€" },
-  { name: "Covers musicales", description: "Cover single/EP/album, tracklist visuelle, CV de presse — calibrés pour toutes les plateformes (Spotify, Apple Music, Deezer…).", price: "À partir de 80€" },
-  { name: "Accompagnement streamers", description: "Overlays, alerts, panels, thumbnails, logo — un pack complet pour ne plus vous soucier de l'image. Mis à jour selon vos besoins.", price: "À partir de 99€/mois", badge: "Nouveau" },
-];
+type Service = ServiceItem;
 
 const faq = [
-  { q: "Comment se passe le paiement ?", a: "Un acompte de 30% est demandé à la commande. Le solde est réglé à la livraison. Je travaille par virement bancaire ou PayPal." },
-  { q: "Combien de temps pour livrer ?", a: "Cela dépend du projet. Un logo prend 5-7 jours, un site vitrine 2-4 semaines. Je vous donne un délai précis lors du devis." },
-  { q: "Puis-je modifier le résultat ?", a: "Oui. Chaque prestation inclut 2 à 3 allers-retours de révisions. Les modifications supplémentaires sont facturées au taux horaire (40€/h)." },
-  { q: "Vous travaillez avec des auto-entrepreneurs ?", a: "Bien sûr ! Mes tarifs sont adaptés aux indépendants, artistes et petites structures. Pas de TVA facturable (art. 293B du CGI)." },
-  { q: "Les fichiers sources sont-ils inclus ?", a: "Pour la création visuelle : oui, les fichiers sources (AI, PSD, Figma…) sont livrés. Pour le dev web : le code source est disponible sur GitHub." },
-  { q: "Vous proposez de la maintenance ?", a: "Oui, pour les projets web. Un forfait de maintenance mensuel est disponible selon vos besoins (mises à jour, contenus, corrections)." },
+  { q: "Comment se passe le paiement ?", a: "Un acompte de 30% est demandé à la commande. Le solde est réglé à la livraison, par virement bancaire ou PayPal." },
+  { q: "Combien de temps pour livrer ?", a: "Un logo prend 5–7 jours, un site vitrine 2–4 semaines. Un délai précis est donné lors du devis." },
+  { q: "Combien de révisions sont incluses ?", a: "Chaque prestation inclut 2 à 3 allers-retours. Les modifications supplémentaires sont facturées 40€/h." },
+  { q: "Vous travaillez avec des auto-entrepreneurs ?", a: "Bien sûr. Tarifs adaptés aux indépendants, artistes et petites structures. Pas de TVA (art. 293B du CGI)." },
+  { q: "Les fichiers sources sont-ils fournis ?", a: "Création visuelle : oui (AI, PSD, Figma…). Dev web : code source livré sur GitHub." },
+  { q: "Proposez-vous de la maintenance ?", a: "Oui pour les projets web. Forfait mensuel disponible selon vos besoins (mises à jour, contenus, corrections)." },
 ];
 
-function FaqItem({ q, a }: { q: string; a: string }) {
-  const [open, setOpen] = useState(false);
+function ServiceRow({ s, i }: { s: Service; i: number }) {
   return (
-    <div style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-      <button onClick={() => setOpen(o => !o)} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 0", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-poppins)", textAlign: "left" }}>
-        <span style={{ fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>{q}</span>
-        {open ? <ChevronUp size={15} color="rgba(255,255,255,0.3)" /> : <ChevronDown size={15} color="rgba(255,255,255,0.3)" />}
-      </button>
-      <motion.div
-        initial={false}
-        animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
-        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        style={{ overflow: "hidden" }}
-      >
-        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 300, color: "rgba(255,255,255,0.42)", lineHeight: 1.75, paddingBottom: "20px", margin: 0 }}>{a}</p>
-      </motion.div>
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: i * 0.05, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "32px",
+        padding: "20px 0",
+        borderBottom: "1px solid rgba(255,255,255,0.05)",
+        opacity: s.soon ? 0.35 : 1,
+      }}
+    >
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+          <div style={{ width: "16px", height: "1px", background: "rgba(255,255,255,0.18)", flexShrink: 0 }} />
+          <span style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.82)", letterSpacing: "0.2px" }}>
+            {s.name}
+          </span>
+          {s.badge && (
+            <span style={{ fontFamily: "var(--font-poppins)", fontSize: "7px", fontWeight: 600, letterSpacing: "3px", textTransform: "uppercase", color: "rgba(74,222,128,0.85)", border: "1px solid rgba(74,222,128,0.22)", padding: "2px 7px" }}>
+              {s.badge}
+            </span>
+          )}
+          {s.soon && (
+            <span style={{ fontFamily: "var(--font-poppins)", fontSize: "7px", fontWeight: 500, letterSpacing: "3px", textTransform: "uppercase", color: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.08)", padding: "2px 7px" }}>
+              Bientôt
+            </span>
+          )}
+        </div>
+        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 400, color: "rgba(255,255,255,0.50)", margin: "0 0 0 26px", lineHeight: 1.75 }}>
+          {s.description}
+        </p>
+      </div>
+      <span style={{
+        fontFamily: "var(--font-poppins), sans-serif",
+        fontSize: "13px",
+        fontWeight: 600,
+        letterSpacing: "0px",
+        color: (s.price === "Sur devis" || s.price === "À venir") ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.88)",
+        whiteSpace: "nowrap",
+        flexShrink: 0,
+        textAlign: "right",
+      }}>
+        {s.price}
+      </span>
+    </motion.div>
+  );
+}
+
+function FaqPanel() {
+  const [selected, setSelected] = useState(0);
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1px", background: "rgba(255,255,255,0.06)" }}>
+
+      {/* Gauche : liste des questions */}
+      <div style={{ background: "#0e0c0a" }}>
+        {faq.map((f, i) => (
+          <button
+            key={f.q}
+            onClick={() => setSelected(i)}
+            style={{
+              width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "22px 32px",
+              background: selected === i ? "rgba(92,92,245,0.05)" : "transparent",
+              borderLeft: selected === i ? "2px solid #5C5CF5" : "2px solid transparent",
+              borderBottom: "1px solid rgba(255,255,255,0.05)",
+              borderTop: "none", borderRight: "none",
+              cursor: "pointer", textAlign: "left", gap: "16px",
+              fontFamily: "var(--font-poppins)",
+              transition: "background 0.2s, border-color 0.2s",
+            }}
+          >
+            <span style={{ fontSize: "12px", fontWeight: selected === i ? 600 : 400, color: selected === i ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.38)", letterSpacing: "0.2px", transition: "color 0.2s" }}>
+              {f.q}
+            </span>
+            {selected === i && (
+              <span style={{ fontSize: "10px", color: "#5C5CF5", flexShrink: 0 }}>→</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Droite : réponse */}
+      <div style={{ background: "#0e0c0a", padding: "52px 48px", display: "flex", flexDirection: "column", justifyContent: "center", minHeight: "320px" }}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={selected}
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -8 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <p className="vto-label" style={{ fontSize: "8px", letterSpacing: "4px", color: "rgba(92,92,245,0.55)", marginBottom: "20px" }}>
+              {String(selected + 1).padStart(2, "0")}
+            </p>
+            <h3 style={{ fontFamily: "var(--font-six-caps), sans-serif", fontSize: "clamp(1.6rem, 2.4vw, 2.4rem)", fontWeight: 400, letterSpacing: "4px", textTransform: "uppercase", color: "white", margin: "0 0 20px", lineHeight: 1 }}>
+              {faq[selected].q}
+            </h3>
+            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 400, color: "rgba(255,255,255,0.52)", lineHeight: 1.9, margin: 0 }}>
+              {faq[selected].a}
+            </p>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
     </div>
   );
 }
 
-export function TarifPageContent() {
+export function TarifPageContent({ content }: { content: SiteContentMap["tarifs"] }) {
   return (
-    <div style={{ background: "#060a0e", minHeight: "100dvh", color: "white" }}>
-      <header style={{ padding: "24px 6vw", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: "8px", textDecoration: "none", fontFamily: "var(--font-poppins)", fontSize: "12px", color: "rgba(255,255,255,0.35)", fontWeight: 500 }}>
-          <ArrowLeft size={14} /> Accueil
-        </Link>
-        <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.2em", color: "rgba(255,255,255,0.18)" }}>Tarifs</span>
-      </header>
+    <div style={{ background: "#0e0c0a", minHeight: "100dvh", color: "white", paddingTop: "64px" }}>
 
-      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "80px 6vw 160px" }}>
+      <div style={{ maxWidth: "1500px", margin: "0 auto", padding: "80px 4vw 160px" }}>
 
         {/* Hero */}
-        <motion.div initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }} style={{ marginBottom: "80px" }}>
-          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.28em", color: "rgba(255,255,255,0.22)", marginBottom: "16px" }}>Tarifs</p>
-          <h1 style={{ fontFamily: "var(--font-poppins)", fontSize: "clamp(2.8rem,5vw,5rem)", fontWeight: 800, lineHeight: 0.95, letterSpacing: "-0.025em", margin: "0 0 24px" }}>Aperçu des tarifs.</h1>
-          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "15px", fontWeight: 300, color: "rgba(255,255,255,0.38)", maxWidth: "480px", lineHeight: 1.75, margin: 0 }}>
-            Chaque projet est unique — ces fourchettes sont là pour vous orienter.<br />
+        <motion.div
+          initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          style={{ marginBottom: "80px", textAlign: "center" }}
+        >
+          <p className="vto-label" style={{ marginBottom: "20px" }}>Tarifs</p>
+          <h1 style={{
+            fontFamily: "var(--font-six-caps), sans-serif",
+            fontSize: "clamp(3.5rem, 7vw, 7rem)",
+            fontWeight: 400,
+            lineHeight: 0.9,
+            letterSpacing: "5px",
+            textTransform: "uppercase",
+            margin: "0 0 32px",
+          }}>
+            Aperçu des tarifs.
+          </h1>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 400, color: "rgba(255,255,255,0.52)", lineHeight: 1.9, margin: "0 auto", letterSpacing: "0.3px", maxWidth: "420px" }}>
+            Chaque projet est unique, ces fourchettes sont là pour vous orienter.
             Devis gratuit sous 24h, sans engagement.
           </p>
         </motion.div>
 
-        {/* Service panels */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "100px" }}>
+        {/* Grille tarifs */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          style={{ display: "flex", gap: "1px", background: "rgba(255,255,255,0.06)", marginBottom: "80px", flexWrap: "wrap" }}
+        >
           {[
-            { num: "01", title: "Développement Web", services: devServices },
-            { num: "02", title: "Création Visuelle", services: visualServices },
+            { num: "01", title: content.devTitle,    services: content.devServices    },
+            { num: "02", title: content.visualTitle, services: content.visualServices },
           ].map(({ num, title, services }, pi) => (
-            <motion.div key={num} initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: pi * 0.1, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-              style={{ padding: "36px 32px", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.015)", position: "relative", overflow: "hidden" }}
-            >
-              <div style={{ position: "absolute", top: 0, right: 0, width: "200px", height: "200px", background: "radial-gradient(circle at top right, rgba(60,100,255,0.06), transparent 70%)", pointerEvents: "none" }} />
-              <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 500, color: "rgba(255,255,255,0.18)", textTransform: "uppercase", letterSpacing: "0.25em", marginBottom: "10px" }}>{num}</p>
-              <h2 style={{ fontFamily: "var(--font-poppins)", fontSize: "clamp(1.3rem,2.2vw,1.7rem)", fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.1, margin: "0 0 28px" }}>{title}</h2>
-              <div>
-                {services.map((s) => (
-                  <div key={s.name} style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "20px", padding: "18px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", opacity: s.soon ? 0.45 : 1 }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "5px" }}>
-                        <span style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>{s.name}</span>
-                        {s.badge && <span style={{ fontSize: "9px", fontFamily: "var(--font-poppins)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(74,222,128,0.9)", border: "1px solid rgba(74,222,128,0.3)", background: "rgba(74,222,128,0.08)", padding: "2px 7px", borderRadius: "999px" }}>{s.badge}</span>}
-                        {s.soon && <span style={{ fontSize: "9px", fontFamily: "var(--font-poppins)", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.1)", padding: "2px 7px", borderRadius: "999px" }}>Bientôt</span>}
-                      </div>
-                      <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 300, color: "rgba(255,255,255,0.28)", lineHeight: 1.65, margin: 0 }}>{s.description}</p>
-                    </div>
-                    <span style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: s.price.startsWith("À partir") ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.25)", whiteSpace: "nowrap", flexShrink: 0 }}>{s.price}</span>
-                  </div>
-                ))}
+            <div key={num} style={{ flex: 1, minWidth: "300px", padding: "48px 48px 44px", background: "#0e0c0a" }}>
+              <p className="vto-label" style={{ fontSize: "8px", letterSpacing: "4px", color: "rgba(255,255,255,0.40)", marginBottom: "16px" }}>{num}</p>
+              <h2 style={{
+                fontFamily: "var(--font-six-caps), sans-serif",
+                fontSize: "clamp(2.2rem, 3.5vw, 3.8rem)",
+                fontWeight: 400,
+                letterSpacing: "5px",
+                textTransform: "uppercase",
+                lineHeight: 0.9,
+                margin: "0 0 28px",
+              }}>
+                {title}
+              </h2>
+              <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", marginBottom: 0 }} />
+              {services.map((s, i) => <ServiceRow key={s.name} s={s} i={i + pi * 0.3} />)}
+              <div style={{ marginTop: "32px" }}>
+                <Link href="/espace" className="vto-cta-link vto-cta-link--accent">
+                  Obtenir un devis
+                  <span className="vto-cta-line" />
+                </Link>
               </div>
-            </motion.div>
+            </div>
           ))}
-        </div>
+        </motion.div>
 
-        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 300, color: "rgba(255,255,255,0.15)", textAlign: "center", marginBottom: "100px", letterSpacing: "0.04em" }}>
-          Tarifs HT · TVA non applicable selon art. 293B du CGI · Acompte 30% à la commande
+        <p className="vto-label" style={{ fontSize: "8px", letterSpacing: "3px", color: "rgba(255,255,255,0.32)", textAlign: "center", marginBottom: "100px" }}>
+          {content.footerNote}
         </p>
 
         {/* FAQ */}
-        <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }} style={{ marginBottom: "100px" }}>
-          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.28em", color: "rgba(255,255,255,0.22)", marginBottom: "16px" }}>FAQ</p>
-          <h2 style={{ fontFamily: "var(--font-poppins)", fontSize: "clamp(2rem,4vw,3.2rem)", fontWeight: 800, letterSpacing: "-0.02em", margin: "0 0 48px" }}>Questions fréquentes.</h2>
-          <div style={{ maxWidth: "720px" }}>
-            {faq.map(f => <FaqItem key={f.q} q={f.q} a={f.a} />)}
-          </div>
+        <div className="vto-sep" style={{ marginBottom: "72px", opacity: 0.4 }} />
+
+        <motion.div
+          initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          style={{ marginBottom: "100px" }}
+        >
+          <p className="vto-label" style={{ marginBottom: "20px" }}>FAQ</p>
+          <h2 style={{
+            fontFamily: "var(--font-six-caps), sans-serif",
+            fontSize: "clamp(2.5rem, 5vw, 5rem)",
+            fontWeight: 400,
+            letterSpacing: "5px",
+            textTransform: "uppercase",
+            margin: "0 0 48px",
+          }}>
+            Questions fréquentes.
+          </h2>
+          <FaqPanel />
         </motion.div>
 
-        {/* CTA */}
-        <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }}
-          style={{ padding: "60px", borderRadius: "20px", border: "1px solid rgba(60,100,255,0.2)", background: "radial-gradient(ellipse at 60% 0%, rgba(60,100,255,0.08) 0%, transparent 70%)", textAlign: "center" }}
-        >
-          <h2 style={{ fontFamily: "var(--font-poppins)", fontSize: "clamp(2rem,4vw,3rem)", fontWeight: 800, letterSpacing: "-0.02em", margin: "0 0 14px" }}>
-            Un projet en tête ?
-          </h2>
-          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "14px", fontWeight: 300, color: "rgba(255,255,255,0.35)", margin: "0 auto 32px", maxWidth: "400px", lineHeight: 1.7 }}>
-            Devis gratuit sous 24h. Décrivez votre projet depuis votre espace client et je vous reviens rapidement.
-          </p>
-          <Link href="/espace" style={{ display: "inline-flex", alignItems: "center", gap: "10px", padding: "14px 28px", borderRadius: "12px", border: "1px solid rgba(60,100,255,0.35)", background: "rgba(60,100,255,0.6)", fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600, color: "white", textDecoration: "none" }}>
-            Demander un devis →
-          </Link>
-        </motion.div>
+        {/* CTA final */}
+        <CollabCTA title="Un projet en tête ?" ctaLabel="Demander un devis" />
+
       </div>
     </div>
   );

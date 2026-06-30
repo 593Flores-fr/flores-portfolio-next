@@ -10,11 +10,8 @@ export function PageViewTracker() {
   useEffect(() => {
     if (pathname === last.current) return;
     last.current = pathname;
-    fetch("/api/views", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ page: pathname }),
-    }).catch(() => {});
+    // sendBeacon : non-bloquant, garanti livraison, ne freeze pas la nav
+    navigator.sendBeacon("/api/views", JSON.stringify({ page: pathname }));
   }, [pathname]);
 
   return null;

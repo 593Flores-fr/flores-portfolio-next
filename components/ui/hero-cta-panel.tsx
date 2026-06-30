@@ -107,7 +107,7 @@ export function HeroCtaPanel() {
 
       <p style={{
         fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 300,
-        color: "rgba(255,255,255,0.15)", textAlign: "center",
+        color: "rgba(255,255,255,0.40)", textAlign: "center",
         letterSpacing: "0.04em", margin: 0,
       }}>
         Gratuit · Connexion Discord ou email

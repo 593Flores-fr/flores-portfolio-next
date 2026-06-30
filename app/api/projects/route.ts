@@ -9,11 +9,12 @@ export async function GET() {
   const projects = await prisma.project.findMany({
     where: { userId: session.user.id },
     include: {
-      review: { select: { status: true } },
+      review: { select: { status: true, content: true, rating: true } },
       columns: {
         orderBy: { order: "asc" },
         include: { tasks: { orderBy: { order: "asc" } } },
       },
+      deliverables: { orderBy: { createdAt: "desc" } },
     },
     orderBy: { createdAt: "desc" },
   });

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { SITE_DEFAULTS } from "@/lib/site-content";
@@ -33,5 +34,10 @@ export async function PUT(req: NextRequest) {
     update: { data },
     create: { section, data },
   });
+
+  revalidatePath("/");
+  revalidatePath("/about");
+  revalidatePath("/tarif");
+
   return NextResponse.json(record);
 }

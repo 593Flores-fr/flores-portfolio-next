@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
-import { Poppins, Six_Caps } from "next/font/google";
+import { Space_Grotesk, Six_Caps } from "next/font/google";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import { Providers } from "@/components/providers";
-import { Dock } from "@/components/ui/dock";
+import { Navbar } from "@/components/ui/navbar";
 import { PageViewTracker } from "@/components/ui/page-view-tracker";
 import { PageLoader } from "@/components/ui/page-loader";
 import "./globals.css";
 
-const poppins = Poppins({
+// Space Grotesk : tech-forward, plus géométrique que Poppins — mix VTO/Flores
+const spaceGrotesk = Space_Grotesk({
   variable: "--font-poppins",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -52,18 +53,18 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="fr" className={`${poppins.variable} ${sixCaps.variable}`}>
-      <body style={{ fontFamily: "var(--font-poppins), sans-serif", background: "#060a0e" }}>
+    <html lang="fr" className={`${spaceGrotesk.variable} ${sixCaps.variable}`}>
+      <body style={{ fontFamily: "var(--font-poppins), sans-serif", background: "#0e0c0a" }}>
         <Providers>
           <PageLoader />
           {children}
-          <Dock />
+          <Navbar />
           <PageViewTracker />
         </Providers>
         {/* UnicornStudio SDK */}
         <Script
           src="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.1.9/dist/unicornStudio.umd.js"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
         <Analytics />
       </body>

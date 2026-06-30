@@ -1,17 +1,19 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Save, Check, ChevronDown, ChevronRight, Globe, Type, Link as LinkIcon, Image } from "lucide-react";
+import { Save, Check, ChevronDown, ChevronRight, Globe, Type, Link as LinkIcon, Image, BookImage } from "lucide-react";
+import { ImagePickerModal } from "@/components/ui/admin-image-picker";
 import type { SiteContentMap, ServiceItem } from "@/lib/site-content";
 import { SITE_DEFAULTS } from "@/lib/site-content";
 
 type Section = keyof SiteContentMap;
 
 const SECTION_LABELS: Record<Section, string> = {
-  hero: "Accueil — Hero",
-  about: "Section À propos",
-  features: "Section Services",
-  tarifs: "Section Tarifs",
+  hero: "Hero — Page d'accueil",
+  about: "Bloc À propos (accueil)",
+  features: "Services (non utilisé)",
+  aboutPage: "Page À propos",
+  tarifs: "Tarifs",
   footer: "Footer & Réseaux",
 };
 
@@ -92,6 +94,96 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+// ── Hero panel image uploader ──────────────────────────────────────────────────
+
+function PanelImageField({ label, value, onChange, folder, hint }: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  folder: string;
+  hint?: string;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(`/api/admin/about-image?folder=${folder}`, { method: "POST", body: fd });
+      const text = await res.text();
+      if (!text) throw new Error("Réponse vide — Vercel Blob non configuré ?");
+      const data = JSON.parse(text);
+      if (data.url) onChange(data.url);
+      else throw new Error(data.error ?? "Upload échoué");
+    } catch (err) {
+      alert(String(err instanceof Error ? err.message : err));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <>
+      <ImagePickerModal open={pickerOpen} onClose={() => setPickerOpen(false)} onSelect={onChange} />
+      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        <label style={labelStyle}>{label}</label>
+        {hint && <p style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", color: "rgba(255,255,255,0.2)", margin: "0 0 4px", lineHeight: 1.5 }}>{hint}</p>}
+        {value && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={value} alt="" style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)" }} />
+        )}
+        {/* Deux actions côte à côte */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center", gap: "7px",
+              padding: "9px 14px", cursor: "pointer",
+              border: "1px solid rgba(92,92,245,0.25)", background: "rgba(92,92,245,0.06)",
+              fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600,
+              letterSpacing: "1.5px", textTransform: "uppercase", color: "rgba(92,92,245,0.8)",
+            }}
+          >
+            <BookImage size={12} />
+            Bibliothèque
+          </button>
+          <label style={{
+            display: "flex", alignItems: "center", justifyContent: "center", gap: "7px",
+            padding: "9px 14px", cursor: uploading ? "not-allowed" : "pointer",
+            border: "1px dashed rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.03)",
+            fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600,
+            letterSpacing: "1.5px", textTransform: "uppercase",
+            color: uploading ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.45)",
+          }}>
+            {uploading ? "Upload…" : "Nouveau fichier"}
+            <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleUpload} disabled={uploading} />
+          </label>
+        </div>
+        <input
+          style={{ ...inputStyle, fontSize: "10px", color: "rgba(255,255,255,0.35)" }}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder="ou coller une URL directe"
+        />
+        {value && (
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            style={{ alignSelf: "flex-start", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "10px", color: "rgba(248,113,113,0.5)", padding: 0 }}
+          >
+            ✕ Supprimer (revenir au défaut)
+          </button>
+        )}
+      </div>
+    </>
+  );
+}
+
 // ── Hero editor ────────────────────────────────────────────────────────────────
 
 function HeroEditor({ value, onChange }: {
@@ -102,20 +194,24 @@ function HeroEditor({ value, onChange }: {
     onChange({ ...value, [key]: val });
   return (
     <>
+      <PanelImageField
+        label="Image de fond (hero)"
+        value={value.graphismeImage ?? ""}
+        onChange={set("graphismeImage")}
+        folder="hero-graphisme"
+        hint="Photo affichée en fond plein écran. Défaut : /images/about.jpg"
+      />
       <Field label="Badge disponibilité">
         <input style={inputStyle} value={value.badge} onChange={e => set("badge")(e.target.value)} />
-      </Field>
-      <Field label="Sous-titre (ex: Graphiste & Dev Web · France)">
-        <input style={inputStyle} value={value.subtitle} onChange={e => set("subtitle")(e.target.value)} />
       </Field>
       <Field label="Description">
         <AutoTextarea value={value.description} onChange={set("description")} />
       </Field>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-        <Field label="Bouton principal">
+        <Field label="Bouton principal (portfolio)">
           <input style={inputStyle} value={value.cta1} onChange={e => set("cta1")(e.target.value)} />
         </Field>
-        <Field label="Bouton secondaire">
+        <Field label="Bouton secondaire (espace)">
           <input style={inputStyle} value={value.cta2} onChange={e => set("cta2")(e.target.value)} />
         </Field>
       </div>
@@ -138,30 +234,30 @@ function AboutEditor({ value, onChange }: {
     pts[i] = { ...pts[i], [field]: val };
     onChange({ ...value, points: pts });
   };
-  const setStat = (i: number, field: "val" | "label") => (val: string) => {
-    const stats = [...value.stats];
-    stats[i] = { ...stats[i], [field]: val };
-    onChange({ ...value, stats });
-  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await fetch("/api/admin/about-image", { method: "POST", body: fd });
-    const data = await res.json();
-    if (data.url) setField("imageSrc")(data.url);
-    setUploading(false);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/about-image", { method: "POST", body: fd });
+      const text = await res.text();
+      if (!text) throw new Error("Réponse vide — Vercel Blob non configuré ?");
+      const data = JSON.parse(text);
+      if (data.url) setField("imageSrc")(data.url);
+      else throw new Error(data.error ?? "Upload échoué");
+    } catch (err) {
+      alert(String(err instanceof Error ? err.message : err));
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
     <>
-      <Field label="Badge flottant">
-        <input style={inputStyle} value={value.badge} onChange={e => setField("badge")(e.target.value)} />
-      </Field>
-      <Field label="Titre section">
+      <Field label="Titre section (Six Caps, affiché en grand)">
         <input style={inputStyle} value={value.heading} onChange={e => setField("heading")(e.target.value)} />
       </Field>
       <Field label="Photo">
@@ -197,19 +293,6 @@ function AboutEditor({ value, onChange }: {
           </div>
         ))}
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-        <label style={labelStyle}>Stats flottantes</label>
-        {value.stats.map((stat, i) => (
-          <div key={i} style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: "8px" }}>
-            <Field label="Valeur">
-              <input style={inputStyle} value={stat.val} onChange={e => setStat(i, "val")(e.target.value)} />
-            </Field>
-            <Field label="Label">
-              <input style={inputStyle} value={stat.label} onChange={e => setStat(i, "label")(e.target.value)} />
-            </Field>
-          </div>
-        ))}
-      </div>
     </>
   );
 }
@@ -230,14 +313,14 @@ function FeaturesEditor({ value, onChange }: {
   return (
     <>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-        <Field label="Eyebrow">
+        <Field label="Label section (petit texte en haut)">
           <input style={inputStyle} value={value.eyebrow} onChange={e => setField("eyebrow")(e.target.value)} />
         </Field>
-        <Field label="Titre">
+        <Field label="Titre principal (Six Caps)">
           <input style={inputStyle} value={value.title} onChange={e => setField("title")(e.target.value)} />
         </Field>
       </div>
-      <Field label="Sous-titre">
+      <Field label="Accroche sous le titre">
         <input style={inputStyle} value={value.subtitle} onChange={e => setField("subtitle")(e.target.value)} />
       </Field>
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -253,6 +336,140 @@ function FeaturesEditor({ value, onChange }: {
           </div>
         ))}
       </div>
+    </>
+  );
+}
+
+// ── About Page editor ──────────────────────────────────────────────────────────
+
+function AboutPageEditor({ value, onChange }: {
+  value: SiteContentMap["aboutPage"];
+  onChange: (v: SiteContentMap["aboutPage"]) => void;
+}) {
+  const set = <K extends keyof SiteContentMap["aboutPage"]>(key: K) => (val: SiteContentMap["aboutPage"][K]) =>
+    onChange({ ...value, [key]: val });
+
+  const setParcours = (i: number, field: "date" | "title" | "text") => (val: string) => {
+    const arr = [...value.parcours];
+    arr[i] = { ...arr[i], [field]: val };
+    onChange({ ...value, parcours: arr });
+  };
+  const setProcess = (i: number, field: "emoji" | "title" | "text") => (val: string) => {
+    const arr = [...value.process];
+    arr[i] = { ...arr[i], [field]: val };
+    onChange({ ...value, process: arr });
+  };
+  const setVtoLink = (i: number, field: "label" | "desc" | "href") => (val: string) => {
+    const arr = [...value.vtoLinks];
+    arr[i] = { ...arr[i], [field]: val };
+    onChange({ ...value, vtoLinks: arr });
+  };
+  const setVtoService = (i: number, field: "label" | "desc") => (val: string) => {
+    const arr = [...value.vtoServices];
+    arr[i] = { ...arr[i], [field]: val };
+    onChange({ ...value, vtoServices: arr });
+  };
+
+  return (
+    <>
+      {/* Hero */}
+      <SectionPanel title="Hero — Titre & accroche">
+        <Field label="Titre (& sera coloré en violet)">
+          <input style={inputStyle} value={value.heroTitle} onChange={e => set("heroTitle")(e.target.value)} />
+        </Field>
+        <Field label="Sous-titre (↵ pour saut de ligne)">
+          <AutoTextarea value={value.heroSubtitle} onChange={v => set("heroSubtitle")(v)} />
+        </Field>
+      </SectionPanel>
+
+      {/* Parcours */}
+      <SectionPanel title="Mon parcours">
+        <Field label="Titre de section (↵ pour saut de ligne)">
+          <AutoTextarea value={value.parcoursHeading} onChange={v => set("parcoursHeading")(v)} />
+        </Field>
+        <label style={labelStyle}>Étapes (timeline)</label>
+        {value.parcours.map((p, i) => (
+          <div key={i} style={{ padding: "12px", borderRadius: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: "8px" }}>
+              <Field label="Date">
+                <input style={inputStyle} value={p.date} onChange={e => setParcours(i, "date")(e.target.value)} />
+              </Field>
+              <Field label="Titre">
+                <input style={inputStyle} value={p.title} onChange={e => setParcours(i, "title")(e.target.value)} />
+              </Field>
+            </div>
+            <Field label="Texte">
+              <AutoTextarea value={p.text} onChange={setParcours(i, "text")} />
+            </Field>
+          </div>
+        ))}
+      </SectionPanel>
+
+      {/* VTO */}
+      <SectionPanel title="V.T.O Studio">
+        <Field label="Description 1">
+          <AutoTextarea value={value.vtoDesc1} onChange={v => set("vtoDesc1")(v)} />
+        </Field>
+        <Field label="Description 2">
+          <AutoTextarea value={value.vtoDesc2} onChange={v => set("vtoDesc2")(v)} />
+        </Field>
+        <label style={labelStyle}>Liens (pro / artistes / discord)</label>
+        {value.vtoLinks.map((link, i) => (
+          <div key={i} style={{ padding: "10px", borderRadius: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: "6px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+              <Field label="Label">
+                <input style={inputStyle} value={link.label} onChange={e => setVtoLink(i, "label")(e.target.value)} />
+              </Field>
+              <Field label="Description">
+                <input style={inputStyle} value={link.desc} onChange={e => setVtoLink(i, "desc")(e.target.value)} />
+              </Field>
+            </div>
+            <Field label="URL">
+              <input style={inputStyle} value={link.href} onChange={e => setVtoLink(i, "href")(e.target.value)} placeholder="https://..." />
+            </Field>
+          </div>
+        ))}
+        <label style={labelStyle}>Services (colonne droite)</label>
+        {value.vtoServices.map((svc, i) => (
+          <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "8px" }}>
+            <Field label="Label">
+              <input style={inputStyle} value={svc.label} onChange={e => setVtoService(i, "label")(e.target.value)} />
+            </Field>
+            <Field label="Description">
+              <input style={inputStyle} value={svc.desc} onChange={e => setVtoService(i, "desc")(e.target.value)} />
+            </Field>
+          </div>
+        ))}
+      </SectionPanel>
+
+      {/* Processus */}
+      <SectionPanel title="Processus — Comment je travaille">
+        {value.process.map((p, i) => (
+          <div key={i} style={{ padding: "12px", borderRadius: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "60px 1fr", gap: "8px" }}>
+              <Field label="Emoji">
+                <input style={inputStyle} value={p.emoji} onChange={e => setProcess(i, "emoji")(e.target.value)} />
+              </Field>
+              <Field label="Titre">
+                <input style={inputStyle} value={p.title} onChange={e => setProcess(i, "title")(e.target.value)} />
+              </Field>
+            </div>
+            <Field label="Texte">
+              <AutoTextarea value={p.text} onChange={setProcess(i, "text")} />
+            </Field>
+          </div>
+        ))}
+      </SectionPanel>
+
+      {/* CTA */}
+      <SectionPanel title="CTA final">
+        <Field label="Titre">
+          <input style={inputStyle} value={value.ctaTitle} onChange={e => set("ctaTitle")(e.target.value)} />
+        </Field>
+        <Field label="Description">
+          <AutoTextarea value={value.ctaDesc} onChange={v => set("ctaDesc")(v)} />
+        </Field>
+      </SectionPanel>
     </>
   );
 }
@@ -415,37 +632,36 @@ export function AdminContenu() {
     return <div style={{ padding: "40px", color: "rgba(255,255,255,0.2)", fontSize: "12px" }}>Chargement…</div>;
   }
 
-  const sections: { key: Section; icon: React.ReactNode; editor: React.ReactNode }[] = [
-    {
-      key: "hero",
-      icon: <Type size={13} />,
-      editor: <HeroEditor value={content.hero} onChange={setSection("hero")} />,
-    },
-    {
-      key: "about",
-      icon: <Image size={13} />,
-      editor: <AboutEditor value={content.about} onChange={setSection("about")} />,
-    },
-    {
-      key: "features",
-      icon: <Globe size={13} />,
-      editor: <FeaturesEditor value={content.features} onChange={setSection("features")} />,
-    },
-    {
-      key: "tarifs",
-      icon: <LinkIcon size={13} />,
-      editor: <TarifsEditor value={content.tarifs} onChange={setSection("tarifs")} />,
-    },
-    {
-      key: "footer",
-      icon: <LinkIcon size={13} />,
-      editor: <FooterEditor value={content.footer} onChange={setSection("footer")} />,
-    },
-  ];
+  function GroupLabel({ label }: { label: string }) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "28px 0 14px" }}>
+        <span style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 700, letterSpacing: "0.24em", textTransform: "uppercase", color: "rgba(255,255,255,0.28)" }}>
+          {label}
+        </span>
+        <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.05)" }} />
+      </div>
+    );
+  }
+
+  function SectionRow({ sectionKey, editor, defaultOpen = false }: { sectionKey: Section; editor: React.ReactNode; defaultOpen?: boolean }) {
+    return (
+      <div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+          <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.45)", letterSpacing: "0.08em" }}>
+            {SECTION_LABELS[sectionKey]}
+          </span>
+          <SaveBtn section={sectionKey} />
+        </div>
+        <SectionPanel title={SECTION_LABELS[sectionKey]} defaultOpen={defaultOpen}>
+          {editor}
+        </SectionPanel>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: "32px 40px" }}>
-      <div style={{ marginBottom: "28px" }}>
+      <div style={{ marginBottom: "8px" }}>
         <h1 style={{ fontSize: "20px", fontWeight: 800, color: "white", margin: "0 0 6px", letterSpacing: "-0.01em" }}>
           Contenu du site
         </h1>
@@ -454,20 +670,21 @@ export function AdminContenu() {
         </p>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxWidth: "760px" }}>
-        {sections.map(({ key, editor }) => (
-          <div key={key}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-              <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.16em" }}>
-                {SECTION_LABELS[key]}
-              </span>
-              <SaveBtn section={key} />
-            </div>
-            <SectionPanel title={SECTION_LABELS[key]} defaultOpen={key === "hero"}>
-              {editor}
-            </SectionPanel>
-          </div>
-        ))}
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "760px" }}>
+
+        <GroupLabel label="Accueil" />
+        <SectionRow sectionKey="hero"  editor={<HeroEditor value={content.hero} onChange={setSection("hero")} />} defaultOpen />
+        <SectionRow sectionKey="about" editor={<AboutEditor value={content.about} onChange={setSection("about")} />} />
+
+        <GroupLabel label="À propos" />
+        <SectionRow sectionKey="aboutPage" editor={<AboutPageEditor value={content.aboutPage} onChange={setSection("aboutPage")} />} />
+
+        <GroupLabel label="Tarifs" />
+        <SectionRow sectionKey="tarifs" editor={<TarifsEditor value={content.tarifs} onChange={setSection("tarifs")} />} />
+
+        <GroupLabel label="Footer" />
+        <SectionRow sectionKey="footer" editor={<FooterEditor value={content.footer} onChange={setSection("footer")} />} />
+
       </div>
     </div>
   );
