@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { PortfolioClient } from "@/components/ui/portfolio-client";
 import prisma from "@/lib/prisma";
 
@@ -22,5 +23,9 @@ export default async function PortfolioPage() {
     console.error("[portfolio] DB fetch failed:", err);
   }
 
-  return <PortfolioClient initialProjects={projects} />;
+  return (
+    <Suspense>
+      <PortfolioClient initialProjects={projects} />
+    </Suspense>
+  );
 }
