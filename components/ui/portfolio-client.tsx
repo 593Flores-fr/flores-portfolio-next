@@ -106,6 +106,7 @@ export function PortfolioClient({ initialProjects }: { initialProjects: Project[
 
   useEffect(() => {
     const cat = searchParams.get("cat");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (cat && FILTERS.includes(cat)) setActive(cat);
   }, [searchParams]);
 

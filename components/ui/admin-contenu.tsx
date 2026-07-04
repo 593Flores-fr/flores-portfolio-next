@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Save, Check, ChevronDown, ChevronRight, Globe, Type, Link as LinkIcon, Image, BookImage } from "lucide-react";
+import { Save, Check, ChevronDown, ChevronRight, BookImage } from "lucide-react";
 import { ImagePickerModal } from "@/components/ui/admin-image-picker";
 import type { SiteContentMap, ServiceItem } from "@/lib/site-content";
 import { SITE_DEFAULTS } from "@/lib/site-content";
@@ -504,7 +504,7 @@ function ServiceEditor({ services, onChange }: {
             <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
               <input type="checkbox" checked={!!svc.badge} onChange={e => set(i, "badge")(e.target.checked ? "Nouveau" : "")}
                 style={{ accentColor: "rgba(74,222,128,0.8)" }} />
-              <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(255,255,255,0.35)" }}>Badge "Nouveau"</span>
+              <span style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(255,255,255,0.35)" }}>Badge &ldquo;Nouveau&rdquo;</span>
             </label>
             <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
               <input type="checkbox" checked={!!svc.soon} onChange={e => set(i, "soon")(e.target.checked)}

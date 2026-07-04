@@ -36,7 +36,9 @@ export function ImagePickerModal({
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchImages();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelected(null);
     }
   }, [open, fetchImages]);

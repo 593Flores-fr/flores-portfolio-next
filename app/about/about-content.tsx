@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { CollabCTA } from "@/components/ui/collab-cta";
 import { SITE_DEFAULTS } from "@/lib/site-content";

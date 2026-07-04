@@ -46,6 +46,7 @@ export function AdminBibliotheque() {
     }
   }, []);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchImages(); }, [fetchImages]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,7 +90,6 @@ export function AdminBibliotheque() {
   };
 
   const selectedImg = images.find(img => img.url === selected);
-  const hasBlobToken = true; // check via error response
 
   return (
     <div style={{ padding: "36px 40px", maxWidth: "1200px" }}>

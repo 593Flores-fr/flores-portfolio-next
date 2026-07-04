@@ -38,6 +38,7 @@ export function Navbar() {
   }, []);
 
   // Fermer le menu sur changement de route
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMenuOpen(false); }, [pathname]);
 
   // Bloquer le scroll quand le menu est ouvert

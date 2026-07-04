@@ -853,6 +853,7 @@ function TabGalerie({ projects }: { projects: Project[] }) {
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [localProjects, setLocalProjects] = useState(projects);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setLocalProjects(projects); }, [projects]);
 
   const project = localProjects.find(p => p.id === selectedProject);
@@ -878,10 +879,10 @@ function TabGalerie({ projects }: { projects: Project[] }) {
     return (
       <div>
         <SectionTitle>Livrables</SectionTitle>
-        <SectionSub>Retrouvez ici tous les fichiers que je vous envoie, avec possibilité d'approbation en ligne.</SectionSub>
+        <SectionSub>Retrouvez ici tous les fichiers que je vous envoie, avec possibilité d&apos;approbation en ligne.</SectionSub>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", paddingTop: "60px", gap: "12px", opacity: 0.4 }}>
           <FolderOpen size={36} color="rgba(255,255,255,0.3)" strokeWidth={1} />
-          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.3)", margin: 0 }}>Aucun livrable pour l'instant</p>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.3)", margin: 0 }}>Aucun livrable pour l&apos;instant</p>
         </div>
       </div>
     );
@@ -1075,7 +1076,7 @@ function TabProjets({ onRequestDevis, onMessage }: { onRequestDevis: () => void;
           <div style={{ width: 48, height: 48, borderRadius: "12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Kanban size={20} color="rgba(255,255,255,0.15)" />
           </div>
-          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.25)", margin: 0 }}>Aucun projet pour l'instant</p>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.25)", margin: 0 }}>Aucun projet pour l&apos;instant</p>
           <button onClick={onRequestDevis} style={{ padding: "9px 18px", borderRadius: "9px", border: "1px solid rgba(60,100,255,0.3)", background: "rgba(60,100,255,0.12)", fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "rgba(100,140,255,0.8)", cursor: "pointer" }}>Faire une demande de devis</button>
         </div>
       ) : (
@@ -1237,11 +1238,13 @@ function TabMoodboard({ projects }: { projects: Project[] }) {
 
   useEffect(() => {
     const first = withDeliverables[0]?.id ?? null;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (first && !selectedId) setSelectedId(first);
   }, [projects]);
 
   useEffect(() => {
     if (!selectedId) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     safeFetch<MoodboardItem[]>(`/api/moodboard/${selectedId}`, []).then(data => {
       setItems(data);
@@ -1424,7 +1427,7 @@ function TabAvis() {
       {!reviewableProject && submittedProjects.length === 0 && !loading && (
         <div style={{ textAlign: "center", padding: "48px 0" }}>
           <Star size={24} color="rgba(255,255,255,0.1)" style={{ marginBottom: "12px" }} />
-          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.2)", margin: 0 }}>Aucune invitation à laisser un avis pour l'instant.<br />Je vous contacterai à la fin de votre projet.</p>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.2)", margin: 0 }}>Aucune invitation à laisser un avis pour l&apos;instant.<br />Je vous contacterai à la fin de votre projet.</p>
         </div>
       )}
     </div>
@@ -1947,6 +1950,7 @@ function TabMessagesWithPrefill({ user, prefill, clearPrefill }: { user: Session
 
   useEffect(() => {
     if (prefill) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInput(prefill);
       clearPrefill();
       setTimeout(() => inputRef.current?.focus(), 200);

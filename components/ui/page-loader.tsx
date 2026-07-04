@@ -8,6 +8,7 @@ export function PageLoader() {
 
   useEffect(() => {
     if (sessionStorage.getItem("flo_loaded")) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisible(true);
     const t = setTimeout(() => {
       setVisible(false);

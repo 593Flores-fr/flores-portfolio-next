@@ -2,7 +2,6 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { CollabCTA } from "@/components/ui/collab-cta";
 import { useState } from "react";
 import type { SiteContentMap, ServiceItem } from "@/lib/site-content";

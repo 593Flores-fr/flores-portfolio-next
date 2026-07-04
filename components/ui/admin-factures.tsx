@@ -370,7 +370,7 @@ export function AdminFactures() {
 
                   {/* Dates */}
                   <div>
-                    <label style={labelStyle}>Date d'échéance</label>
+                    <label style={labelStyle}>Date d&apos;échéance</label>
                     <input type="date" value={form.dueDate} onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))} style={inputStyle} />
                   </div>
 

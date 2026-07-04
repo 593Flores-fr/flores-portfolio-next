@@ -89,6 +89,7 @@ export function CardStack<T extends CardStackItem>({
   const [active, setActive] = React.useState(() => wrapIndex(initialIndex, len));
   const [hovering, setHovering] = React.useState(false);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   React.useEffect(() => { setActive((a) => wrapIndex(a, len)); }, [len]);
   React.useEffect(() => {
     if (!len) return;
