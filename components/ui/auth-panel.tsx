@@ -32,10 +32,11 @@ export function AuthPanel({ onClose }: AuthPanelProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const router = useRouter();
 
   const switchMode = (m: "login" | "register") => {
-    setMode(m); setError(""); setName(""); setEmail(""); setPassword("");
+    setMode(m); setError(""); setName(""); setEmail(""); setPassword(""); setRememberMe(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,11 +51,11 @@ export function AuthPanel({ onClose }: AuthPanelProps) {
         });
         const data = await res.json();
         if (!res.ok) { setError(data.error ?? "Erreur"); setLoading(false); return; }
-        const result = await signIn("credentials", { email, password, redirect: false });
+        const result = await signIn("credentials", { email, password, rememberMe: "false", redirect: false });
         if (result?.error) { setError("Compte créé — connectez-vous."); setMode("login"); }
         else router.push("/espace");
       } else {
-        const result = await signIn("credentials", { email, password, redirect: false });
+        const result = await signIn("credentials", { email, password, rememberMe: String(rememberMe), redirect: false });
         if (result?.error) setError("Email ou mot de passe incorrect");
         else router.push("/espace");
       }
@@ -142,6 +143,20 @@ export function AuthPanel({ onClose }: AuthPanelProps) {
                 </button>
               </div>
             </div>
+
+            {mode === "login" && (
+              <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", userSelect: "none" }}>
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={e => setRememberMe(e.target.checked)}
+                  style={{ width: "12px", height: "12px", accentColor: "rgba(92,92,245,0.85)", cursor: "pointer", flexShrink: 0 }}
+                />
+                <span style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 500, color: "rgba(255,255,255,0.35)", letterSpacing: "0.05em" }}>
+                  Se souvenir de moi — 30 jours
+                </span>
+              </label>
+            )}
 
             {/* Submit — style VTO CTA */}
             <button

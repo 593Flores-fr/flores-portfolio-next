@@ -39,13 +39,13 @@ export const metadata: Metadata = {
     siteName: "Flores",
     title: "Flores — Graphiste & Développeur Web",
     description: "Identité visuelle, direction artistique & développement web — des créations qui vous ressemblent vraiment.",
-    images: [{ url: "/og-image.jpg", width: 1200, height: 630, alt: "Flores — Graphiste & Développeur Web" }],
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Flores — Graphiste & Développeur Web" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Flores — Graphiste & Développeur Web",
     description: "Identité visuelle, direction artistique & développement web — des créations qui vous ressemblent vraiment.",
-    images: ["/og-image.jpg"],
+    images: ["/opengraph-image"],
   },
 };
 

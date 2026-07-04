@@ -13,6 +13,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        rememberMe: { label: "Remember me", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
@@ -22,11 +23,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!user || !user.password) return null;
         const valid = await compare(credentials.password as string, user.password);
         if (!valid) return null;
-        return { id: user.id, name: user.name, email: user.email, image: user.image };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return { id: user.id, name: user.name, email: user.email, image: user.image, rememberMe: credentials.rememberMe === "true" } as any;
       },
     }),
   ],
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   pages: { signIn: "/" },
   events: {
     async signIn({ user, account }) {
@@ -44,6 +46,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, user, account }) {
       if (user) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rememberMe = (user as any).rememberMe ?? true; // Discord always remembers
+        if (!rememberMe) token.expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+
         if (account?.provider === "discord") {
           const isAdminDiscord = account.providerAccountId === process.env.ADMIN_DISCORD_ID;
 
@@ -78,6 +84,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.id = user.id;
         }
       }
+      // Expire non-remember-me sessions after 24h
+      if (token.expiresAt && Date.now() > (token.expiresAt as number)) return null;
       return token;
     },
     session({ session, token }) {

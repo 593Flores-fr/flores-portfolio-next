@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { signOut, signIn } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Send, LogOut, MessageSquare, Kanban, Star,
   Settings, PlusCircle, ChevronRight, CheckCircle2,
@@ -89,7 +90,7 @@ const PRIO_COLORS: Record<string, string> = {
 // ── Avatar ────────────────────────────────────────────────────────────────────
 
 function Avatar({ name, image, size = 36 }: { name?: string | null; image?: string | null; size?: number }) {
-  if (image) return <img src={image} alt="" style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />;
+  if (image) return <Image src={image} alt="" width={size} height={size} style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />;
   const initials = (name ?? "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
   return (
     <div style={{ width: size, height: size, borderRadius: "50%", flexShrink: 0, background: "linear-gradient(135deg, rgba(60,100,255,0.6), rgba(100,60,255,0.6))", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-poppins)", fontSize: size * 0.36 + "px", fontWeight: 700, color: "white" }}>
@@ -377,6 +378,7 @@ function ProjectSummaryPanel({ project }: { project: Project }) {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function TabMessages({ user }: { user: Session["user"] }) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -538,7 +540,6 @@ function BudgetSlider({ value, onChange }: { value: number; onChange: (v: number
 }
 
 const TIME_SLOTS = [{ value: "9h-12h", label: "Matin  9h–12h" }, { value: "14h-17h", label: "Après-midi  14h–17h" }, { value: "17h-19h", label: "Soir  17h–19h" }, { value: "flexible", label: "Flexible" }];
-const PROJECT_TYPES = [{ value: "web", label: "Site web / Application" }, { value: "visual", label: "Création visuelle" }, { value: "other", label: "Autre / Je ne sais pas encore" }];
 const DEADLINES = [{ value: "urgent", label: "Urgent (moins de 2 semaines)" }, { value: "1mois", label: "1 mois environ" }, { value: "3mois", label: "2 à 3 mois" }, { value: "flexible", label: "Flexible / Pas de contrainte" }];
 const CONTACTS = [{ value: "email", label: "E-mail" }, { value: "discord", label: "Discord" }, { value: "phone", label: "Téléphone" }, { value: "other", label: "Peu importe" }];
 
@@ -911,7 +912,7 @@ function TabGalerie({ projects }: { projects: Project[] }) {
             {/* Preview ou icône */}
             <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
               {d.fileType === "image" ? (
-                <img src={d.fileUrl} alt={d.fileName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <Image src={d.fileUrl} alt={d.fileName} width={44} height={44} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               ) : (
                 <span style={{ fontSize: "18px" }}>{d.fileType === "pdf" ? "📄" : "📦"}</span>
               )}
@@ -1285,6 +1286,7 @@ function TabMoodboard({ projects }: { projects: Project[] }) {
           onClick={() => setLightbox(null)}
           style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px", cursor: "zoom-out" }}
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={lightbox} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", borderRadius: "6px" }} onClick={e => e.stopPropagation()} />
         </div>
       )}
@@ -1306,6 +1308,7 @@ function TabMoodboard({ projects }: { projects: Project[] }) {
               onClick={() => setLightbox(item.imageUrl)}
               style={{ breakInside: "avoid", marginBottom: "10px", cursor: "zoom-in", position: "relative", overflow: "hidden", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={item.imageUrl}
                 alt={item.note ?? ""}

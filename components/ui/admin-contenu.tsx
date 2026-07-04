@@ -297,49 +297,6 @@ function AboutEditor({ value, onChange }: {
   );
 }
 
-// ── Features editor ────────────────────────────────────────────────────────────
-
-function FeaturesEditor({ value, onChange }: {
-  value: SiteContentMap["features"];
-  onChange: (v: SiteContentMap["features"]) => void;
-}) {
-  const setField = (key: keyof SiteContentMap["features"]) => (val: string) =>
-    onChange({ ...value, [key]: val });
-  const setItem = (i: number, field: "title" | "description") => (val: string) => {
-    const items = [...value.items];
-    items[i] = { ...items[i], [field]: val };
-    onChange({ ...value, items });
-  };
-  return (
-    <>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-        <Field label="Label section (petit texte en haut)">
-          <input style={inputStyle} value={value.eyebrow} onChange={e => setField("eyebrow")(e.target.value)} />
-        </Field>
-        <Field label="Titre principal (Six Caps)">
-          <input style={inputStyle} value={value.title} onChange={e => setField("title")(e.target.value)} />
-        </Field>
-      </div>
-      <Field label="Accroche sous le titre">
-        <input style={inputStyle} value={value.subtitle} onChange={e => setField("subtitle")(e.target.value)} />
-      </Field>
-      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        <label style={labelStyle}>Cartes services (6)</label>
-        {value.items.map((item, i) => (
-          <div key={i} style={{ padding: "12px", borderRadius: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: "8px" }}>
-            <Field label={`Service ${i + 1} — Titre`}>
-              <input style={inputStyle} value={item.title} onChange={e => setItem(i, "title")(e.target.value)} />
-            </Field>
-            <Field label="Description">
-              <AutoTextarea value={item.description} onChange={setItem(i, "description")} />
-            </Field>
-          </div>
-        ))}
-      </div>
-    </>
-  );
-}
-
 // ── About Page editor ──────────────────────────────────────────────────────────
 
 function AboutPageEditor({ value, onChange }: {

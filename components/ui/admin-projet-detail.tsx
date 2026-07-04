@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,7 +20,6 @@ type Project = {
   moodboard: MoodboardItem[];
 };
 
-const DEFAULT_COLS = ["À faire", "En cours", "Bloquée", "En review", "Fait"];
 const COL_COLOR: Record<string, string> = {
   "À faire": "rgba(255,255,255,0.35)",
   "En cours": "rgba(96,165,250,0.8)",
@@ -514,7 +514,6 @@ export function AdminProjetDetail({ projectId, compact = false }: { projectId: s
             {sortedCols.map(col => {
               const accent = COL_COLOR[col.title] ?? "rgba(255,255,255,0.35)";
               const bg = COL_BG[col.title] ?? "rgba(255,255,255,0.015)";
-              const doneTasks = col.tasks.filter(t => t.done).length;
               return (
                 <motion.div
                   key={col.id}

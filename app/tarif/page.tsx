@@ -9,6 +9,11 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: "Tarifs",
   description: "Tarifs des prestations de Flores : identité visuelle, logo, site vitrine, covers musicales, accompagnement streamers. Devis gratuit sous 24h, sans engagement.",
+  openGraph: {
+    title: "Tarifs — Flores",
+    description: "Identité visuelle, site vitrine, covers & plus. Devis gratuit sous 24h.",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
+  },
 };
 
 async function getTarifsContent(): Promise<SiteContentMap["tarifs"]> {

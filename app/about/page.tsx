@@ -6,6 +6,11 @@ import prisma from "@/lib/prisma";
 export const metadata: Metadata = {
   title: "À propos",
   description: "Allan — graphiste freelance autodidacte depuis 5 ans, membre de V.T.O Studio. Identité visuelle, direction artistique & développement web, des créations qui ont un caractère propre.",
+  openGraph: {
+    title: "À propos — Flores",
+    description: "Autodidacte depuis 5 ans, membre de V.T.O Studio. Identité visuelle, DA & dev web.",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
+  },
 };
 
 async function getReviews() {

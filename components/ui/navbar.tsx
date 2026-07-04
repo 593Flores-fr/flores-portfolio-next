@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSession } from "next-auth/react";
 
 function FloresStar({ size = 13 }: { size?: number }) {
   const p = "M50,47 Q40,38 37,24 Q34,12 42,9 Q46,6 50,10 Q54,6 58,9 Q66,12 63,24 Q60,38 50,47Z";
@@ -30,6 +32,7 @@ export function Navbar() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { data: session } = useSession();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 48);
@@ -125,10 +128,41 @@ export function Navbar() {
         </nav>
 
         {/* CTA — hidden on mobile via CSS */}
-        <Link href="/espace" className="navbar-cta vto-cta-link vto-cta-link--accent">
-          Mon espace
-          <span className="vto-cta-line" />
-        </Link>
+        {session?.user ? (
+          <Link href="/espace" className="navbar-cta" style={{ display: "flex", alignItems: "center", gap: "9px", textDecoration: "none" }}>
+            {session.user.image ? (
+              <Image
+                src={session.user.image}
+                alt={session.user.name ?? ""}
+                width={26}
+                height={26}
+                style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+              />
+            ) : (
+              <span style={{
+                width: 26, height: 26, borderRadius: "50%",
+                background: "rgba(92,92,245,0.35)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 700,
+                color: "rgba(255,255,255,0.8)", flexShrink: 0,
+              }}>
+                {(session.user.name ?? session.user.email ?? "?").charAt(0).toUpperCase()}
+              </span>
+            )}
+            <span style={{
+              fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600,
+              letterSpacing: "2px", textTransform: "uppercase",
+              color: "rgba(255,255,255,0.65)",
+            }}>
+              {session.user.name?.split(" ")[0] ?? "Mon espace"}
+            </span>
+          </Link>
+        ) : (
+          <Link href="/espace" className="navbar-cta vto-cta-link vto-cta-link--accent">
+            Mon espace
+            <span className="vto-cta-line" />
+          </Link>
+        )}
 
         {/* Hamburger — visible only on mobile via CSS */}
         <button
@@ -196,15 +230,50 @@ export function Navbar() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: NAV_LINKS.length * 0.06, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             >
-              <Link
-                href="/espace"
-                onClick={() => setMenuOpen(false)}
-                className="vto-cta-link vto-cta-link--accent"
-                style={{ marginTop: "8px" }}
-              >
-                Mon espace
-                <span className="vto-cta-line" />
-              </Link>
+              {session?.user ? (
+                <Link
+                  href="/espace"
+                  onClick={() => setMenuOpen(false)}
+                  style={{ display: "flex", alignItems: "center", gap: "12px", textDecoration: "none", marginTop: "8px" }}
+                >
+                  {session.user.image ? (
+                    <Image
+                      src={session.user.image}
+                      alt={session.user.name ?? ""}
+                      width={32}
+                      height={32}
+                      style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+                    />
+                  ) : (
+                    <span style={{
+                      width: 32, height: 32, borderRadius: "50%",
+                      background: "rgba(92,92,245,0.35)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 700,
+                      color: "rgba(255,255,255,0.8)", flexShrink: 0,
+                    }}>
+                      {(session.user.name ?? session.user.email ?? "?").charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <span style={{
+                    fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600,
+                    letterSpacing: "3px", textTransform: "uppercase",
+                    color: "rgba(255,255,255,0.6)",
+                  }}>
+                    {session.user.name?.split(" ")[0] ?? "Mon espace"}
+                  </span>
+                </Link>
+              ) : (
+                <Link
+                  href="/espace"
+                  onClick={() => setMenuOpen(false)}
+                  className="vto-cta-link vto-cta-link--accent"
+                  style={{ marginTop: "8px" }}
+                >
+                  Mon espace
+                  <span className="vto-cta-line" />
+                </Link>
+              )}
             </motion.div>
           </motion.div>
         )}
