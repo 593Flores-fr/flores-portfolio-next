@@ -3,7 +3,6 @@ import { AboutSection } from "@/components/ui/about-section";
 import { PortfolioTeaser } from "@/components/ui/portfolio-teaser";
 import { TarifsTeaser } from "@/components/ui/tarifs-teaser";
 import { EspaceTeaser } from "@/components/ui/espace-teaser";
-import { ReviewsSection } from "@/components/ui/reviews-section";
 import { Footer } from "@/components/ui/footer";
 import prisma from "@/lib/prisma";
 import { SITE_DEFAULTS } from "@/lib/site-content";
@@ -40,26 +39,9 @@ async function getFeaturedProjects() {
   }
 }
 
-async function getReviews() {
-  try {
-    return await prisma.review.findMany({
-      where: { status: "approved", content: { not: null } },
-      select: {
-        id: true, content: true, rating: true,
-        user: { select: { name: true, image: true } },
-        project: { select: { title: true } },
-      },
-      orderBy: { submittedAt: "desc" },
-    });
-  } catch {
-    return [];
-  }
-}
-
 export default async function Home() {
-  const [content, reviews, featuredProjects] = await Promise.all([
+  const [content, featuredProjects] = await Promise.all([
     getSiteContent(),
-    getReviews(),
     getFeaturedProjects(),
   ]);
 
@@ -70,7 +52,6 @@ export default async function Home() {
       <AboutSection content={content.about} />
       <TarifsTeaser />
       <EspaceTeaser />
-      <ReviewsSection initialReviews={reviews} />
       <Footer content={content.footer} />
     </main>
   );

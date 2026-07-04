@@ -3,8 +3,17 @@
 import { motion } from "framer-motion";
 import { ExternalLink } from "lucide-react";
 import { CollabCTA } from "@/components/ui/collab-cta";
+import { ReviewsSection } from "@/components/ui/reviews-section";
 import { SITE_DEFAULTS } from "@/lib/site-content";
 import type { SiteContentMap } from "@/lib/site-content";
+
+type Avis = {
+  id: string;
+  content: string | null;
+  rating: number;
+  user: { name: string | null; image: string | null };
+  project: { title: string };
+};
 
 const toolGroups = [
   {
@@ -34,7 +43,7 @@ const fadeUp = {
 
 type Content = SiteContentMap["aboutPage"];
 
-export function AboutPageContent({ content = SITE_DEFAULTS.aboutPage }: { content?: Content }) {
+export function AboutPageContent({ content = SITE_DEFAULTS.aboutPage, reviews = [] }: { content?: Content; reviews?: Avis[] }) {
   const parcours = content.parcours;
   const process  = content.process;
 
@@ -126,7 +135,7 @@ export function AboutPageContent({ content = SITE_DEFAULTS.aboutPage }: { conten
 
       </div>
 
-      <div style={{ maxWidth: "1500px", margin: "0 auto", padding: "80px 4vw 160px" }}>
+      <div style={{ maxWidth: "1500px", margin: "0 auto", padding: "80px 4vw 80px" }}>
 
         {/* ── Parcours ── */}
         <motion.div
@@ -369,10 +378,16 @@ export function AboutPageContent({ content = SITE_DEFAULTS.aboutPage }: { conten
           </div>
         </motion.div>
 
-        {/* ── CTA ── */}
-        <CollabCTA title={content.ctaTitle} ctaLabel="Démarrer un projet" />
-
       </div>
+
+      {/* ── Avis clients ── */}
+      <ReviewsSection initialReviews={reviews} />
+
+      {/* ── CTA ── */}
+      <div style={{ maxWidth: "1500px", margin: "0 auto", padding: "0 4vw 160px" }}>
+        <CollabCTA title={content.ctaTitle} ctaLabel="Démarrer un projet" />
+      </div>
+
     </div>
   );
 }
