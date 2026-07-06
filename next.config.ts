@@ -7,7 +7,7 @@ const csp = [
   "img-src 'self' data: https:",
   "font-src 'self' data:",
   "frame-src https://www.youtube.com https://player.vimeo.com",
-  "connect-src 'self' https://vitals.vercel-insights.com https://*.vercel-analytics.com",
+  "connect-src 'self' https://vitals.vercel-insights.com https://*.vercel-analytics.com https://*.public.blob.vercel-storage.com https://blob.vercel-storage.com",
   "object-src 'none'",
   "base-uri 'self'",
   "frame-ancestors 'none'",
