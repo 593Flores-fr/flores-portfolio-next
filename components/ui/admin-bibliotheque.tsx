@@ -53,23 +53,22 @@ export function AdminBibliotheque() {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
     setUploading(true); setUploadError("");
-    let failed = 0;
+    const errors: string[] = [];
     for (const file of files) {
       const fd = new FormData();
       fd.append("file", file);
       try {
         const res = await fetch("/api/admin/image-library", { method: "POST", body: fd });
         const data = await res.json().catch(() => ({}));
-        if (!data.url) failed++;
-        setUploadError(data.error ?? "");
+        if (!data.url) errors.push(`${file.name} — ${data.error ?? "échec de l'upload"}`);
       } catch {
-        failed++;
+        errors.push(`${file.name} — erreur réseau`);
       }
     }
     await fetchImages();
     setUploading(false);
     e.target.value = "";
-    if (failed > 0) setUploadError(`${failed} fichier(s) n'ont pas pu être uploadés.`);
+    if (errors.length > 0) setUploadError(errors.join(" · "));
   };
 
   const handleCopy = async (url: string) => {
