@@ -24,3 +24,24 @@ export async function uploadLibraryImage(file: File): Promise<string> {
   if (err) throw new Error(err);
   return uploadToBlob(`library/${safeLibraryFilename(file)}`, file, "/api/admin/image-library");
 }
+
+/** Livrable client (image ou PDF) — le nom d'origine est envoyé séparément à la création en DB. */
+export async function uploadDeliverable(file: File, projectId: string): Promise<string> {
+  const err = validateUpload(file, "document");
+  if (err) throw new Error(err);
+  return uploadToBlob(`deliverables/${projectId}/${safeFilename(file)}`, file, "/api/admin/deliverables/upload-token");
+}
+
+/** Image de moodboard. */
+export async function uploadMoodboardImage(file: File, projectId: string): Promise<string> {
+  const err = validateUpload(file, "image");
+  if (err) throw new Error(err);
+  return uploadToBlob(`moodboard/${projectId}/${safeFilename(file)}`, file, "/api/admin/moodboard/upload-token");
+}
+
+/** Avatar de profil (client ou admin). */
+export async function uploadAvatar(file: File): Promise<string> {
+  const err = validateUpload(file, "image");
+  if (err) throw new Error(err);
+  return uploadToBlob(`avatars/${safeFilename(file)}`, file, "/api/profile/avatar/upload-token");
+}

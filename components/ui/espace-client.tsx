@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import type { Session } from "next-auth";
 import { useIsMobile } from "@/lib/hooks";
+import { uploadAvatar } from "@/lib/upload-client";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -1473,13 +1474,23 @@ function TabParametres({ user }: { user: Session["user"] }) {
     if (!file) return;
     setAvatarUploading(true);
     setError(""); setSuccess("");
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await fetch("/api/profile/avatar", { method: "POST", body: fd });
-    setAvatarUploading(false);
-    e.target.value = "";
-    if (res.ok) { const d = await res.json(); setAvatarUrl(d.image); setSuccess("Photo de profil mise à jour."); }
-    else setError("Erreur lors de l'upload.");
+    try {
+      const imageUrl = await uploadAvatar(file);
+      const res = await fetch("/api/profile/avatar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl }),
+      });
+      if (!res.ok) throw new Error("Erreur lors de l'upload.");
+      const d = await res.json();
+      setAvatarUrl(d.image);
+      setSuccess("Photo de profil mise à jour.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur lors de l'upload.");
+    } finally {
+      setAvatarUploading(false);
+      e.target.value = "";
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Trash2, CheckCircle2, Circle, Star, StickyNote, Save, Eye, EyeOff, X, ChevronUp, Upload, Kanban, ImageIcon, LayoutGrid, FileText, File, Link as LinkIcon, CheckCircle, XCircle } from "lucide-react";
+import { uploadDeliverable, uploadMoodboardImage } from "@/lib/upload-client";
 
 type Task = { id: string; title: string; description: string | null; category: string | null; priority: string; done: boolean; order: number };
 type Column = { id: string; title: string; order: number; tasks: Task[] };
@@ -679,16 +680,25 @@ function AdminLivrables({ projectId, deliverables, onUpdate }: {
   const upload = async () => {
     if (!file) return;
     setUploading(true); setError("");
-    const fd = new FormData();
-    fd.append("file", file);
-    fd.append("projectId", projectId);
-    if (notes.trim()) fd.append("notes", notes.trim());
-    const res = await fetch("/api/admin/deliverables", { method: "POST", body: fd });
-    setUploading(false);
-    if (!res.ok) { setError("Erreur lors de l'upload"); return; }
-    const newDel: Deliverable = await res.json();
-    onUpdate([newDel, ...deliverables]);
-    setFile(null); setNotes("");
+    try {
+      const fileUrl = await uploadDeliverable(file, projectId);
+      const res = await fetch("/api/admin/deliverables", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId, notes: notes.trim() || undefined, fileUrl, fileName: file.name, contentType: file.type }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error ?? "Erreur lors de l'upload");
+      }
+      const newDel: Deliverable = await res.json();
+      onUpdate([newDel, ...deliverables]);
+      setFile(null); setNotes("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur lors de l'upload");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const remove = async (id: string) => {
@@ -797,20 +807,25 @@ function AdminMoodboard({ projectId, items, onUpdate }: {
   const add = async () => {
     if (!file && !url.trim()) return;
     setUploading(true); setError("");
-    const fd = new FormData();
-    fd.append("projectId", projectId);
-    if (note.trim()) fd.append("note", note.trim());
-    if (file) {
-      fd.append("file", file);
-    } else {
-      fd.append("imageUrl", url.trim());
+    try {
+      const imageUrl = file ? await uploadMoodboardImage(file, projectId) : url.trim();
+      const res = await fetch("/api/admin/moodboard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId, note: note.trim() || undefined, imageUrl }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error ?? "Erreur lors de l'ajout");
+      }
+      const newItem: MoodboardItem = await res.json();
+      onUpdate([...items, newItem]);
+      setFile(null); setUrl(""); setNote("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur lors de l'ajout");
+    } finally {
+      setUploading(false);
     }
-    const res = await fetch("/api/admin/moodboard", { method: "POST", body: fd });
-    setUploading(false);
-    if (!res.ok) { setError("Erreur lors de l'ajout"); return; }
-    const newItem: MoodboardItem = await res.json();
-    onUpdate([...items, newItem]);
-    setFile(null); setUrl(""); setNote("");
   };
 
   const remove = async (id: string) => {
