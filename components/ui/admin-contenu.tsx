@@ -6,6 +6,7 @@ import { Save, Check, ChevronDown, ChevronRight, BookImage } from "lucide-react"
 import { ImagePickerModal } from "@/components/ui/admin-image-picker";
 import type { SiteContentMap, ServiceItem } from "@/lib/site-content";
 import { SITE_DEFAULTS } from "@/lib/site-content";
+import { uploadImage } from "@/lib/upload-client";
 
 type Section = keyof SiteContentMap;
 
@@ -115,14 +116,8 @@ function PanelImageField({ label, value, onChange, folder, hint }: {
     if (!file) return;
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch(`/api/admin/about-image?folder=${folder}`, { method: "POST", body: fd });
-      const text = await res.text();
-      if (!text) throw new Error("Réponse vide — Vercel Blob non configuré ?");
-      const data = JSON.parse(text);
-      if (data.url) onChange(data.url);
-      else throw new Error(data.error ?? "Upload échoué");
+      const url = await uploadImage(file, folder);
+      onChange(url);
     } catch (err) {
       alert(String(err instanceof Error ? err.message : err));
     } finally {
@@ -244,14 +239,8 @@ function AboutEditor({ value, onChange }: {
     if (!file) return;
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/admin/about-image", { method: "POST", body: fd });
-      const text = await res.text();
-      if (!text) throw new Error("Réponse vide — Vercel Blob non configuré ?");
-      const data = JSON.parse(text);
-      if (data.url) setField("imageSrc")(data.url);
-      else throw new Error(data.error ?? "Upload échoué");
+      const url = await uploadImage(file, "about");
+      setField("imageSrc")(url);
     } catch (err) {
       alert(String(err instanceof Error ? err.message : err));
     } finally {

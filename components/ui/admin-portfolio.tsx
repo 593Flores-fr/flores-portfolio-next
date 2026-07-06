@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { ImagePickerModal } from "@/components/ui/admin-image-picker";
 import { toBlockArray, emptyBlock, type PortfolioBlock } from "@/lib/portfolio-blocks";
+import { uploadImage } from "@/lib/upload-client";
 
 type Section = { id: string; name: string; color: string; order: number };
 
@@ -486,11 +487,10 @@ export function AdminPortfolio() {
     if (!file) return;
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/admin/about-image?folder=portfolio", { method: "POST", body: fd });
-      const data = await res.json();
-      if (data.url) setForm(f => ({ ...f, imageSrc: data.url }));
+      const url = await uploadImage(file, "portfolio");
+      setForm(f => ({ ...f, imageSrc: url }));
+    } catch (err) {
+      alert(String(err instanceof Error ? err.message : err));
     } finally {
       setUploading(false);
       e.target.value = "";
@@ -743,12 +743,14 @@ export function AdminPortfolio() {
                       <input type="file" accept="image/*" style={{ display: "none" }} onChange={async e => {
                         const file = e.target.files?.[0];
                         if (!file) return;
-                        const fd = new FormData();
-                        fd.append("file", file);
-                        const res = await fetch("/api/admin/about-image?folder=portfolio-logo", { method: "POST", body: fd });
-                        const data = await res.json();
-                        if (data.url) setForm(f => ({ ...f, logoSrc: data.url }));
-                        e.target.value = "";
+                        try {
+                          const url = await uploadImage(file, "portfolio-logo");
+                          setForm(f => ({ ...f, logoSrc: url }));
+                        } catch (err) {
+                          alert(String(err instanceof Error ? err.message : err));
+                        } finally {
+                          e.target.value = "";
+                        }
                       }} />
                     </label>
                   </div>

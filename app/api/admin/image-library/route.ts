@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { put, list } from "@vercel/blob";
-import { validateUpload, safeLibraryFilename } from "@/lib/upload-validation";
+import { list } from "@vercel/blob";
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 
 function isAdmin(email?: string | null) {
   return email === process.env.ADMIN_EMAIL;
@@ -50,18 +50,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "BLOB_READ_WRITE_TOKEN manquant — configurez-le dans .env.local depuis le dashboard Vercel → Storage → Blob" }, { status: 503 });
   }
 
-  const formData = await req.formData();
-  const file = formData.get("file") as File | null;
-  if (!file) return NextResponse.json({ error: "Fichier manquant" }, { status: 400 });
-
-  const validationError = validateUpload(file, "image");
-  if (validationError) return NextResponse.json({ error: validationError }, { status: 400 });
+  const body = (await req.json()) as HandleUploadBody;
 
   try {
-    const blob = await put(`library/${safeLibraryFilename(file)}`, file, { access: "public" });
-    return NextResponse.json({ url: blob.url, name: file.name });
-  } catch (e) {
-    console.error("[image-library] upload failed:", e);
-    return NextResponse.json({ error: "Erreur upload" }, { status: 500 });
+    const jsonResponse = await handleUpload({
+      body,
+      request: req,
+      onBeforeGenerateToken: async () => ({
+        allowedContentTypes: ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif", "image/avif", "image/bmp"],
+        maximumSizeInBytes: 20 * 1024 * 1024,
+        addRandomSuffix: false,
+      }),
+    });
+    return NextResponse.json(jsonResponse);
+  } catch (error) {
+    console.error("[image-library] client upload error:", error);
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Erreur upload" }, { status: 400 });
   }
 }

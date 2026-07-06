@@ -1,26 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { auth } from "@/auth";
-import { put } from "@vercel/blob";
-import { validateUpload, safeFilename } from "@/lib/upload-validation";
 
 function isAdmin(email?: string | null) {
   return email === process.env.ADMIN_EMAIL;
 }
 
+const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif", "image/avif", "image/bmp"];
+const MAX_BYTES = 20 * 1024 * 1024; // 20 Mo
+
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!isAdmin(session?.user?.email)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const formData = await req.formData();
-  const file = formData.get("file") as File | null;
-  if (!file) return NextResponse.json({ error: "Fichier manquant" }, { status: 400 });
+  const body = (await req.json()) as HandleUploadBody;
 
-  const validationError = validateUpload(file, "image");
-  if (validationError) return NextResponse.json({ error: validationError }, { status: 400 });
-
-  const { searchParams } = new URL(req.url);
-  const folder = searchParams.get("folder") ?? "about";
-
-  const blob = await put(`${folder}/${safeFilename(file)}`, file, { access: "public" });
-  return NextResponse.json({ url: blob.url });
+  try {
+    const jsonResponse = await handleUpload({
+      body,
+      request: req,
+      onBeforeGenerateToken: async () => ({
+        allowedContentTypes: ALLOWED_TYPES,
+        maximumSizeInBytes: MAX_BYTES,
+        addRandomSuffix: false,
+      }),
+    });
+    return NextResponse.json(jsonResponse);
+  } catch (error) {
+    console.error("[about-image] client upload error:", error);
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Erreur upload" }, { status: 400 });
+  }
 }

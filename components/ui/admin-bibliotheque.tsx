@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, Trash2, Copy, Check, X, BookImage } from "lucide-react";
+import { uploadLibraryImage } from "@/lib/upload-client";
 
 type LibraryImage = {
   url: string;
@@ -55,14 +56,10 @@ export function AdminBibliotheque() {
     setUploading(true); setUploadError("");
     const errors: string[] = [];
     for (const file of files) {
-      const fd = new FormData();
-      fd.append("file", file);
       try {
-        const res = await fetch("/api/admin/image-library", { method: "POST", body: fd });
-        const data = await res.json().catch(() => ({}));
-        if (!data.url) errors.push(`${file.name} — ${data.error ?? "échec de l'upload"}`);
-      } catch {
-        errors.push(`${file.name} — erreur réseau`);
+        await uploadLibraryImage(file);
+      } catch (err) {
+        errors.push(`${file.name} — ${err instanceof Error ? err.message : "échec de l'upload"}`);
       }
     }
     await fetchImages();
