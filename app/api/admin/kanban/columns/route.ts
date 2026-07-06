@@ -14,9 +14,10 @@ export async function POST(req: NextRequest) {
   if (!projectId || !title?.trim()) return NextResponse.json({ error: "Champs requis" }, { status: 400 });
 
   const last = await prisma.kanbanColumn.findFirst({ where: { projectId }, orderBy: { order: "desc" } });
+  // Neon HTTP adapter ne supporte pas les transactions : create() + include échoue.
+  // Une colonne neuve n'a de toute façon aucune tâche.
   const column = await prisma.kanbanColumn.create({
     data: { projectId, title: title.trim(), order: (last?.order ?? -1) + 1 },
-    include: { tasks: true },
   });
-  return NextResponse.json(column, { status: 201 });
+  return NextResponse.json({ ...column, tasks: [] }, { status: 201 });
 }
