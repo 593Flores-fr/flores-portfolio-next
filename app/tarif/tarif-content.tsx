@@ -74,7 +74,7 @@ function ServiceRow({ s, i }: { s: Service; i: number }) {
 function FaqPanel() {
   const [selected, setSelected] = useState(0);
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1px", background: "rgba(255,255,255,0.06)" }}>
+    <div className="faq-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1px", background: "rgba(255,255,255,0.06)" }}>
 
       {/* Gauche : liste des questions */}
       <div style={{ background: "#0e0c0a" }}>
@@ -105,7 +105,7 @@ function FaqPanel() {
       </div>
 
       {/* Droite : réponse */}
-      <div style={{ background: "#0e0c0a", padding: "52px 48px", display: "flex", flexDirection: "column", justifyContent: "center", minHeight: "320px" }}>
+      <div className="faq-answer" style={{ background: "#0e0c0a", padding: "52px 48px", display: "flex", flexDirection: "column", justifyContent: "center", minHeight: "320px" }}>
         <AnimatePresence mode="wait">
           <motion.div
             key={selected}

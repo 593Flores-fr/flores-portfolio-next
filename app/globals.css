@@ -471,6 +471,14 @@ html, body {
   .about-hero-grid { grid-template-rows: auto 56vw; }
   .about-editorial-text { padding: 48px 5vw !important; }
 
+  /* ── TarifsTeaser 3-col → 1-col ── */
+  .tarifs-teaser-grid { grid-template-columns: 1fr !important; }
+  .tarifs-teaser-col  { padding: 32px 24px !important; }
+
+  /* ── FAQ panel (tarif page) → stack ── */
+  .faq-grid           { grid-template-columns: 1fr !important; }
+  .faq-answer         { min-height: auto !important; padding: 28px 24px !important; }
+
   /* ── General ── */
   .hide-mobile { display: none !important; }
 }

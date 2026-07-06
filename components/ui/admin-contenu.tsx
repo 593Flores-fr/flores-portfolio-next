@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Save, Check, ChevronDown, ChevronRight, BookImage } from "lucide-react";
 import { ImagePickerModal } from "@/components/ui/admin-image-picker";
 import type { SiteContentMap, ServiceItem } from "@/lib/site-content";
@@ -603,6 +604,7 @@ export function AdminContenu() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<Section | null>(null);
   const [saved, setSaved] = useState<Section | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/site-content")
@@ -619,7 +621,8 @@ export function AdminContenu() {
     });
     setSaving(null);
     setSaved(section);
-    setTimeout(() => setSaved(null), 2200);
+    setToast(SECTION_LABELS[section]);
+    setTimeout(() => { setSaved(null); setToast(null); }, 2500);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content]);
 
@@ -632,7 +635,32 @@ export function AdminContenu() {
   }
 
   return (
-    <div style={{ padding: "32px 40px" }}>
+    <div style={{ padding: "32px 40px", position: "relative" }}>
+
+      {/* Toast sauvegarde */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 16, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.95 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            style={{
+              position: "fixed", bottom: "28px", right: "28px", zIndex: 9999,
+              display: "flex", alignItems: "center", gap: "10px",
+              padding: "12px 18px",
+              background: "rgba(20,30,20,0.97)", border: "1px solid rgba(74,222,128,0.3)",
+              fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600,
+              color: "rgba(74,222,128,0.9)",
+              backdropFilter: "blur(12px)",
+              boxShadow: "0 4px 24px rgba(0,0,0,0.5)",
+            }}
+          >
+            <Check size={13} />
+            <span>Enregistré — {toast}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div style={{ marginBottom: "8px" }}>
         <h1 style={{ fontSize: "20px", fontWeight: 800, color: "white", margin: "0 0 6px", letterSpacing: "-0.01em" }}>
           Contenu du site

@@ -1,9 +1,10 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit2, Eye, EyeOff, GripVertical, Check, X } from "lucide-react";
+import { Plus, Trash2, Eye, EyeOff, Check, X, BookImage, Upload } from "lucide-react";
+import { ImagePickerModal } from "@/components/ui/admin-image-picker";
 
 type PortfolioProject = {
   id: string; slug: string; title: string; tag: string;
@@ -45,8 +46,13 @@ export function AdminPortfolio() {
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerTarget, setPickerTarget] = useState<"cover" | "gallery" | "mockup" | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const uploadRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch("/api/admin/portfolio").then(r => r.json()).then(data => { setProjects(data); setLoading(false); });
@@ -102,6 +108,36 @@ export function AdminPortfolio() {
       closePanel();
     }
     setSaving(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  };
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/about-image?folder=portfolio", { method: "POST", body: fd });
+      const data = await res.json();
+      if (data.url) setForm(f => ({ ...f, imageSrc: data.url }));
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const handlePickerSelect = (url: string) => {
+    if (pickerTarget === "cover") {
+      setForm(f => ({ ...f, imageSrc: url }));
+    } else if (pickerTarget === "gallery") {
+      setForm(f => ({ ...f, imagesRaw: f.imagesRaw ? f.imagesRaw.trimEnd() + "\n" + url : url }));
+    } else if (pickerTarget === "mockup") {
+      setForm(f => ({ ...f, mockupImagesRaw: f.mockupImagesRaw ? f.mockupImagesRaw.trimEnd() + "\n" + url : url }));
+    }
+    setPickerOpen(false);
+    setPickerTarget(null);
   };
 
   const deleteProject = async (id: string) => {
@@ -214,15 +250,15 @@ export function AdminPortfolio() {
               initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }}
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
               style={{
-                width: "320px", flexShrink: 0,
+                width: "340px", flexShrink: 0,
                 border: "1px solid rgba(255,255,255,0.08)", borderRadius: "16px",
                 background: "rgba(255,255,255,0.02)", padding: "20px",
-                position: "sticky", top: "32px",
+                position: "sticky", top: "32px", maxHeight: "calc(100vh - 80px)", overflowY: "auto",
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
                 <p style={{ fontSize: "13px", fontWeight: 700, color: "white", margin: 0 }}>
-                  {editing ? "Modifier" : "Nouveau projet"}
+                  {editing ? "Modifier le projet" : "Nouveau projet"}
                 </p>
                 <button onClick={closePanel} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.3)", display: "flex", padding: 0 }}>
                   <X size={15} />
@@ -239,7 +275,7 @@ export function AdminPortfolio() {
                 <Field label="Tag / Catégorie">
                   <input value={form.tag} onChange={e => setForm(f => ({ ...f, tag: e.target.value }))} placeholder="Identité visuelle" style={inputStyle} />
                 </Field>
-                <Field label="Description">
+                <Field label="Description courte">
                   <textarea
                     value={form.description}
                     onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
@@ -248,14 +284,32 @@ export function AdminPortfolio() {
                     style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }}
                   />
                 </Field>
-                <Field label="Image couverture (URL ou /images/…)">
-                  <input value={form.imageSrc} onChange={e => setForm(f => ({ ...f, imageSrc: e.target.value }))} placeholder="/images/projet.jpg" style={inputStyle} />
-                </Field>
-                {form.imageSrc && (
-                  <div style={{ borderRadius: "8px", overflow: "hidden", height: "90px", background: "rgba(255,255,255,0.04)" }}>
-                    <img src={form.imageSrc} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+
+                {/* ── Image couverture avec picker ── */}
+                <div>
+                  <label style={{ display: "block", fontSize: "10px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,255,255,0.25)", marginBottom: "8px" }}>
+                    Image couverture
+                  </label>
+                  {form.imageSrc && (
+                    <div style={{ borderRadius: "8px", overflow: "hidden", height: "90px", background: "rgba(255,255,255,0.04)", marginBottom: "8px" }}>
+                      <img src={form.imageSrc} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </div>
+                  )}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "6px" }}>
+                    <button
+                      type="button"
+                      onClick={() => { setPickerTarget("cover"); setPickerOpen(true); }}
+                      style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", padding: "8px", border: "1px solid rgba(92,92,245,0.25)", background: "rgba(92,92,245,0.07)", cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(92,92,245,0.8)", borderRadius: "6px" }}
+                    >
+                      <BookImage size={11} /> Bibliothèque
+                    </button>
+                    <label style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", padding: "8px", border: "1px dashed rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.03)", cursor: uploading ? "not-allowed" : "pointer", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: uploading ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.45)", borderRadius: "6px" }}>
+                      <Upload size={11} /> {uploading ? "…" : "Upload"}
+                      <input ref={uploadRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleCoverUpload} disabled={uploading} />
+                    </label>
                   </div>
-                )}
+                  <input value={form.imageSrc} onChange={e => setForm(f => ({ ...f, imageSrc: e.target.value }))} placeholder="ou coller une URL…" style={{ ...inputStyle, fontSize: "10px", color: "rgba(255,255,255,0.35)" }} />
+                </div>
 
                 {/* Divider */}
                 <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "4px 0" }} />
@@ -287,12 +341,29 @@ export function AdminPortfolio() {
                 <Field label="Outils utilisés (virgule)">
                   <input value={form.toolsRaw} onChange={e => setForm(f => ({ ...f, toolsRaw: e.target.value }))} placeholder="Figma, Illustrator, Next.js" style={inputStyle} />
                 </Field>
-                <Field label="Images galerie (1 URL par ligne)">
-                  <textarea value={form.imagesRaw} onChange={e => setForm(f => ({ ...f, imagesRaw: e.target.value }))} rows={3} placeholder={"/images/img1.jpg\n/images/img2.jpg"} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.8, fontFamily: "monospace", fontSize: "11px" }} />
-                </Field>
-                <Field label="Mockups navigateur (1 URL par ligne — projets web)">
-                  <textarea value={form.mockupImagesRaw} onChange={e => setForm(f => ({ ...f, mockupImagesRaw: e.target.value }))} rows={3} placeholder={"/images/mockup-home.jpg\n/images/mockup-detail.jpg"} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.8, fontFamily: "monospace", fontSize: "11px" }} />
-                </Field>
+
+                {/* ── Galerie avec picker ── */}
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
+                    <label style={{ fontSize: "10px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,255,255,0.25)" }}>Images galerie</label>
+                    <button type="button" onClick={() => { setPickerTarget("gallery"); setPickerOpen(true); }} style={{ display: "flex", alignItems: "center", gap: "5px", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(92,92,245,0.7)", padding: 0 }}>
+                      <BookImage size={10} /> + Bibliothèque
+                    </button>
+                  </div>
+                  <textarea value={form.imagesRaw} onChange={e => setForm(f => ({ ...f, imagesRaw: e.target.value }))} rows={3} placeholder={"https://…/img1.jpg\nhttps://…/img2.jpg"} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.8, fontFamily: "monospace", fontSize: "10px" }} />
+                </div>
+
+                {/* ── Mockups avec picker ── */}
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
+                    <label style={{ fontSize: "10px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,255,255,0.25)" }}>Mockups navigateur</label>
+                    <button type="button" onClick={() => { setPickerTarget("mockup"); setPickerOpen(true); }} style={{ display: "flex", alignItems: "center", gap: "5px", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(92,92,245,0.7)", padding: 0 }}>
+                      <BookImage size={10} /> + Bibliothèque
+                    </button>
+                  </div>
+                  <textarea value={form.mockupImagesRaw} onChange={e => setForm(f => ({ ...f, mockupImagesRaw: e.target.value }))} rows={3} placeholder={"https://…/mockup1.jpg\nhttps://…/mockup2.jpg"} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.8, fontFamily: "monospace", fontSize: "10px" }} />
+                </div>
+
                 <Field label="Lien externe (optionnel)">
                   <input value={form.externalLink} onChange={e => setForm(f => ({ ...f, externalLink: e.target.value }))} placeholder="https://…" style={inputStyle} />
                 </Field>
@@ -329,19 +400,30 @@ export function AdminPortfolio() {
                 onClick={save}
                 disabled={saving || !form.title.trim() || !form.slug.trim()}
                 style={{
-                  marginTop: "18px", width: "100%", padding: "10px", borderRadius: "10px",
-                  border: "1px solid rgba(60,100,255,0.3)", background: "rgba(60,100,255,0.2)",
+                  marginTop: "18px", width: "100%", padding: "11px", borderRadius: "10px",
+                  border: `1px solid ${saved ? "rgba(74,222,128,0.3)" : "rgba(60,100,255,0.3)"}`,
+                  background: saved ? "rgba(74,222,128,0.1)" : "rgba(60,100,255,0.2)",
                   fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600,
-                  color: "rgba(140,170,255,0.9)", cursor: "pointer",
-                  opacity: (saving || !form.title.trim() || !form.slug.trim()) ? 0.4 : 1,
+                  color: saved ? "rgba(74,222,128,0.9)" : "rgba(140,170,255,0.9)",
+                  cursor: (saving || !form.title.trim() || !form.slug.trim()) ? "not-allowed" : "pointer",
+                  opacity: (!form.title.trim() || !form.slug.trim()) ? 0.4 : 1,
+                  transition: "all 0.3s ease",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: "7px",
                 }}
               >
-                {saving ? "Enregistrement…" : editing ? "Mettre à jour" : "Créer le projet"}
+                {saved ? <><Check size={13} /> Enregistré</> : saving ? "Enregistrement…" : editing ? "Mettre à jour" : "Créer le projet"}
               </button>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      {/* Image picker modal */}
+      <ImagePickerModal
+        open={pickerOpen}
+        onClose={() => { setPickerOpen(false); setPickerTarget(null); }}
+        onSelect={handlePickerSelect}
+      />
     </div>
   );
 }

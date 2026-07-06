@@ -122,12 +122,13 @@ export function TarifsTeaser() {
         </motion.div>
 
         {/* 3 catégories */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1px", background: "rgba(255,255,255,0.05)" }}>
+        <div className="tarifs-teaser-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1px", background: "rgba(255,255,255,0.05)" }}>
           {categories.map((cat, i) => (
             <motion.div
               key={cat.num}
               custom={i} variants={fadeUp} initial="hidden" whileInView="show"
               viewport={{ once: true, margin: "-40px" }}
+              className="tarifs-teaser-col"
               style={{ padding: "44px 40px", background: "#0e0c0a", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}
             >
               {/* Visuel décoratif en fond */}
