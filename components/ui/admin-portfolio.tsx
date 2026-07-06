@@ -8,17 +8,17 @@ import { ImagePickerModal } from "@/components/ui/admin-image-picker";
 
 type PortfolioProject = {
   id: string; slug: string; title: string; tag: string;
-  description: string; imageSrc: string; order: number; published: boolean;
+  description: string; imageSrc: string; logoSrc: string; order: number; published: boolean;
   category: string; year: string; client: string;
   fullDescription: string; challenge: string;
   images: string[]; mockupImages: string[]; tools: string[];
-  externalLink: string | null; accentColor: string;
+  externalLink: string | null; discordUrl: string | null; accentColor: string;
 };
 
 const emptyForm = {
-  slug: "", title: "", tag: "", description: "", imageSrc: "",
+  slug: "", title: "", tag: "", description: "", imageSrc: "", logoSrc: "",
   category: "", year: "", client: "", fullDescription: "", challenge: "",
-  imagesRaw: "", mockupImagesRaw: "", toolsRaw: "", externalLink: "", accentColor: "",
+  imagesRaw: "", mockupImagesRaw: "", toolsRaw: "", externalLink: "", discordUrl: "", accentColor: "",
   order: 0, published: true,
 };
 
@@ -50,7 +50,7 @@ export function AdminPortfolio() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerTarget, setPickerTarget] = useState<"cover" | "gallery" | "mockup" | null>(null);
+  const [pickerTarget, setPickerTarget] = useState<"cover" | "logo" | "gallery" | "mockup" | null>(null);
   const [uploading, setUploading] = useState(false);
   const uploadRef = useRef<HTMLInputElement>(null);
 
@@ -71,12 +71,13 @@ export function AdminPortfolio() {
 
   const toFormState = (p: PortfolioProject) => ({
     slug: p.slug, title: p.title, tag: p.tag, description: p.description, imageSrc: p.imageSrc,
+    logoSrc: p.logoSrc ?? "",
     category: p.category ?? "", year: p.year ?? "", client: p.client ?? "",
     fullDescription: p.fullDescription ?? "", challenge: p.challenge ?? "",
     imagesRaw: (p.images ?? []).join("\n"),
     mockupImagesRaw: (p.mockupImages ?? []).join("\n"),
     toolsRaw: (p.tools ?? []).join(", "),
-    externalLink: p.externalLink ?? "", accentColor: p.accentColor ?? "",
+    externalLink: p.externalLink ?? "", discordUrl: p.discordUrl ?? "", accentColor: p.accentColor ?? "",
     order: p.order, published: p.published,
   });
 
@@ -90,6 +91,7 @@ export function AdminPortfolio() {
     mockupImages: form.mockupImagesRaw.split("\n").map(s => s.trim()).filter(Boolean),
     tools: form.toolsRaw.split(",").map(s => s.trim()).filter(Boolean),
     externalLink: form.externalLink.trim() || null,
+    discordUrl: form.discordUrl.trim() || null,
   });
 
   const save = async () => {
@@ -131,6 +133,8 @@ export function AdminPortfolio() {
   const handlePickerSelect = (url: string) => {
     if (pickerTarget === "cover") {
       setForm(f => ({ ...f, imageSrc: url }));
+    } else if (pickerTarget === "logo") {
+      setForm(f => ({ ...f, logoSrc: url }));
     } else if (pickerTarget === "gallery") {
       setForm(f => ({ ...f, imagesRaw: f.imagesRaw ? f.imagesRaw.trimEnd() + "\n" + url : url }));
     } else if (pickerTarget === "mockup") {
@@ -311,6 +315,41 @@ export function AdminPortfolio() {
                   <input value={form.imageSrc} onChange={e => setForm(f => ({ ...f, imageSrc: e.target.value }))} placeholder="ou coller une URL…" style={{ ...inputStyle, fontSize: "10px", color: "rgba(255,255,255,0.35)" }} />
                 </div>
 
+                {/* ── Logo avec picker ── */}
+                <div>
+                  <label style={{ display: "block", fontSize: "10px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,255,255,0.25)", marginBottom: "8px" }}>
+                    Logo (optionnel)
+                  </label>
+                  {form.logoSrc && (
+                    <div style={{ borderRadius: "8px", overflow: "hidden", height: "70px", width: "70px", background: "rgba(255,255,255,0.04)", marginBottom: "8px" }}>
+                      <img src={form.logoSrc} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                    </div>
+                  )}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "6px" }}>
+                    <button
+                      type="button"
+                      onClick={() => { setPickerTarget("logo"); setPickerOpen(true); }}
+                      style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", padding: "8px", border: "1px solid rgba(92,92,245,0.25)", background: "rgba(92,92,245,0.07)", cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(92,92,245,0.8)", borderRadius: "6px" }}
+                    >
+                      <BookImage size={11} /> Bibliothèque
+                    </button>
+                    <label style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", padding: "8px", border: "1px dashed rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.03)", cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", borderRadius: "6px" }}>
+                      <Upload size={11} /> Upload
+                      <input type="file" accept="image/*" style={{ display: "none" }} onChange={async e => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const fd = new FormData();
+                        fd.append("file", file);
+                        const res = await fetch("/api/admin/about-image?folder=portfolio-logo", { method: "POST", body: fd });
+                        const data = await res.json();
+                        if (data.url) setForm(f => ({ ...f, logoSrc: data.url }));
+                        e.target.value = "";
+                      }} />
+                    </label>
+                  </div>
+                  <input value={form.logoSrc} onChange={e => setForm(f => ({ ...f, logoSrc: e.target.value }))} placeholder="ou coller une URL…" style={{ ...inputStyle, fontSize: "10px", color: "rgba(255,255,255,0.35)" }} />
+                </div>
+
                 {/* Divider */}
                 <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "4px 0" }} />
                 <p style={{ fontSize: "9px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.15em", color: "rgba(255,255,255,0.2)", margin: 0 }}>Page détail</p>
@@ -366,6 +405,9 @@ export function AdminPortfolio() {
 
                 <Field label="Lien externe (optionnel)">
                   <input value={form.externalLink} onChange={e => setForm(f => ({ ...f, externalLink: e.target.value }))} placeholder="https://…" style={inputStyle} />
+                </Field>
+                <Field label="Invitation Discord (optionnel)">
+                  <input value={form.discordUrl} onChange={e => setForm(f => ({ ...f, discordUrl: e.target.value }))} placeholder="https://discord.gg/…" style={inputStyle} />
                 </Field>
                 <Field label="Couleur accent (hex)">
                   <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>

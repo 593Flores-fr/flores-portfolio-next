@@ -125,6 +125,7 @@ model PortfolioProject {
   tag             String   @default("")
   description     String   @default("")
   imageSrc        String   @default("")
+  logoSrc         String   @default("")
   category        String   @default("")
   year            String   @default("")
   client          String   @default("")
@@ -134,6 +135,7 @@ model PortfolioProject {
   mockupImages    Json     @default("[]")
   tools           Json     @default("[]")
   externalLink    String?
+  discordUrl      String?
   accentColor     String   @default("")
   order           Int      @default(0)
   published       Boolean  @default(true)

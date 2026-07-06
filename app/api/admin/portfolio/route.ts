@@ -16,8 +16,8 @@ export async function POST(req: NextRequest) {
   if (!isAdmin(session?.user?.email)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json();
-  const { title, slug, tag, description, imageSrc, category, year, client,
-    fullDescription, challenge, images, tools, externalLink, accentColor, published } = body;
+  const { title, slug, tag, description, imageSrc, logoSrc, category, year, client,
+    fullDescription, challenge, images, mockupImages, tools, externalLink, discordUrl, accentColor, published } = body;
   if (!title?.trim() || !slug?.trim()) return NextResponse.json({ error: "title et slug requis" }, { status: 400 });
 
   const last = await prisma.portfolioProject.findFirst({ orderBy: { order: "desc" } });
@@ -25,12 +25,13 @@ export async function POST(req: NextRequest) {
     data: {
       title: title.trim(), slug: slug.trim(),
       tag: tag?.trim() ?? "", description: description?.trim() ?? "",
-      imageSrc: imageSrc?.trim() ?? "",
+      imageSrc: imageSrc?.trim() ?? "", logoSrc: logoSrc?.trim() ?? "",
       category: category?.trim() ?? "", year: year?.trim() ?? "",
       client: client?.trim() ?? "", fullDescription: fullDescription?.trim() ?? "",
       challenge: challenge?.trim() ?? "",
-      images: images ?? [], tools: tools ?? [],
+      images: images ?? [], mockupImages: mockupImages ?? [], tools: tools ?? [],
       externalLink: externalLink?.trim() || null,
+      discordUrl: discordUrl?.trim() || null,
       accentColor: accentColor?.trim() ?? "",
       order: body.order !== undefined ? Number(body.order) : (last?.order ?? -1) + 1,
       published: published !== false,

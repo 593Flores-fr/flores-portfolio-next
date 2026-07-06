@@ -8,10 +8,18 @@ import { ArrowLeft, ExternalLink, ArrowRight } from "lucide-react";
 
 type Project = {
   id: string; slug: string; title: string; tag: string;
-  description: string; imageSrc: string; category: string; year: string;
+  description: string; imageSrc: string; logoSrc?: string | null; category: string; year: string;
   client: string; fullDescription: string; challenge: string;
-  images: unknown; mockupImages: unknown; tools: unknown; externalLink: string | null; accentColor: string;
+  images: unknown; mockupImages: unknown; tools: unknown; externalLink: string | null; discordUrl?: string | null; accentColor: string;
 };
+
+function DiscordIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.08.114 18.1.128 18.116a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
+    </svg>
+  );
+}
 
 function resolveAccent(color?: string) {
   if (!color) return "rgba(60,100,255,1)";
@@ -82,6 +90,17 @@ export default function PortfolioDetail({ project }: { project: Project }) {
         {/* Hero content */}
         <motion.div style={{ position: "relative", zIndex: 2, padding: "0 6vw 80px", width: "100%", opacity: opacityHero }}>
           <div style={{ maxWidth: "900px" }}>
+            {/* Logo */}
+            {project.logoSrc && (
+              <motion.div
+                initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                style={{ position: "relative", height: "56px", width: "180px", marginBottom: "24px" }}
+              >
+                <Image src={project.logoSrc} alt={`Logo ${project.title}`} fill unoptimized={isExt(project.logoSrc)} style={{ objectFit: "contain", objectPosition: "left" }} />
+              </motion.div>
+            )}
+
             {/* Category + year */}
             <motion.div
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
@@ -276,6 +295,46 @@ export default function PortfolioDetail({ project }: { project: Project }) {
               ))}
             </div>
           </motion.div>
+        )}
+
+        {/* Discord CTA */}
+        {project.discordUrl && (
+          <motion.a
+            href={project.discordUrl} target="_blank" rel="noopener noreferrer"
+            variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "20px",
+              padding: "36px 44px", marginBottom: "120px", borderRadius: "20px", textDecoration: "none",
+              border: "1px solid rgba(88,101,242,0.25)",
+              background: "linear-gradient(135deg, rgba(88,101,242,0.10) 0%, rgba(6,10,14,0) 100%)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
+              <div style={{
+                width: "52px", height: "52px", borderRadius: "14px", flexShrink: 0,
+                background: "rgba(88,101,242,0.15)", border: "1px solid rgba(88,101,242,0.3)",
+                display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(120,138,255,0.95)",
+              }}>
+                <DiscordIcon size={26} />
+              </div>
+              <div>
+                <p style={{ fontSize: "15px", fontWeight: 700, color: "white", margin: "0 0 4px" }}>
+                  Rejoindre la communauté {project.title}
+                </p>
+                <p style={{ fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.4)", margin: 0 }}>
+                  Échangez avec les membres et suivez les actualités du projet sur Discord.
+                </p>
+              </div>
+            </div>
+            <span style={{
+              display: "flex", alignItems: "center", gap: "8px", flexShrink: 0,
+              padding: "12px 22px", borderRadius: "12px",
+              border: "1px solid rgba(88,101,242,0.4)", background: "rgba(88,101,242,0.85)",
+              fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "white",
+            }}>
+              Rejoindre le serveur <ArrowRight size={14} />
+            </span>
+          </motion.a>
         )}
 
         {/* Separator + CTA */}
