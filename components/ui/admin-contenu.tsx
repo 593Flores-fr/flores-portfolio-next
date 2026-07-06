@@ -11,10 +11,13 @@ type Section = keyof SiteContentMap;
 
 const SECTION_LABELS: Record<Section, string> = {
   hero: "Hero — Page d'accueil",
+  portfolioTeaser: "Bloc Portfolio (accueil)",
   about: "Bloc À propos (accueil)",
-  features: "Services (non utilisé)",
+  features: "Bloc Services (accueil)",
+  tarifsTeaser: "Bloc Tarifs (accueil)",
+  espaceTeaser: "Bloc Espace client (accueil)",
   aboutPage: "Page À propos",
-  tarifs: "Tarifs",
+  tarifs: "Page Tarifs",
   footer: "Footer & Réseaux",
 };
 
@@ -294,6 +297,176 @@ function AboutEditor({ value, onChange }: {
           </div>
         ))}
       </div>
+    </>
+  );
+}
+
+// ── Portfolio teaser editor (accueil) ───────────────────────────────────────────
+
+function PortfolioTeaserEditor({ value, onChange }: {
+  value: SiteContentMap["portfolioTeaser"];
+  onChange: (v: SiteContentMap["portfolioTeaser"]) => void;
+}) {
+  const set = (key: keyof SiteContentMap["portfolioTeaser"]) => (val: string) =>
+    onChange({ ...value, [key]: val });
+  return (
+    <>
+      <Field label="Sur-titre (petit label)">
+        <input style={inputStyle} value={value.eyebrow} onChange={e => set("eyebrow")(e.target.value)} />
+      </Field>
+      <Field label="Titre (Six Caps, affiché en grand)">
+        <input style={inputStyle} value={value.title} onChange={e => set("title")(e.target.value)} />
+      </Field>
+      <Field label="Texte du lien vers le portfolio complet">
+        <input style={inputStyle} value={value.ctaLabel} onChange={e => set("ctaLabel")(e.target.value)} />
+      </Field>
+      <p style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", color: "rgba(255,255,255,0.2)", margin: 0, lineHeight: 1.5 }}>
+        Les 3 projets affichés viennent automatiquement du Portfolio (les plus récents publiés) — gérez-les depuis l&apos;onglet Portfolio.
+      </p>
+    </>
+  );
+}
+
+// ── Tarifs teaser editor (accueil) ──────────────────────────────────────────────
+
+function TarifsTeaserEditor({ value, onChange }: {
+  value: SiteContentMap["tarifsTeaser"];
+  onChange: (v: SiteContentMap["tarifsTeaser"]) => void;
+}) {
+  const set = (key: keyof SiteContentMap["tarifsTeaser"]) => (val: string) =>
+    onChange({ ...value, [key]: val } as SiteContentMap["tarifsTeaser"]);
+  const setCategory = (i: number, field: "title" | "desc" | "from") => (val: string) => {
+    const arr = [...value.categories];
+    arr[i] = { ...arr[i], [field]: val };
+    onChange({ ...value, categories: arr });
+  };
+  const setCategoryTags = (i: number) => (val: string) => {
+    const arr = [...value.categories];
+    arr[i] = { ...arr[i], tags: val.split(",").map(s => s.trim()).filter(Boolean) };
+    onChange({ ...value, categories: arr });
+  };
+  return (
+    <>
+      <Field label="Sur-titre (petit label)">
+        <input style={inputStyle} value={value.eyebrow} onChange={e => set("eyebrow")(e.target.value)} />
+      </Field>
+      <Field label="Titre (Six Caps, affiché en grand)">
+        <input style={inputStyle} value={value.title} onChange={e => set("title")(e.target.value)} />
+      </Field>
+      <Field label="Sous-titre">
+        <AutoTextarea value={value.subtitle} onChange={set("subtitle")} />
+      </Field>
+      <Field label="Texte du lien vers les tarifs détaillés">
+        <input style={inputStyle} value={value.ctaLabel} onChange={e => set("ctaLabel")(e.target.value)} />
+      </Field>
+      <label style={labelStyle}>3 catégories</label>
+      {value.categories.map((cat, i) => (
+        <div key={i} style={{ padding: "12px", borderRadius: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: "8px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 100px", gap: "8px" }}>
+            <Field label="Titre">
+              <input style={inputStyle} value={cat.title} onChange={e => setCategory(i, "title")(e.target.value)} />
+            </Field>
+            <Field label="À partir de">
+              <input style={inputStyle} value={cat.from} onChange={e => setCategory(i, "from")(e.target.value)} placeholder="200€" />
+            </Field>
+          </div>
+          <Field label="Description">
+            <AutoTextarea value={cat.desc} onChange={setCategory(i, "desc")} />
+          </Field>
+          <Field label="Tags (séparés par des virgules)">
+            <input style={inputStyle} value={cat.tags.join(", ")} onChange={e => setCategoryTags(i)(e.target.value)} placeholder="Logo, Charte, DA, Print" />
+          </Field>
+        </div>
+      ))}
+    </>
+  );
+}
+
+// ── Espace client teaser editor (accueil) ───────────────────────────────────────
+
+function EspaceTeaserEditor({ value, onChange }: {
+  value: SiteContentMap["espaceTeaser"];
+  onChange: (v: SiteContentMap["espaceTeaser"]) => void;
+}) {
+  const set = (key: keyof SiteContentMap["espaceTeaser"]) => (val: string) =>
+    onChange({ ...value, [key]: val } as SiteContentMap["espaceTeaser"]);
+  const setPillier = (i: number, field: "title" | "desc") => (val: string) => {
+    const arr = [...value.pilliers];
+    arr[i] = { ...arr[i], [field]: val };
+    onChange({ ...value, pilliers: arr });
+  };
+  return (
+    <>
+      <Field label="Badge">
+        <input style={inputStyle} value={value.badge} onChange={e => set("badge")(e.target.value)} />
+      </Field>
+      <Field label="Titre (↵ pour saut de ligne)">
+        <AutoTextarea value={value.title} onChange={set("title")} />
+      </Field>
+      <Field label="Paragraphe 1">
+        <AutoTextarea value={value.paragraph1} onChange={set("paragraph1")} />
+      </Field>
+      <Field label="Paragraphe 2">
+        <AutoTextarea value={value.paragraph2} onChange={set("paragraph2")} />
+      </Field>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+        <Field label="Texte du bouton">
+          <input style={inputStyle} value={value.ctaLabel} onChange={e => set("ctaLabel")(e.target.value)} />
+        </Field>
+        <Field label="Note sous le bouton">
+          <input style={inputStyle} value={value.discordNote} onChange={e => set("discordNote")(e.target.value)} />
+        </Field>
+      </div>
+      <label style={labelStyle}>3 piliers (colonne de droite)</label>
+      {value.pilliers.map((p, i) => (
+        <div key={i} style={{ padding: "12px", borderRadius: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: "8px" }}>
+          <Field label="Titre">
+            <input style={inputStyle} value={p.title} onChange={e => setPillier(i, "title")(e.target.value)} />
+          </Field>
+          <Field label="Texte">
+            <AutoTextarea value={p.desc} onChange={setPillier(i, "desc")} />
+          </Field>
+        </div>
+      ))}
+    </>
+  );
+}
+
+// ── Features editor (accueil) ───────────────────────────────────────────────────
+
+function FeaturesEditor({ value, onChange }: {
+  value: SiteContentMap["features"];
+  onChange: (v: SiteContentMap["features"]) => void;
+}) {
+  const set = (key: keyof SiteContentMap["features"]) => (val: string) =>
+    onChange({ ...value, [key]: val } as SiteContentMap["features"]);
+  const setItem = (i: number, field: "title" | "description") => (val: string) => {
+    const arr = [...value.items];
+    arr[i] = { ...arr[i], [field]: val };
+    onChange({ ...value, items: arr });
+  };
+  return (
+    <>
+      <Field label="Sur-titre (petit label)">
+        <input style={inputStyle} value={value.eyebrow} onChange={e => set("eyebrow")(e.target.value)} />
+      </Field>
+      <Field label="Titre (Six Caps, affiché en grand)">
+        <input style={inputStyle} value={value.title} onChange={e => set("title")(e.target.value)} />
+      </Field>
+      <Field label="Sous-titre">
+        <AutoTextarea value={value.subtitle} onChange={set("subtitle")} />
+      </Field>
+      <label style={labelStyle}>6 services</label>
+      {value.items.map((item, i) => (
+        <div key={i} style={{ padding: "12px", borderRadius: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: "8px" }}>
+          <Field label="Titre">
+            <input style={inputStyle} value={item.title} onChange={e => setItem(i, "title")(e.target.value)} />
+          </Field>
+          <Field label="Description">
+            <AutoTextarea value={item.description} onChange={setItem(i, "description")} />
+          </Field>
+        </div>
+      ))}
     </>
   );
 }
@@ -672,18 +845,20 @@ export function AdminContenu() {
 
       <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "760px" }}>
 
-        <GroupLabel label="Accueil" />
-        <SectionRow sectionKey="hero"  editor={<HeroEditor value={content.hero} onChange={setSection("hero")} />} defaultOpen saving={saving} saved={saved} onSave={save} />
+        <GroupLabel label="Accueil — dans l'ordre de la page" />
+        <SectionRow sectionKey="hero" editor={<HeroEditor value={content.hero} onChange={setSection("hero")} />} defaultOpen saving={saving} saved={saved} onSave={save} />
+        <SectionRow sectionKey="portfolioTeaser" editor={<PortfolioTeaserEditor value={content.portfolioTeaser} onChange={setSection("portfolioTeaser")} />} saving={saving} saved={saved} onSave={save} />
         <SectionRow sectionKey="about" editor={<AboutEditor value={content.about} onChange={setSection("about")} />} saving={saving} saved={saved} onSave={save} />
+        <SectionRow sectionKey="features" editor={<FeaturesEditor value={content.features} onChange={setSection("features")} />} saving={saving} saved={saved} onSave={save} />
+        <SectionRow sectionKey="tarifsTeaser" editor={<TarifsTeaserEditor value={content.tarifsTeaser} onChange={setSection("tarifsTeaser")} />} saving={saving} saved={saved} onSave={save} />
+        <SectionRow sectionKey="espaceTeaser" editor={<EspaceTeaserEditor value={content.espaceTeaser} onChange={setSection("espaceTeaser")} />} saving={saving} saved={saved} onSave={save} />
+        <SectionRow sectionKey="footer" editor={<FooterEditor value={content.footer} onChange={setSection("footer")} />} saving={saving} saved={saved} onSave={save} />
 
         <GroupLabel label="À propos" />
         <SectionRow sectionKey="aboutPage" editor={<AboutPageEditor value={content.aboutPage} onChange={setSection("aboutPage")} />} saving={saving} saved={saved} onSave={save} />
 
-        <GroupLabel label="Tarifs" />
+        <GroupLabel label="Page Tarifs (détail)" />
         <SectionRow sectionKey="tarifs" editor={<TarifsEditor value={content.tarifs} onChange={setSection("tarifs")} />} saving={saving} saved={saved} onSave={save} />
-
-        <GroupLabel label="Footer" />
-        <SectionRow sectionKey="footer" editor={<FooterEditor value={content.footer} onChange={setSection("footer")} />} saving={saving} saved={saved} onSave={save} />
 
       </div>
     </div>

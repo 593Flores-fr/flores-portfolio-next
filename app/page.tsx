@@ -49,11 +49,11 @@ export default async function Home() {
   return (
     <main>
       <HeroHome content={content.hero} />
-      <PortfolioTeaser projects={featuredProjects} />
+      <PortfolioTeaser projects={featuredProjects} content={content.portfolioTeaser} />
       <AboutSection content={content.about} />
       <FeaturesSection content={content.features} />
-      <TarifsTeaser />
-      <EspaceTeaser />
+      <TarifsTeaser content={content.tarifsTeaser} />
+      <EspaceTeaser content={content.espaceTeaser} />
       <Footer content={content.footer} />
     </main>
   );

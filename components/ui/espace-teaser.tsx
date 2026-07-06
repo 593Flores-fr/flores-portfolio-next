@@ -3,28 +3,12 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ScrollFillText } from "@/components/ui/scroll-fill-text";
+import { SITE_DEFAULTS } from "@/lib/site-content";
+import type { SiteContentMap } from "@/lib/site-content";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-const pilliers = [
-  {
-    num: "01",
-    title: "Ça commence ici",
-    desc: "Formulaire de brief structuré ou réservation d'un premier RDV, directement depuis l'espace. Pas d'email, pas de contact générique. Les bases du projet posées proprement, dès le départ.",
-  },
-  {
-    num: "02",
-    title: "Suivi en continu",
-    desc: "Avancement visible à chaque étape, kanban partagé, messagerie dédiée au projet. Votre client sait exactement où on en est, sans avoir besoin de demander.",
-  },
-  {
-    num: "03",
-    title: "Tout centralisé",
-    desc: "Devis signés en ligne, factures téléchargeables, fichiers livrés archivés. Un seul endroit pour tout retrouver, du brief à la livraison finale.",
-  },
-];
-
-export function EspaceTeaser() {
+export function EspaceTeaser({ content = SITE_DEFAULTS.espaceTeaser }: { content?: SiteContentMap["espaceTeaser"] }) {
   return (
     <section style={{ background: "#0e0c0a", padding: "120px 0 140px", position: "relative" }}>
       <div className="vto-sep" style={{ position: "absolute", top: 0, left: "4vw", right: "4vw", opacity: 0.4 }} />
@@ -46,7 +30,7 @@ export function EspaceTeaser() {
             <div style={{ display: "inline-flex", alignItems: "center", gap: "10px", marginBottom: "28px" }}>
               <div style={{ width: "28px", height: "1px", background: "#5C5CF5" }} />
               <span className="vto-label" style={{ fontSize: "8px", color: "rgba(92,92,245,0.75)", letterSpacing: "4px" }}>
-                Espace client · Inclus
+                {content.badge}
               </span>
             </div>
 
@@ -59,8 +43,9 @@ export function EspaceTeaser() {
               color: "white", margin: "0 0 28px",
             }}>
               <ScrollFillText>
-                Votre projet.<br />
-                Votre espace.
+                {content.title.split("\n").map((line, i, arr) => (
+                  <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+                ))}
               </ScrollFillText>
             </h2>
 
@@ -70,23 +55,23 @@ export function EspaceTeaser() {
               color: "rgba(255,255,255,0.48)", maxWidth: "400px", lineHeight: 2,
               margin: "0 0 12px",
             }}>
-              Tout commence depuis l&apos;espace : un formulaire adapté pour poser les bases du projet, ou la réservation d&apos;un premier RDV. Pas d&apos;email générique, pas d&apos;aller-retour inutile.
+              {content.paragraph1}
             </p>
             <p style={{
               fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 400,
               color: "rgba(255,255,255,0.32)", maxWidth: "400px", lineHeight: 2,
               margin: "0 0 40px",
             }}>
-              Une fois le projet lancé : avancement en temps réel, messagerie dédiée, devis et factures en ligne. Tout simplement la meilleure façon de bosser ensemble.
+              {content.paragraph2}
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               <Link href="/espace" className="vto-cta-link vto-cta-link--accent">
-                Créer un compte · Se connecter
+                {content.ctaLabel}
                 <span className="vto-cta-line" />
               </Link>
               <span style={{ fontFamily: "var(--font-poppins)", fontSize: "8px", letterSpacing: "2px", color: "rgba(255,255,255,0.22)", textTransform: "uppercase" }}>
-                Connexion Discord disponible
+                {content.discordNote}
               </span>
             </div>
           </motion.div>
@@ -112,15 +97,15 @@ export function EspaceTeaser() {
               pointerEvents: "none",
             }} />
 
-            {pilliers.map((p, i) => (
+            {content.pilliers.map((p, i) => (
               <motion.div
-                key={p.num}
+                key={p.title}
                 initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-40px" }}
                 transition={{ delay: 0.1 + i * 0.1, duration: 0.55, ease }}
                 style={{
                   padding: "36px 44px",
-                  borderBottom: i < pilliers.length - 1 ? "1px solid rgba(92,92,245,0.10)" : "none",
+                  borderBottom: i < content.pilliers.length - 1 ? "1px solid rgba(92,92,245,0.10)" : "none",
                   position: "relative",
                 }}
               >
@@ -133,7 +118,7 @@ export function EspaceTeaser() {
                     border: "1px solid rgba(92,92,245,0.22)",
                     padding: "3px 10px",
                   }}>
-                    {p.num}
+                    {String(i + 1).padStart(2, "0")}
                   </span>
                 </div>
 

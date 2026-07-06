@@ -28,6 +28,27 @@ export type SiteContentMap = {
     subtitle: string;
     items: { title: string; description: string }[];
   };
+  portfolioTeaser: {
+    eyebrow: string;
+    title: string;
+    ctaLabel: string;
+  };
+  tarifsTeaser: {
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+    ctaLabel: string;
+    categories: { title: string; desc: string; tags: string[]; from: string }[];
+  };
+  espaceTeaser: {
+    badge: string;
+    title: string;
+    paragraph1: string;
+    paragraph2: string;
+    ctaLabel: string;
+    discordNote: string;
+    pilliers: { title: string; desc: string }[];
+  };
   aboutPage: {
     heroTitle: string;
     heroSubtitle: string;
@@ -92,6 +113,50 @@ export const SITE_DEFAULTS: SiteContentMap = {
       { title: "Cover Art", description: "Pochettes single, EP, album. Des visuels musicaux percutants calibrés pour toutes les plateformes de streaming." },
       { title: "Print & Supports", description: "Affiches, flyers, cartes de visite, packaging. Des supports imprimés qui marquent les esprits." },
       { title: "Suivi Créateurs", description: "Thumbnails, overlays, packs stream, assets réseaux. Un accompagnement long terme pour les créateurs de contenu." },
+    ],
+  },
+  portfolioTeaser: {
+    eyebrow: "Portfolio",
+    title: "Quelques réalisations.",
+    ctaLabel: "Voir tout le portfolio",
+  },
+  tarifsTeaser: {
+    eyebrow: "Tarifs",
+    title: "Ce que je propose.",
+    subtitle: "Devis gratuit sous 24h, sans engagement. Chaque projet est unique, les tarifs sont là pour vous orienter.",
+    ctaLabel: "Voir les tarifs détaillés",
+    categories: [
+      {
+        title: "Identité visuelle",
+        desc: "Logo, charte graphique, direction artistique. Tout ce qui construit une image de marque reconnaissable et durable.",
+        tags: ["Logo", "Charte", "DA", "Print"],
+        from: "200€",
+      },
+      {
+        title: "Développement web",
+        desc: "Sites vitrines, portfolios, applications sur mesure. Du design à la mise en ligne, zéro template.",
+        tags: ["Site vitrine", "Portfolio", "Next.js", "Sur mesure"],
+        from: "500€",
+      },
+      {
+        title: "Créations pour artistes",
+        desc: "Covers, visuels streaming, packs stream, identité d'artiste. Pour les créateurs qui veulent une image à leur niveau.",
+        tags: ["Cover art", "Streaming", "Pack stream", "Presse"],
+        from: "80€",
+      },
+    ],
+  },
+  espaceTeaser: {
+    badge: "Espace client · Inclus",
+    title: "Votre projet.\nVotre espace.",
+    paragraph1: "Tout commence depuis l'espace : un formulaire adapté pour poser les bases du projet, ou la réservation d'un premier RDV. Pas d'email générique, pas d'aller-retour inutile.",
+    paragraph2: "Une fois le projet lancé : avancement en temps réel, messagerie dédiée, devis et factures en ligne. Tout simplement la meilleure façon de bosser ensemble.",
+    ctaLabel: "Créer un compte · Se connecter",
+    discordNote: "Connexion Discord disponible",
+    pilliers: [
+      { title: "Ça commence ici", desc: "Formulaire de brief structuré ou réservation d'un premier RDV, directement depuis l'espace. Pas d'email, pas de contact générique. Les bases du projet posées proprement, dès le départ." },
+      { title: "Suivi en continu", desc: "Avancement visible à chaque étape, kanban partagé, messagerie dédiée au projet. Votre client sait exactement où on en est, sans avoir besoin de demander." },
+      { title: "Tout centralisé", desc: "Devis signés en ligne, factures téléchargeables, fichiers livrés archivés. Un seul endroit pour tout retrouver, du brief à la livraison finale." },
     ],
   },
   aboutPage: {

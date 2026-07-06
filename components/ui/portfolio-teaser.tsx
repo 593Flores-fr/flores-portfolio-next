@@ -5,6 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { ScrollFillText } from "@/components/ui/scroll-fill-text";
 import { hexToRgb } from "@/lib/utils";
+import { SITE_DEFAULTS } from "@/lib/site-content";
+import type { SiteContentMap } from "@/lib/site-content";
 
 type Project = {
   id: string;
@@ -22,7 +24,7 @@ const FALLBACK: Project[] = [
   { id: "3", slug: "vto-studio", section: { name: "Visuel", color: "#a78bfa" }, title: "V.T.O Studio", tag: "Identité visuelle · 2024",    description: "Direction artistique pour un collectif créatif. Logo, supports de communication et présence digitale cohérente.",         imageSrc: "/images/vto.jpg" },
 ];
 
-export function PortfolioTeaser({ projects }: { projects?: Project[] }) {
+export function PortfolioTeaser({ projects, content = SITE_DEFAULTS.portfolioTeaser }: { projects?: Project[]; content?: SiteContentMap["portfolioTeaser"] }) {
   const items = (projects && projects.length >= 3 ? projects.slice(0, 3) : FALLBACK);
   const [featured, ...rest] = items;
 
@@ -40,13 +42,13 @@ export function PortfolioTeaser({ projects }: { projects?: Project[] }) {
           style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: "24px", marginBottom: "56px" }}
         >
           <div>
-            <p className="vto-label" style={{ marginBottom: "16px" }}>Portfolio</p>
+            <p className="vto-label" style={{ marginBottom: "16px" }}>{content.eyebrow}</p>
             <h2 style={{ fontFamily: "var(--font-six-caps), sans-serif", fontSize: "clamp(3rem, 5.5vw, 5.5rem)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "5px", color: "white", textTransform: "uppercase", margin: 0 }}>
-              <ScrollFillText>Quelques réalisations.</ScrollFillText>
+              <ScrollFillText>{content.title}</ScrollFillText>
             </h2>
           </div>
           <Link href="/portfolio" className="vto-cta-link">
-            Voir tout le portfolio
+            {content.ctaLabel}
             <span className="vto-cta-line" />
           </Link>
         </motion.div>

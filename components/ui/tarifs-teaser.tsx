@@ -3,6 +3,8 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ScrollFillText } from "@/components/ui/scroll-fill-text";
+import { SITE_DEFAULTS } from "@/lib/site-content";
+import type { SiteContentMap } from "@/lib/site-content";
 
 const VisualIdentite = () => (
   <svg aria-hidden width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -57,32 +59,7 @@ const VisualArtiste = () => (
   </svg>
 );
 
-const categories = [
-  {
-    num: "01",
-    title: "Identité visuelle",
-    desc: "Logo, charte graphique, direction artistique. Tout ce qui construit une image de marque reconnaissable et durable.",
-    tags: ["Logo", "Charte", "DA", "Print"],
-    from: "200€",
-    visual: <VisualIdentite />,
-  },
-  {
-    num: "02",
-    title: "Développement web",
-    desc: "Sites vitrines, portfolios, applications sur mesure. Du design à la mise en ligne, zéro template.",
-    tags: ["Site vitrine", "Portfolio", "Next.js", "Sur mesure"],
-    from: "500€",
-    visual: <VisualWeb />,
-  },
-  {
-    num: "03",
-    title: "Créations pour artistes",
-    desc: "Covers, visuels streaming, packs stream, identité d'artiste. Pour les créateurs qui veulent une image à leur niveau.",
-    tags: ["Cover art", "Streaming", "Pack stream", "Presse"],
-    from: "80€",
-    visual: <VisualArtiste />,
-  },
-];
+const VISUALS = [<VisualIdentite key="identite" />, <VisualWeb key="web" />, <VisualArtiste key="artiste" />];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -92,7 +69,7 @@ const fadeUp = {
   }),
 };
 
-export function TarifsTeaser() {
+export function TarifsTeaser({ content = SITE_DEFAULTS.tarifsTeaser }: { content?: SiteContentMap["tarifsTeaser"] }) {
   return (
     <section style={{ background: "#0e0c0a", padding: "120px 0 140px", position: "relative" }}>
       <div className="vto-sep" style={{ position: "absolute", top: 0, left: "4vw", right: "4vw", opacity: 0.4 }} />
@@ -107,25 +84,25 @@ export function TarifsTeaser() {
           style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: "24px", marginBottom: "64px" }}
         >
           <div>
-            <p className="vto-label" style={{ marginBottom: "16px" }}>Tarifs</p>
+            <p className="vto-label" style={{ marginBottom: "16px" }}>{content.eyebrow}</p>
             <h2 style={{ fontFamily: "var(--font-six-caps), sans-serif", fontSize: "clamp(3rem, 5.5vw, 5.5rem)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "5px", color: "white", textTransform: "uppercase", margin: "0 0 20px" }}>
-              <ScrollFillText>Ce que je propose.</ScrollFillText>
+              <ScrollFillText>{content.title}</ScrollFillText>
             </h2>
             <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 400, color: "rgba(255,255,255,0.48)", maxWidth: "360px", lineHeight: 1.9, margin: 0 }}>
-              Devis gratuit sous 24h, sans engagement. Chaque projet est unique, les tarifs sont là pour vous orienter.
+              {content.subtitle}
             </p>
           </div>
           <Link href="/tarif" className="vto-cta-link vto-cta-link--primary">
-            Voir les tarifs détaillés
+            {content.ctaLabel}
             <span className="vto-cta-line" />
           </Link>
         </motion.div>
 
         {/* 3 catégories */}
         <div className="tarifs-teaser-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1px", background: "rgba(255,255,255,0.05)" }}>
-          {categories.map((cat, i) => (
+          {content.categories.map((cat, i) => (
             <motion.div
-              key={cat.num}
+              key={cat.title}
               custom={i} variants={fadeUp} initial="hidden" whileInView="show"
               viewport={{ once: true, margin: "-40px" }}
               className="tarifs-teaser-col"
@@ -133,10 +110,10 @@ export function TarifsTeaser() {
             >
               {/* Visuel décoratif en fond */}
               <div style={{ position: "absolute", bottom: "-8px", right: "16px", pointerEvents: "none", userSelect: "none", zIndex: 0 }}>
-                {cat.visual}
+                {VISUALS[i % VISUALS.length]}
               </div>
 
-              <p className="vto-label" style={{ fontSize: "8px", letterSpacing: "4px", color: "rgba(255,255,255,0.28)", marginBottom: "20px" }}>{cat.num}</p>
+              <p className="vto-label" style={{ fontSize: "8px", letterSpacing: "4px", color: "rgba(255,255,255,0.28)", marginBottom: "20px" }}>{String(i + 1).padStart(2, "0")}</p>
               <h3 style={{ fontFamily: "var(--font-six-caps), sans-serif", fontSize: "clamp(2rem, 2.8vw, 3rem)", fontWeight: 400, letterSpacing: "4px", textTransform: "uppercase", color: "white", lineHeight: 1.0, margin: "0 0 20px" }}>
                 {cat.title}
               </h3>
