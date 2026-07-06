@@ -360,6 +360,7 @@ export function AdminPortfolio() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [deleting, setDeleting] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -429,9 +430,9 @@ export function AdminPortfolio() {
     order: p.order, published: p.published, blocks: toBlockArray(p.blocks),
   });
 
-  const openCreate = () => { setForm(emptyForm); setEditing(null); setCreating(true); };
-  const openEdit = (p: PortfolioProject) => { setForm(toFormState(p)); setEditing(p); setCreating(false); };
-  const closePanel = () => { setEditing(null); setCreating(false); };
+  const openCreate = () => { setForm(emptyForm); setEditing(null); setCreating(true); setSaveError(""); };
+  const openEdit = (p: PortfolioProject) => { setForm(toFormState(p)); setEditing(p); setCreating(false); setSaveError(""); };
+  const closePanel = () => { setEditing(null); setCreating(false); setSaveError(""); };
 
   const buildPayload = () => ({
     ...form,
@@ -445,22 +446,39 @@ export function AdminPortfolio() {
 
   const save = async () => {
     setSaving(true);
-    const payload = buildPayload();
-    if (editing) {
-      const res = await fetch(`/api/admin/portfolio/${editing.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      const updated = await res.json();
-      setProjects(p => p.map(x => x.id === editing.id ? updated : x));
-      setEditing(updated);
-      setForm(toFormState(updated));
-    } else {
-      const res = await fetch("/api/admin/portfolio", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      const created = await res.json();
-      setProjects(p => [...p, created]);
-      closePanel();
+    setSaveError("");
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+    try {
+      const payload = buildPayload();
+      if (editing) {
+        const res = await fetch(`/api/admin/portfolio/${editing.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), signal: controller.signal });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `Échec de la sauvegarde (${res.status})`);
+        }
+        const updated = await res.json();
+        setProjects(p => p.map(x => x.id === editing.id ? updated : x));
+        setEditing(updated);
+        setForm(toFormState(updated));
+      } else {
+        const res = await fetch("/api/admin/portfolio", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), signal: controller.signal });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `Échec de la création (${res.status})`);
+        }
+        const created = await res.json();
+        setProjects(p => [...p, created]);
+        closePanel();
+      }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      setSaveError(err instanceof DOMException && err.name === "AbortError" ? "Délai dépassé — vérifiez votre connexion et réessayez." : err instanceof Error ? err.message : "Erreur réseau — réessayez.");
+    } finally {
+      clearTimeout(timeout);
+      setSaving(false);
     }
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
   };
 
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -839,11 +857,21 @@ export function AdminPortfolio() {
                 </Field>
               </div>
 
+              {saveError && (
+                <p style={{
+                  marginTop: "14px", marginBottom: 0, padding: "10px 12px", borderRadius: "8px",
+                  border: "1px solid rgba(248,113,113,0.25)", background: "rgba(248,113,113,0.08)",
+                  fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(248,113,113,0.9)",
+                }}>
+                  {saveError}
+                </p>
+              )}
+
               <button
                 onClick={save}
                 disabled={saving || !form.title.trim() || !form.slug.trim()}
                 style={{
-                  marginTop: "18px", width: "100%", padding: "11px", borderRadius: "10px",
+                  marginTop: "12px", width: "100%", padding: "11px", borderRadius: "10px",
                   border: `1px solid ${saved ? "rgba(74,222,128,0.3)" : "rgba(60,100,255,0.3)"}`,
                   background: saved ? "rgba(74,222,128,0.1)" : "rgba(60,100,255,0.2)",
                   fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600,
