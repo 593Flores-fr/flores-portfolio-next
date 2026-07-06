@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const { title, slug, tag, description, imageSrc, logoSrc, sectionId, year, client,
-    fullDescription, challenge, images, mockupImages, tools, externalLink, discordUrl, accentColor, published } = body;
+    fullDescription, challenge, images, mockupImages, blocks, tools, externalLink, discordUrl, accentColor, published } = body;
   if (!title?.trim() || !slug?.trim()) return NextResponse.json({ error: "title et slug requis" }, { status: 400 });
 
   const last = await prisma.portfolioProject.findFirst({ orderBy: { order: "desc" } });
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       sectionId: sectionId || null, year: year?.trim() ?? "",
       client: client?.trim() ?? "", fullDescription: fullDescription?.trim() ?? "",
       challenge: challenge?.trim() ?? "",
-      images: images ?? [], mockupImages: mockupImages ?? [], tools: tools ?? [],
+      images: images ?? [], mockupImages: mockupImages ?? [], blocks: blocks ?? [], tools: tools ?? [],
       externalLink: externalLink?.trim() || null,
       discordUrl: discordUrl?.trim() || null,
       accentColor: accentColor?.trim() ?? "",

@@ -134,6 +134,7 @@ model PortfolioProject {
   challenge       String   @default("")
   images          Json     @default("[]")
   mockupImages    Json     @default("[]")
+  blocks          Json     @default("[]")
   tools           Json     @default("[]")
   externalLink    String?
   discordUrl      String?

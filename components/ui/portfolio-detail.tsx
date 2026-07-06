@@ -1,16 +1,17 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { useRef } from "react";
-import { ArrowLeft, ExternalLink, ArrowRight } from "lucide-react";
+import { useRef, useState } from "react";
+import { ArrowLeft, ExternalLink, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { toBlockArray, resolveVideoEmbed, type PortfolioBlock, type TextImageBlock } from "@/lib/portfolio-blocks";
 
 type Project = {
   id: string; slug: string; title: string; tag: string;
   description: string; imageSrc: string; logoSrc?: string | null; section?: { name: string } | null; year: string;
   client: string; fullDescription: string; challenge: string;
-  images: unknown; mockupImages: unknown; tools: unknown; externalLink: string | null; discordUrl?: string | null; accentColor: string;
+  images: unknown; mockupImages: unknown; blocks?: unknown; tools: unknown; externalLink: string | null; discordUrl?: string | null; accentColor: string;
 };
 
 function DiscordIcon({ size = 18 }: { size?: number }) {
@@ -39,6 +40,147 @@ const fadeUp = {
   show: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.7, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } }),
 };
 
+function TextBlockView({ title, text }: { title?: string; text: string }) {
+  return (
+    <div style={{ maxWidth: "760px" }}>
+      {title && (
+        <h3 style={{ fontFamily: "var(--font-six-caps)", fontSize: "clamp(1.8rem,2.6vw,2.6rem)", letterSpacing: "3px", textTransform: "uppercase", color: "white", margin: "0 0 20px", lineHeight: 1.05 }}>
+          {title}
+        </h3>
+      )}
+      <p style={{ fontSize: "15px", fontWeight: 300, color: "rgba(255,255,255,0.6)", lineHeight: 1.9, margin: 0, whiteSpace: "pre-line" }}>
+        {text}
+      </p>
+    </div>
+  );
+}
+
+function TextImageBlockView({ block, projectTitle }: { block: TextImageBlock; projectTitle: string }) {
+  const imageFirst = block.imagePosition === "left";
+  return (
+    <div className="pd-split" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "56px", alignItems: "center" }}>
+      <div className="pd-split-text" style={{ order: imageFirst ? 2 : 1 }}>
+        {block.title && (
+          <h3 style={{ fontFamily: "var(--font-six-caps)", fontSize: "clamp(1.8rem,2.6vw,2.6rem)", letterSpacing: "3px", textTransform: "uppercase", color: "white", margin: "0 0 20px", lineHeight: 1.05 }}>
+            {block.title}
+          </h3>
+        )}
+        <p style={{ fontSize: "15px", fontWeight: 300, color: "rgba(255,255,255,0.6)", lineHeight: 1.9, margin: 0, whiteSpace: "pre-line" }}>
+          {block.text}
+        </p>
+      </div>
+      <div className="pd-split-image" style={{ order: imageFirst ? 1 : 2, position: "relative", aspectRatio: "4/3", borderRadius: "16px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.03)" }}>
+        {block.image && (
+          <Image src={block.image} alt={block.title || projectTitle} fill unoptimized={isExt(block.image)} style={{ objectFit: "cover" }} sizes="(max-width: 768px) 100vw, 50vw" />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CarouselBlockView({ images, title, accentRgb }: { images: string[]; title: string; accentRgb: string }) {
+  const [index, setIndex] = useState(0);
+  if (images.length === 0) return null;
+  return (
+    <div>
+      <div style={{ position: "relative", borderRadius: "16px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.07)", aspectRatio: "16/9", background: "rgba(255,255,255,0.03)" }}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={index}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
+            style={{ position: "absolute", inset: 0 }}
+          >
+            <Image src={images[index]} alt={`${title} — ${index + 1}`} fill unoptimized={isExt(images[index])} style={{ objectFit: "cover" }} sizes="(max-width: 768px) 100vw, 1100px" />
+          </motion.div>
+        </AnimatePresence>
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={() => setIndex(i => (i - 1 + images.length) % images.length)}
+              aria-label="Image précédente"
+              style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", width: "38px", height: "38px", borderRadius: "50%", border: "1px solid rgba(255,255,255,0.15)", background: "rgba(6,10,14,0.6)", backdropFilter: "blur(6px)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}
+            >
+              <ChevronLeft size={18} color="white" />
+            </button>
+            <button
+              onClick={() => setIndex(i => (i + 1) % images.length)}
+              aria-label="Image suivante"
+              style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", width: "38px", height: "38px", borderRadius: "50%", border: "1px solid rgba(255,255,255,0.15)", background: "rgba(6,10,14,0.6)", backdropFilter: "blur(6px)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}
+            >
+              <ChevronRight size={18} color="white" />
+            </button>
+          </>
+        )}
+      </div>
+      {images.length > 1 && (
+        <div style={{ display: "flex", gap: "6px", justifyContent: "center", marginTop: "16px" }}>
+          {images.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setIndex(i)}
+              aria-label={`Aller à l'image ${i + 1}`}
+              style={{ width: i === index ? "20px" : "6px", height: "6px", borderRadius: "3px", border: "none", cursor: "pointer", background: i === index ? `rgba(${accentRgb},0.9)` : "rgba(255,255,255,0.15)", transition: "all 0.25s ease" }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function VideoBlockView({ url, caption }: { url: string; caption?: string }) {
+  if (!url) return null;
+  const embed = resolveVideoEmbed(url);
+  return (
+    <div>
+      <div style={{ position: "relative", borderRadius: "16px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.07)", aspectRatio: "16/9", background: "#000" }}>
+        {embed ? (
+          <iframe
+            src={embed}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }}
+          />
+        ) : (
+          <video src={url} controls style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />
+        )}
+      </div>
+      {caption && (
+        <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", marginTop: "14px", textAlign: "center" }}>{caption}</p>
+      )}
+    </div>
+  );
+}
+
+function StatsBlockView({ items, accentRgb }: { items: { value: string; label: string }[]; accentRgb: string }) {
+  if (items.length === 0) return null;
+  return (
+    <div className="pd-stats-grid" style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(items.length, 4)}, 1fr)`, gap: "1px", background: "rgba(255,255,255,0.06)" }}>
+      {items.map((it, i) => (
+        <div key={i} style={{ padding: "36px 20px", background: "#060a0e", textAlign: "center" }}>
+          <p style={{ fontFamily: "var(--font-six-caps)", fontSize: "clamp(2.2rem,3.5vw,3.5rem)", color: `rgba(${accentRgb},0.9)`, margin: "0 0 8px", letterSpacing: "2px", lineHeight: 1 }}>
+            {it.value}
+          </p>
+          <p style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", margin: 0 }}>
+            {it.label}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function BlockView({ block, projectTitle, accentRgb }: { block: PortfolioBlock; projectTitle: string; accentRgb: string }) {
+  switch (block.type) {
+    case "text": return <TextBlockView title={block.title} text={block.text} />;
+    case "textImage": return <TextImageBlockView block={block} projectTitle={projectTitle} />;
+    case "carousel": return <CarouselBlockView images={block.images} title={projectTitle} accentRgb={accentRgb} />;
+    case "video": return <VideoBlockView url={block.url} caption={block.caption} />;
+    case "stats": return <StatsBlockView items={block.items} accentRgb={accentRgb} />;
+    default: return null;
+  }
+}
+
 export default function PortfolioDetail({ project }: { project: Project }) {
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -53,6 +195,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
   const images = toStringArray(project.images);
   const mockupImages = toStringArray(project.mockupImages);
   const tools = toStringArray(project.tools);
+  const blocks = toBlockArray(project.blocks);
 
   return (
     <div style={{ background: "#060a0e", minHeight: "100dvh", color: "white", fontFamily: "var(--font-poppins)" }}>
@@ -238,6 +381,17 @@ export default function PortfolioDetail({ project }: { project: Project }) {
               </p>
             </div>
           </motion.div>
+        )}
+
+        {/* Blocs de présentation */}
+        {blocks.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "120px", marginBottom: "120px" }}>
+            {blocks.map((block, i) => (
+              <motion.div key={i} variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }}>
+                <BlockView block={block} projectTitle={project.title} accentRgb={accentRgb} />
+              </motion.div>
+            ))}
+          </div>
         )}
 
         {/* Gallery */}

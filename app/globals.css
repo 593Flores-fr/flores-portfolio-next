@@ -457,11 +457,15 @@ html, body {
   .espace-gate-auth    { flex: 0 0 auto !important; width: 100% !important; }
 
   /* ── PortfolioDetail ── */
-  .pd-overview  { grid-template-columns: 1fr !important; gap: 40px !important; }
-  .pd-meta      { position: static !important; }
-  .pd-title     { font-size: clamp(2.8rem, 13vw, 4.5rem) !important; }
-  .pd-challenge { padding: 24px !important; }
-  .pd-gallery   { grid-template-columns: 1fr !important; }
+  .pd-overview   { grid-template-columns: 1fr !important; gap: 40px !important; }
+  .pd-meta       { position: static !important; }
+  .pd-title      { font-size: clamp(2.8rem, 13vw, 4.5rem) !important; }
+  .pd-challenge  { padding: 24px !important; }
+  .pd-gallery    { grid-template-columns: 1fr !important; }
+  .pd-split      { grid-template-columns: 1fr !important; gap: 24px !important; }
+  .pd-split-text  { order: 1 !important; }
+  .pd-split-image { order: 2 !important; aspect-ratio: 16/10 !important; }
+  .pd-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
 
   /* ── EspaceClient sidebar + accueil grid ── */
   .espace-sidebar        { display: none !important; }

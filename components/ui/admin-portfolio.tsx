@@ -3,8 +3,12 @@
 
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Eye, EyeOff, Check, X, BookImage, Upload, Layers, ChevronUp, ChevronDown } from "lucide-react";
+import {
+  Plus, Trash2, Eye, EyeOff, Check, X, BookImage, Upload, Layers, ChevronUp, ChevronDown,
+  AlignLeft, Columns2, GalleryHorizontal, Video, BarChart3,
+} from "lucide-react";
 import { ImagePickerModal } from "@/components/ui/admin-image-picker";
+import { toBlockArray, emptyBlock, type PortfolioBlock } from "@/lib/portfolio-blocks";
 
 type Section = { id: string; name: string; color: string; order: number };
 
@@ -13,15 +17,19 @@ type PortfolioProject = {
   description: string; imageSrc: string; logoSrc: string; order: number; published: boolean;
   sectionId: string | null; section?: Section | null; year: string; client: string;
   fullDescription: string; challenge: string;
-  images: string[]; mockupImages: string[]; tools: string[];
+  images: string[]; mockupImages: string[]; blocks: unknown; tools: string[];
   externalLink: string | null; discordUrl: string | null; accentColor: string;
 };
+
+type PickerTarget =
+  | { kind: "cover" | "logo" | "gallery" | "mockup" }
+  | { kind: "blockImage" | "blockCarousel"; index: number };
 
 const emptyForm = {
   slug: "", title: "", tag: "", description: "", imageSrc: "", logoSrc: "",
   sectionId: "", year: "", client: "", fullDescription: "", challenge: "",
   imagesRaw: "", mockupImagesRaw: "", toolsRaw: "", externalLink: "", discordUrl: "", accentColor: "",
-  order: 0, published: true,
+  order: 0, published: true, blocks: [] as PortfolioBlock[],
 };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -165,6 +173,185 @@ function SectionsManagerModal({ open, onClose, sections, onAdd, onRename, onColo
   );
 }
 
+// ── Éditeur de blocs de présentation ────────────────────────────────────────────
+
+const BLOCK_META: Record<PortfolioBlock["type"], { label: string; icon: React.ReactNode }> = {
+  text:        { label: "Texte",         icon: <AlignLeft size={12} /> },
+  textImage:   { label: "Texte + Image", icon: <Columns2 size={12} /> },
+  carousel:    { label: "Carousel",      icon: <GalleryHorizontal size={12} /> },
+  video:       { label: "Vidéo",         icon: <Video size={12} /> },
+  stats:       { label: "Stats",         icon: <BarChart3 size={12} /> },
+};
+
+const miniBtn: React.CSSProperties = {
+  width: 22, height: 22, borderRadius: "5px", border: "none", background: "transparent",
+  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+};
+
+function BlocksEditor({ blocks, onChange, onPickImage }: {
+  blocks: PortfolioBlock[];
+  onChange: (blocks: PortfolioBlock[]) => void;
+  onPickImage: (index: number, kind: "blockImage" | "blockCarousel") => void;
+}) {
+  const update = (i: number, block: PortfolioBlock) => onChange(blocks.map((b, idx) => (idx === i ? block : b)));
+  const remove = (i: number) => onChange(blocks.filter((_, idx) => idx !== i));
+  const move = (i: number, dir: "up" | "down") => {
+    const j = dir === "up" ? i - 1 : i + 1;
+    if (j < 0 || j >= blocks.length) return;
+    const copy = [...blocks];
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+    onChange(copy);
+  };
+  const add = (type: PortfolioBlock["type"]) => onChange([...blocks, emptyBlock(type)]);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+      {blocks.map((b, i) => (
+        <div key={i} style={{ border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "12px", background: "rgba(255,255,255,0.02)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.4)" }}>
+              {BLOCK_META[b.type].icon} {BLOCK_META[b.type].label}
+            </span>
+            <div style={{ display: "flex", gap: "1px", alignItems: "center" }}>
+              <button type="button" onClick={() => move(i, "up")} disabled={i === 0} style={{ ...miniBtn, opacity: i === 0 ? 0.2 : 0.6 }}>
+                <ChevronUp size={13} color="white" />
+              </button>
+              <button type="button" onClick={() => move(i, "down")} disabled={i === blocks.length - 1} style={{ ...miniBtn, opacity: i === blocks.length - 1 ? 0.2 : 0.6 }}>
+                <ChevronDown size={13} color="white" />
+              </button>
+              <button type="button" onClick={() => remove(i)} style={miniBtn}>
+                <Trash2 size={13} color="rgba(248,113,113,0.6)" />
+              </button>
+            </div>
+          </div>
+
+          {b.type === "text" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <input value={b.title ?? ""} onChange={e => update(i, { ...b, title: e.target.value })} placeholder="Titre (optionnel)" style={inputStyle} />
+              <textarea value={b.text} onChange={e => update(i, { ...b, text: e.target.value })} rows={4} placeholder="Texte…" style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }} />
+            </div>
+          )}
+
+          {b.type === "textImage" && (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <input value={b.title ?? ""} onChange={e => update(i, { ...b, title: e.target.value })} placeholder="Titre (optionnel)" style={inputStyle} />
+                <textarea value={b.text} onChange={e => update(i, { ...b, text: e.target.value })} rows={5} placeholder="Texte…" style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }} />
+                <div style={{ display: "flex", gap: "6px" }}>
+                  {(["left", "right"] as const).map(pos => (
+                    <button
+                      key={pos}
+                      type="button"
+                      onClick={() => update(i, { ...b, imagePosition: pos })}
+                      style={{
+                        flex: 1, padding: "7px", borderRadius: "6px", cursor: "pointer",
+                        border: `1px solid ${b.imagePosition === pos ? "rgba(92,92,245,0.4)" : "rgba(255,255,255,0.1)"}`,
+                        background: b.imagePosition === pos ? "rgba(92,92,245,0.12)" : "transparent",
+                        fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase",
+                        color: b.imagePosition === pos ? "rgba(92,92,245,0.85)" : "rgba(255,255,255,0.35)",
+                      }}
+                    >
+                      Image à {pos === "left" ? "gauche" : "droite"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                {b.image && (
+                  <div style={{ borderRadius: "8px", overflow: "hidden", height: "110px", background: "rgba(255,255,255,0.04)", marginBottom: "6px" }}>
+                    <img src={b.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => onPickImage(i, "blockImage")}
+                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", padding: "8px", border: "1px solid rgba(92,92,245,0.25)", background: "rgba(92,92,245,0.07)", cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(92,92,245,0.8)", borderRadius: "6px" }}
+                >
+                  <BookImage size={11} /> Bibliothèque
+                </button>
+              </div>
+            </div>
+          )}
+
+          {b.type === "carousel" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {b.images.length > 0 && (
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                  {b.images.map((src, ii) => (
+                    <div key={ii} style={{ position: "relative", width: "64px", height: "64px", borderRadius: "6px", overflow: "hidden", background: "rgba(255,255,255,0.04)" }}>
+                      <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <button
+                        type="button"
+                        onClick={() => update(i, { ...b, images: b.images.filter((_, x) => x !== ii) })}
+                        style={{ position: "absolute", top: 2, right: 2, width: 16, height: 16, borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.7)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                      >
+                        <X size={9} color="white" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => onPickImage(i, "blockCarousel")}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", padding: "8px", border: "1px solid rgba(92,92,245,0.25)", background: "rgba(92,92,245,0.07)", cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(92,92,245,0.8)", borderRadius: "6px" }}
+              >
+                <BookImage size={11} /> Ajouter une image
+              </button>
+            </div>
+          )}
+
+          {b.type === "video" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <input value={b.url} onChange={e => update(i, { ...b, url: e.target.value })} placeholder="URL YouTube, Vimeo ou fichier .mp4" style={inputStyle} />
+              <input value={b.caption ?? ""} onChange={e => update(i, { ...b, caption: e.target.value })} placeholder="Légende (optionnel)" style={inputStyle} />
+            </div>
+          )}
+
+          {b.type === "stats" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              {b.items.map((item, ii) => (
+                <div key={ii} style={{ display: "flex", gap: "6px" }}>
+                  <input value={item.value} onChange={e => update(i, { ...b, items: b.items.map((it, x) => x === ii ? { ...it, value: e.target.value } : it) })} placeholder="500+" style={{ ...inputStyle, width: "90px" }} />
+                  <input value={item.label} onChange={e => update(i, { ...b, items: b.items.map((it, x) => x === ii ? { ...it, label: e.target.value } : it) })} placeholder="Membres actifs" style={{ ...inputStyle, flex: 1 }} />
+                  <button type="button" onClick={() => update(i, { ...b, items: b.items.filter((_, x) => x !== ii) })} style={miniBtn}>
+                    <X size={13} color="rgba(248,113,113,0.6)" />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => update(i, { ...b, items: [...b.items, { value: "", label: "" }] })}
+                style={{ alignSelf: "flex-start", display: "flex", alignItems: "center", gap: "5px", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(92,92,245,0.7)", padding: "4px 0" }}
+              >
+                <Plus size={11} /> Ajouter un chiffre
+              </button>
+            </div>
+          )}
+        </div>
+      ))}
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "6px" }}>
+        {(Object.keys(BLOCK_META) as PortfolioBlock["type"][]).map(type => (
+          <button
+            key={type}
+            type="button"
+            onClick={() => add(type)}
+            style={{
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "5px",
+              padding: "10px 4px", border: "1px dashed rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.02)",
+              cursor: "pointer", borderRadius: "8px", color: "rgba(255,255,255,0.45)",
+            }}
+          >
+            {BLOCK_META[type].icon}
+            <span style={{ fontFamily: "var(--font-poppins)", fontSize: "8px", fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase" }}>{BLOCK_META[type].label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function AdminPortfolio() {
   const [projects, setProjects] = useState<PortfolioProject[]>([]);
   const [loading, setLoading] = useState(true);
@@ -176,7 +363,7 @@ export function AdminPortfolio() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerTarget, setPickerTarget] = useState<"cover" | "logo" | "gallery" | "mockup" | null>(null);
+  const [pickerTarget, setPickerTarget] = useState<PickerTarget | null>(null);
   const [uploading, setUploading] = useState(false);
   const uploadRef = useRef<HTMLInputElement>(null);
   const [sections, setSections] = useState<Section[]>([]);
@@ -239,7 +426,7 @@ export function AdminPortfolio() {
     mockupImagesRaw: (p.mockupImages ?? []).join("\n"),
     toolsRaw: (p.tools ?? []).join(", "),
     externalLink: p.externalLink ?? "", discordUrl: p.discordUrl ?? "", accentColor: p.accentColor ?? "",
-    order: p.order, published: p.published,
+    order: p.order, published: p.published, blocks: toBlockArray(p.blocks),
   });
 
   const openCreate = () => { setForm(emptyForm); setEditing(null); setCreating(true); };
@@ -293,14 +480,32 @@ export function AdminPortfolio() {
   };
 
   const handlePickerSelect = (url: string) => {
-    if (pickerTarget === "cover") {
-      setForm(f => ({ ...f, imageSrc: url }));
-    } else if (pickerTarget === "logo") {
-      setForm(f => ({ ...f, logoSrc: url }));
-    } else if (pickerTarget === "gallery") {
-      setForm(f => ({ ...f, imagesRaw: f.imagesRaw ? f.imagesRaw.trimEnd() + "\n" + url : url }));
-    } else if (pickerTarget === "mockup") {
-      setForm(f => ({ ...f, mockupImagesRaw: f.mockupImagesRaw ? f.mockupImagesRaw.trimEnd() + "\n" + url : url }));
+    if (!pickerTarget) return;
+    switch (pickerTarget.kind) {
+      case "cover":
+        setForm(f => ({ ...f, imageSrc: url })); break;
+      case "logo":
+        setForm(f => ({ ...f, logoSrc: url })); break;
+      case "gallery":
+        setForm(f => ({ ...f, imagesRaw: f.imagesRaw ? f.imagesRaw.trimEnd() + "\n" + url : url })); break;
+      case "mockup":
+        setForm(f => ({ ...f, mockupImagesRaw: f.mockupImagesRaw ? f.mockupImagesRaw.trimEnd() + "\n" + url : url })); break;
+      case "blockImage": {
+        const idx = pickerTarget.index;
+        setForm(f => ({
+          ...f,
+          blocks: f.blocks.map((b, i) => i === idx && b.type === "textImage" ? { ...b, image: url } : b),
+        }));
+        break;
+      }
+      case "blockCarousel": {
+        const idx = pickerTarget.index;
+        setForm(f => ({
+          ...f,
+          blocks: f.blocks.map((b, i) => i === idx && b.type === "carousel" ? { ...b, images: [...b.images, url] } : b),
+        }));
+        break;
+      }
     }
     setPickerOpen(false);
     setPickerTarget(null);
@@ -321,7 +526,7 @@ export function AdminPortfolio() {
   };
 
   return (
-    <div style={{ padding: "32px 40px", maxWidth: "960px" }}>
+    <div style={{ padding: "32px 40px", maxWidth: "1480px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "28px" }}>
         <div>
           <h1 style={{ fontSize: "20px", fontWeight: 800, color: "white", margin: "0 0 4px", letterSpacing: "-0.01em" }}>Portfolio</h1>
@@ -430,14 +635,14 @@ export function AdminPortfolio() {
               initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }}
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
               style={{
-                width: "340px", flexShrink: 0,
+                width: "700px", flexShrink: 0,
                 border: "1px solid rgba(255,255,255,0.08)", borderRadius: "16px",
-                background: "rgba(255,255,255,0.02)", padding: "20px",
+                background: "rgba(255,255,255,0.02)", padding: "24px",
                 position: "sticky", top: "32px", maxHeight: "calc(100vh - 80px)", overflowY: "auto",
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
-                <p style={{ fontSize: "13px", fontWeight: 700, color: "white", margin: 0 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                <p style={{ fontSize: "14px", fontWeight: 700, color: "white", margin: 0 }}>
                   {editing ? "Modifier le projet" : "Nouveau projet"}
                 </p>
                 <button onClick={closePanel} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.3)", display: "flex", padding: 0 }}>
@@ -445,25 +650,31 @@ export function AdminPortfolio() {
                 </button>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px 16px" }}>
                 <Field label="Titre">
                   <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Projet X" style={inputStyle} />
                 </Field>
                 <Field label="Slug (URL)">
                   <input value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} placeholder="projet-x" style={inputStyle} />
                 </Field>
-                <Field label="Tag / Catégorie">
-                  <input value={form.tag} onChange={e => setForm(f => ({ ...f, tag: e.target.value }))} placeholder="Identité visuelle" style={inputStyle} />
-                </Field>
-                <Field label="Description courte">
-                  <textarea
-                    value={form.description}
-                    onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                    rows={3}
-                    placeholder="Description courte du projet…"
-                    style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }}
-                  />
-                </Field>
+
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <Field label="Tag / Catégorie">
+                    <input value={form.tag} onChange={e => setForm(f => ({ ...f, tag: e.target.value }))} placeholder="Identité visuelle" style={inputStyle} />
+                  </Field>
+                </div>
+
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <Field label="Description courte">
+                    <textarea
+                      value={form.description}
+                      onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                      rows={2}
+                      placeholder="Description courte du projet…"
+                      style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }}
+                    />
+                  </Field>
+                </div>
 
                 {/* ── Image couverture avec picker ── */}
                 <div>
@@ -478,7 +689,7 @@ export function AdminPortfolio() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "6px" }}>
                     <button
                       type="button"
-                      onClick={() => { setPickerTarget("cover"); setPickerOpen(true); }}
+                      onClick={() => { setPickerTarget({ kind: "cover" }); setPickerOpen(true); }}
                       style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", padding: "8px", border: "1px solid rgba(92,92,245,0.25)", background: "rgba(92,92,245,0.07)", cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(92,92,245,0.8)", borderRadius: "6px" }}
                     >
                       <BookImage size={11} /> Bibliothèque
@@ -504,7 +715,7 @@ export function AdminPortfolio() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "6px" }}>
                     <button
                       type="button"
-                      onClick={() => { setPickerTarget("logo"); setPickerOpen(true); }}
+                      onClick={() => { setPickerTarget({ kind: "logo" }); setPickerOpen(true); }}
                       style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", padding: "8px", border: "1px solid rgba(92,92,245,0.25)", background: "rgba(92,92,245,0.07)", cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(92,92,245,0.8)", borderRadius: "6px" }}
                     >
                       <BookImage size={11} /> Bibliothèque
@@ -527,54 +738,69 @@ export function AdminPortfolio() {
                 </div>
 
                 {/* Divider */}
-                <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "4px 0" }} />
-                <p style={{ fontSize: "9px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.15em", color: "rgba(255,255,255,0.2)", margin: 0 }}>Page détail</p>
+                <div style={{ gridColumn: "1 / -1", height: "1px", background: "rgba(255,255,255,0.06)", margin: "4px 0" }} />
+                <p style={{ gridColumn: "1 / -1", fontSize: "9px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.15em", color: "rgba(255,255,255,0.2)", margin: 0 }}>Page détail</p>
 
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <Field label="Section">
-                    <select value={form.sectionId} onChange={e => setForm(f => ({ ...f, sectionId: e.target.value }))} style={{ ...inputStyle, appearance: "none", colorScheme: "dark" }}>
-                      <option value="">—</option>
-                      {sections.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                    </select>
-                  </Field>
-                  <Field label="Année">
-                    <input value={form.year} onChange={e => setForm(f => ({ ...f, year: e.target.value }))} placeholder="2024" style={{ ...inputStyle, width: "80px" }} />
-                  </Field>
-                </div>
+                <Field label="Section">
+                  <select value={form.sectionId} onChange={e => setForm(f => ({ ...f, sectionId: e.target.value }))} style={{ ...inputStyle, appearance: "none", colorScheme: "dark" }}>
+                    <option value="">—</option>
+                    {sections.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </Field>
+                <Field label="Année">
+                  <input value={form.year} onChange={e => setForm(f => ({ ...f, year: e.target.value }))} placeholder="2024" style={inputStyle} />
+                </Field>
 
                 <Field label="Client / Projet">
                   <input value={form.client} onChange={e => setForm(f => ({ ...f, client: e.target.value }))} placeholder="Nom du client ou du projet" style={inputStyle} />
-                </Field>
-                <Field label="Description longue">
-                  <textarea value={form.fullDescription} onChange={e => setForm(f => ({ ...f, fullDescription: e.target.value }))} rows={4} placeholder="Contexte, approche, résultat…" style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }} />
-                </Field>
-                <Field label="Enjeu / Brief">
-                  <textarea value={form.challenge} onChange={e => setForm(f => ({ ...f, challenge: e.target.value }))} rows={3} placeholder="Problématique ou objectif du projet…" style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }} />
                 </Field>
                 <Field label="Outils utilisés (virgule)">
                   <input value={form.toolsRaw} onChange={e => setForm(f => ({ ...f, toolsRaw: e.target.value }))} placeholder="Figma, Illustrator, Next.js" style={inputStyle} />
                 </Field>
 
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <Field label="Description longue">
+                    <textarea value={form.fullDescription} onChange={e => setForm(f => ({ ...f, fullDescription: e.target.value }))} rows={5} placeholder="Contexte, approche, résultat…" style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }} />
+                  </Field>
+                </div>
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <Field label="Enjeu / Brief">
+                    <textarea value={form.challenge} onChange={e => setForm(f => ({ ...f, challenge: e.target.value }))} rows={3} placeholder="Problématique ou objectif du projet…" style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }} />
+                  </Field>
+                </div>
+
+                {/* ── Blocs de présentation ── */}
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <label style={{ display: "block", fontSize: "10px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,255,255,0.25)", marginBottom: "10px" }}>
+                    Blocs de présentation
+                  </label>
+                  <BlocksEditor
+                    blocks={form.blocks}
+                    onChange={blocks => setForm(f => ({ ...f, blocks }))}
+                    onPickImage={(index, kind) => { setPickerTarget({ kind, index }); setPickerOpen(true); }}
+                  />
+                </div>
+
                 {/* ── Galerie avec picker ── */}
                 <div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
                     <label style={{ fontSize: "10px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,255,255,0.25)" }}>Images galerie</label>
-                    <button type="button" onClick={() => { setPickerTarget("gallery"); setPickerOpen(true); }} style={{ display: "flex", alignItems: "center", gap: "5px", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(92,92,245,0.7)", padding: 0 }}>
+                    <button type="button" onClick={() => { setPickerTarget({ kind: "gallery" }); setPickerOpen(true); }} style={{ display: "flex", alignItems: "center", gap: "5px", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(92,92,245,0.7)", padding: 0 }}>
                       <BookImage size={10} /> + Bibliothèque
                     </button>
                   </div>
-                  <textarea value={form.imagesRaw} onChange={e => setForm(f => ({ ...f, imagesRaw: e.target.value }))} rows={3} placeholder={"https://…/img1.jpg\nhttps://…/img2.jpg"} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.8, fontFamily: "monospace", fontSize: "10px" }} />
+                  <textarea value={form.imagesRaw} onChange={e => setForm(f => ({ ...f, imagesRaw: e.target.value }))} rows={4} placeholder={"https://…/img1.jpg\nhttps://…/img2.jpg"} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.8, fontFamily: "monospace", fontSize: "10px" }} />
                 </div>
 
                 {/* ── Mockups avec picker ── */}
                 <div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
                     <label style={{ fontSize: "10px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,255,255,0.25)" }}>Mockups navigateur</label>
-                    <button type="button" onClick={() => { setPickerTarget("mockup"); setPickerOpen(true); }} style={{ display: "flex", alignItems: "center", gap: "5px", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(92,92,245,0.7)", padding: 0 }}>
+                    <button type="button" onClick={() => { setPickerTarget({ kind: "mockup" }); setPickerOpen(true); }} style={{ display: "flex", alignItems: "center", gap: "5px", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(92,92,245,0.7)", padding: 0 }}>
                       <BookImage size={10} /> + Bibliothèque
                     </button>
                   </div>
-                  <textarea value={form.mockupImagesRaw} onChange={e => setForm(f => ({ ...f, mockupImagesRaw: e.target.value }))} rows={3} placeholder={"https://…/mockup1.jpg\nhttps://…/mockup2.jpg"} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.8, fontFamily: "monospace", fontSize: "10px" }} />
+                  <textarea value={form.mockupImagesRaw} onChange={e => setForm(f => ({ ...f, mockupImagesRaw: e.target.value }))} rows={4} placeholder={"https://…/mockup1.jpg\nhttps://…/mockup2.jpg"} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.8, fontFamily: "monospace", fontSize: "10px" }} />
                 </div>
 
                 <Field label="Lien externe (optionnel)">
@@ -583,18 +809,19 @@ export function AdminPortfolio() {
                 <Field label="Invitation Discord (optionnel)">
                   <input value={form.discordUrl} onChange={e => setForm(f => ({ ...f, discordUrl: e.target.value }))} placeholder="https://discord.gg/…" style={inputStyle} />
                 </Field>
+
                 <Field label="Couleur accent (hex)">
                   <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                     <input value={form.accentColor} onChange={e => setForm(f => ({ ...f, accentColor: e.target.value }))} placeholder="#3c64ff" style={{ ...inputStyle, flex: 1 }} />
                     {form.accentColor && <div style={{ width: 28, height: 28, borderRadius: "6px", background: form.accentColor, flexShrink: 0, border: "1px solid rgba(255,255,255,0.1)" }} />}
                   </div>
                 </Field>
-
-                <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "4px 0" }} />
-
                 <Field label="Ordre d'affichage">
-                  <input type="number" value={form.order} onChange={e => setForm(f => ({ ...f, order: Number(e.target.value) }))} style={{ ...inputStyle, width: "80px" }} />
+                  <input type="number" value={form.order} onChange={e => setForm(f => ({ ...f, order: Number(e.target.value) }))} style={inputStyle} />
                 </Field>
+
+                <div style={{ gridColumn: "1 / -1", height: "1px", background: "rgba(255,255,255,0.06)", margin: "4px 0" }} />
+
                 <Field label="Visibilité">
                   <button
                     onClick={() => setForm(f => ({ ...f, published: !f.published }))}
