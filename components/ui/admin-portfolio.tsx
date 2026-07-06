@@ -3,13 +3,15 @@
 
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Eye, EyeOff, Check, X, BookImage, Upload } from "lucide-react";
+import { Plus, Trash2, Eye, EyeOff, Check, X, BookImage, Upload, Layers, ChevronUp, ChevronDown } from "lucide-react";
 import { ImagePickerModal } from "@/components/ui/admin-image-picker";
+
+type Section = { id: string; name: string; color: string; order: number };
 
 type PortfolioProject = {
   id: string; slug: string; title: string; tag: string;
   description: string; imageSrc: string; logoSrc: string; order: number; published: boolean;
-  category: string; year: string; client: string;
+  sectionId: string | null; section?: Section | null; year: string; client: string;
   fullDescription: string; challenge: string;
   images: string[]; mockupImages: string[]; tools: string[];
   externalLink: string | null; discordUrl: string | null; accentColor: string;
@@ -17,7 +19,7 @@ type PortfolioProject = {
 
 const emptyForm = {
   slug: "", title: "", tag: "", description: "", imageSrc: "", logoSrc: "",
-  category: "", year: "", client: "", fullDescription: "", challenge: "",
+  sectionId: "", year: "", client: "", fullDescription: "", challenge: "",
   imagesRaw: "", mockupImagesRaw: "", toolsRaw: "", externalLink: "", discordUrl: "", accentColor: "",
   order: 0, published: true,
 };
@@ -39,6 +41,130 @@ const inputStyle: React.CSSProperties = {
   color: "white", fontFamily: "var(--font-poppins)", fontSize: "12px", outline: "none",
 };
 
+// ── Gestion des sections ────────────────────────────────────────────────────────
+
+function SectionRow({ section, isFirst, isLast, onRename, onColor, onMove, onDelete }: {
+  section: Section; isFirst: boolean; isLast: boolean;
+  onRename: (name: string) => void;
+  onColor: (color: string) => void;
+  onMove: (dir: "up" | "down") => void;
+  onDelete: () => void;
+}) {
+  const [name, setName] = useState(section.name);
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 10px", borderRadius: "8px", background: "rgba(255,255,255,0.02)" }}>
+      <input
+        type="color"
+        value={section.color}
+        onChange={e => onColor(e.target.value)}
+        style={{ width: 26, height: 26, padding: 0, border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", background: "none", cursor: "pointer", flexShrink: 0 }}
+      />
+      <input
+        value={name}
+        onChange={e => setName(e.target.value)}
+        onBlur={() => { if (name.trim() && name.trim() !== section.name) onRename(name.trim()); else setName(section.name); }}
+        onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+        style={{ ...inputStyle, flex: 1, padding: "6px 9px" }}
+      />
+      <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+        <button type="button" onClick={() => onMove("up")} disabled={isFirst} style={{ background: "none", border: "none", cursor: isFirst ? "default" : "pointer", padding: "1px", opacity: isFirst ? 0.2 : 0.6, display: "flex" }}>
+          <ChevronUp size={13} color="white" />
+        </button>
+        <button type="button" onClick={() => onMove("down")} disabled={isLast} style={{ background: "none", border: "none", cursor: isLast ? "default" : "pointer", padding: "1px", opacity: isLast ? 0.2 : 0.6, display: "flex" }}>
+          <ChevronDown size={13} color="white" />
+        </button>
+      </div>
+      <button type="button" onClick={onDelete} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", display: "flex", flexShrink: 0 }}>
+        <Trash2 size={13} color="rgba(248,113,113,0.5)" />
+      </button>
+    </div>
+  );
+}
+
+function SectionsManagerModal({ open, onClose, sections, onAdd, onRename, onColor, onMove, onDelete }: {
+  open: boolean; onClose: () => void; sections: Section[];
+  onAdd: (name: string, color: string) => void;
+  onRename: (id: string, name: string) => void;
+  onColor: (id: string, color: string) => void;
+  onMove: (id: string, dir: "up" | "down") => void;
+  onDelete: (id: string) => void;
+}) {
+  const [newName, setNewName] = useState("");
+  const [newColor, setNewColor] = useState("#5c5cf5");
+
+  if (!open) return null;
+
+  const submit = () => {
+    if (!newName.trim()) return;
+    onAdd(newName.trim(), newColor);
+    setNewName(""); setNewColor("#5c5cf5");
+  };
+
+  return (
+    <div
+      style={{ position: "fixed", inset: 0, zIndex: 9000, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "16px", width: "100%", maxWidth: "420px", padding: "24px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+          <p style={{ fontSize: "14px", fontWeight: 700, color: "white", margin: 0 }}>Gérer les sections</p>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", padding: "4px", display: "flex" }}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "16px" }}>
+          {sections.length === 0 ? (
+            <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", padding: "12px 0", textAlign: "center" }}>Aucune section. Créez-en une ci-dessous.</p>
+          ) : (
+            sections.map((s, i) => (
+              <SectionRow
+                key={s.id}
+                section={s}
+                isFirst={i === 0}
+                isLast={i === sections.length - 1}
+                onRename={name => onRename(s.id, name)}
+                onColor={color => onColor(s.id, color)}
+                onMove={dir => onMove(s.id, dir)}
+                onDelete={() => onDelete(s.id)}
+              />
+            ))
+          )}
+        </div>
+
+        <div style={{ display: "flex", gap: "8px", paddingTop: "14px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <input
+            type="color"
+            value={newColor}
+            onChange={e => setNewColor(e.target.value)}
+            style={{ width: 34, height: 34, padding: 0, border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", background: "none", cursor: "pointer", flexShrink: 0 }}
+          />
+          <input
+            value={newName}
+            onChange={e => setNewName(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") submit(); }}
+            placeholder="Nouvelle section (ex: Motion Design)"
+            style={{ ...inputStyle, flex: 1 }}
+          />
+          <button
+            type="button"
+            onClick={submit}
+            disabled={!newName.trim()}
+            style={{
+              padding: "0 14px", borderRadius: "8px", border: "1px solid rgba(60,100,255,0.3)",
+              background: "rgba(60,100,255,0.15)", color: "rgba(140,170,255,0.9)",
+              cursor: newName.trim() ? "pointer" : "not-allowed", opacity: newName.trim() ? 1 : 0.4,
+              display: "flex", alignItems: "center", flexShrink: 0,
+            }}
+          >
+            <Plus size={15} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function AdminPortfolio() {
   const [projects, setProjects] = useState<PortfolioProject[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,10 +179,45 @@ export function AdminPortfolio() {
   const [pickerTarget, setPickerTarget] = useState<"cover" | "logo" | "gallery" | "mockup" | null>(null);
   const [uploading, setUploading] = useState(false);
   const uploadRef = useRef<HTMLInputElement>(null);
+  const [sections, setSections] = useState<Section[]>([]);
+  const [sectionsModalOpen, setSectionsModalOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/portfolio").then(r => r.json()).then(data => { setProjects(data); setLoading(false); });
+    fetch("/api/admin/portfolio-sections").then(r => r.json()).then(setSections);
   }, []);
+
+  const refreshSections = () => fetch("/api/admin/portfolio-sections").then(r => r.json()).then(setSections);
+  const refreshProjects = () => fetch("/api/admin/portfolio").then(r => r.json()).then(setProjects);
+
+  const addSection = async (name: string, color: string) => {
+    await fetch("/api/admin/portfolio-sections", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, color }) });
+    await refreshSections();
+  };
+  const renameSection = async (id: string, name: string) => {
+    await fetch(`/api/admin/portfolio-sections/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
+    await refreshSections();
+  };
+  const recolorSection = async (id: string, color: string) => {
+    setSections(prev => prev.map(s => s.id === id ? { ...s, color } : s));
+    await fetch(`/api/admin/portfolio-sections/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ color }) });
+  };
+  const moveSection = async (id: string, dir: "up" | "down") => {
+    const idx = sections.findIndex(s => s.id === id);
+    const swapIdx = dir === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sections.length) return;
+    const a = sections[idx], b = sections[swapIdx];
+    await Promise.all([
+      fetch(`/api/admin/portfolio-sections/${a.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order: b.order }) }),
+      fetch(`/api/admin/portfolio-sections/${b.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order: a.order }) }),
+    ]);
+    await refreshSections();
+  };
+  const deleteSection = async (id: string) => {
+    if (!window.confirm("Supprimer cette section ? Les projets associés perdront leur section (mais resteront publiés).")) return;
+    await fetch(`/api/admin/portfolio-sections/${id}`, { method: "DELETE" });
+    await Promise.all([refreshSections(), refreshProjects()]);
+  };
 
   const seed = async () => {
     setSeeding(true);
@@ -72,7 +233,7 @@ export function AdminPortfolio() {
   const toFormState = (p: PortfolioProject) => ({
     slug: p.slug, title: p.title, tag: p.tag, description: p.description, imageSrc: p.imageSrc,
     logoSrc: p.logoSrc ?? "",
-    category: p.category ?? "", year: p.year ?? "", client: p.client ?? "",
+    sectionId: p.sectionId ?? "", year: p.year ?? "", client: p.client ?? "",
     fullDescription: p.fullDescription ?? "", challenge: p.challenge ?? "",
     imagesRaw: (p.images ?? []).join("\n"),
     mockupImagesRaw: (p.mockupImages ?? []).join("\n"),
@@ -92,6 +253,7 @@ export function AdminPortfolio() {
     tools: form.toolsRaw.split(",").map(s => s.trim()).filter(Boolean),
     externalLink: form.externalLink.trim() || null,
     discordUrl: form.discordUrl.trim() || null,
+    sectionId: form.sectionId || null,
   });
 
   const save = async () => {
@@ -176,6 +338,14 @@ export function AdminPortfolio() {
               {seeding ? "Import…" : "↓ Importer projets existants"}
             </button>
           )}
+          <button onClick={() => setSectionsModalOpen(true)} style={{
+            display: "flex", alignItems: "center", gap: "7px", padding: "9px 16px", borderRadius: "10px",
+            border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)",
+            fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 500,
+            color: "rgba(255,255,255,0.5)", cursor: "pointer",
+          }}>
+            <Layers size={14} /> Sections
+          </button>
           <button onClick={openCreate} style={{
             display: "flex", alignItems: "center", gap: "7px", padding: "9px 16px", borderRadius: "10px",
             border: "1px solid rgba(60,100,255,0.3)", background: "rgba(60,100,255,0.12)",
@@ -220,6 +390,12 @@ export function AdminPortfolio() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.85)", margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.title}</p>
                     <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                      {p.section && (
+                        <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "10px", padding: "1px 7px", borderRadius: "5px", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.45)" }}>
+                          <span style={{ width: 6, height: 6, borderRadius: "50%", background: p.section.color, flexShrink: 0 }} />
+                          {p.section.name}
+                        </span>
+                      )}
                       <span style={{ fontSize: "10px", padding: "1px 7px", borderRadius: "5px", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)" }}>{p.tag}</span>
                       <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.2)" }}>#{p.order}</span>
                     </div>
@@ -355,12 +531,10 @@ export function AdminPortfolio() {
                 <p style={{ fontSize: "9px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.15em", color: "rgba(255,255,255,0.2)", margin: 0 }}>Page détail</p>
 
                 <div style={{ display: "flex", gap: "8px" }}>
-                  <Field label="Catégorie">
-                    <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} style={{ ...inputStyle, appearance: "none", colorScheme: "dark" }}>
+                  <Field label="Section">
+                    <select value={form.sectionId} onChange={e => setForm(f => ({ ...f, sectionId: e.target.value }))} style={{ ...inputStyle, appearance: "none", colorScheme: "dark" }}>
                       <option value="">—</option>
-                      <option value="Web">Web</option>
-                      <option value="Visuel">Visuel</option>
-                      <option value="Cover">Cover</option>
+                      {sections.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
                   </Field>
                   <Field label="Année">
@@ -465,6 +639,18 @@ export function AdminPortfolio() {
         open={pickerOpen}
         onClose={() => { setPickerOpen(false); setPickerTarget(null); }}
         onSelect={handlePickerSelect}
+      />
+
+      {/* Sections manager modal */}
+      <SectionsManagerModal
+        open={sectionsModalOpen}
+        onClose={() => setSectionsModalOpen(false)}
+        sections={sections}
+        onAdd={addSection}
+        onRename={renameSection}
+        onColor={recolorSection}
+        onMove={moveSection}
+        onDelete={deleteSection}
       />
     </div>
   );

@@ -8,7 +8,7 @@ import { ArrowLeft, ExternalLink, ArrowRight } from "lucide-react";
 
 type Project = {
   id: string; slug: string; title: string; tag: string;
-  description: string; imageSrc: string; logoSrc?: string | null; category: string; year: string;
+  description: string; imageSrc: string; logoSrc?: string | null; section?: { name: string } | null; year: string;
   client: string; fullDescription: string; challenge: string;
   images: unknown; mockupImages: unknown; tools: unknown; externalLink: string | null; discordUrl?: string | null; accentColor: string;
 };
@@ -107,13 +107,13 @@ export default function PortfolioDetail({ project }: { project: Project }) {
               transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}
             >
-              {project.category && (
+              {project.section?.name && (
                 <span style={{
                   fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.2em",
                   color: `rgba(${accentRgb},0.9)`, border: `1px solid rgba(${accentRgb},0.3)`,
                   background: `rgba(${accentRgb},0.08)`, padding: "4px 12px", borderRadius: "999px",
                 }}>
-                  {project.category}
+                  {project.section.name}
                 </span>
               )}
               {project.year && (
@@ -190,7 +190,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
               { label: "Projet", value: project.title },
               project.client ? { label: "Client", value: project.client } : null,
               project.year ? { label: "Année", value: project.year } : null,
-              project.category ? { label: "Catégorie", value: project.category } : null,
+              project.section?.name ? { label: "Catégorie", value: project.section.name } : null,
               project.tag ? { label: "Type", value: project.tag } : null,
             ].filter(Boolean).map((row, i) => (
               <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "12px 0", borderBottom: i < 3 ? "1px solid rgba(255,255,255,0.05)" : "none", gap: "16px" }}>

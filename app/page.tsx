@@ -32,7 +32,7 @@ async function getFeaturedProjects() {
       where: { published: true },
       orderBy: { order: "asc" },
       take: 3,
-      select: { id: true, slug: true, title: true, tag: true, description: true, imageSrc: true, category: true },
+      select: { id: true, slug: true, title: true, tag: true, description: true, imageSrc: true, section: { select: { name: true, color: true } } },
     });
   } catch {
     return [];

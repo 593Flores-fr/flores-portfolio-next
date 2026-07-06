@@ -6,19 +6,13 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { CollabCTA } from "@/components/ui/collab-cta";
+import { hexToRgb } from "@/lib/utils";
 
-type Project = { id: string; slug: string; title: string; tag: string; description: string; imageSrc: string; category: string };
-
-const FILTERS = ["Tous", "Web", "Visuel", "Cover"];
-
-const CAT_COLOR: Record<string, string> = {
-  Web:    "rgba(92,92,245,0.9)",
-  Visuel: "rgba(167,139,250,0.9)",
-  Cover:  "rgba(251,191,36,0.9)",
-};
+type Section = { id: string; name: string; color: string };
+type Project = { id: string; slug: string; title: string; tag: string; description: string; imageSrc: string; section: Section | null };
 
 function ProjectCard({ p, index, featured }: { p: Project; index: number; featured: boolean }) {
-  const accent = CAT_COLOR[p.category] ?? "rgba(255,255,255,0.4)";
+  const accent = `rgba(${hexToRgb(p.section?.color)},0.9)`;
 
   return (
     <motion.div
@@ -56,10 +50,10 @@ function ProjectCard({ p, index, featured }: { p: Project; index: number; featur
             )}
             <div style={{ position: "absolute", inset: 0, background: featured ? "linear-gradient(to right, transparent 55%, rgba(14,12,10,0.85) 100%)" : "linear-gradient(to top, rgba(14,12,10,0.6) 0%, transparent 55%)" }} />
 
-            {p.category && (
+            {p.section?.name && (
               <div style={{ position: "absolute", top: 16, left: 16 }}>
                 <span className="vto-label" style={{ fontSize: "8px", letterSpacing: "3px", color: "rgba(255,255,255,0.9)", border: `1px solid ${accent.replace("0.9", "0.35")}`, padding: "3px 10px", background: "rgba(0,0,0,0.35)" }}>
-                  {p.category}
+                  {p.section.name}
                 </span>
               </div>
             )}
@@ -97,20 +91,22 @@ function ProjectCard({ p, index, featured }: { p: Project; index: number; featur
   );
 }
 
-export function PortfolioClient({ initialProjects }: { initialProjects: Project[] }) {
+export function PortfolioClient({ initialProjects, sections }: { initialProjects: Project[]; sections: Section[] }) {
+  const filters = ["Tous", ...sections.map(s => s.name)];
   const searchParams = useSearchParams();
   const [active, setActive] = useState(() => {
     const cat = searchParams.get("cat");
-    return FILTERS.includes(cat ?? "") ? (cat as string) : "Tous";
+    return filters.includes(cat ?? "") ? (cat as string) : "Tous";
   });
 
   useEffect(() => {
     const cat = searchParams.get("cat");
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (cat && FILTERS.includes(cat)) setActive(cat);
+    if (cat && filters.includes(cat)) setActive(cat);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  const shown = active === "Tous" ? initialProjects : initialProjects.filter(p => p.category === active);
+  const shown = active === "Tous" ? initialProjects : initialProjects.filter(p => p.section?.name === active);
 
   return (
     <div style={{ background: "#0e0c0a", minHeight: "100dvh", color: "white", paddingTop: "64px" }}>
@@ -136,8 +132,8 @@ export function PortfolioClient({ initialProjects }: { initialProjects: Project[
         </motion.div>
 
         {/* Filters — VTO flat tabs */}
-        <div style={{ display: "flex", gap: "1px", background: "rgba(255,255,255,0.05)", marginBottom: "52px", width: "fit-content" }}>
-          {FILTERS.map(f => (
+        <div style={{ display: "flex", gap: "1px", background: "rgba(255,255,255,0.05)", marginBottom: "52px", width: "fit-content", flexWrap: "wrap" }}>
+          {filters.map(f => (
             <button
               key={f}
               onClick={() => setActive(f)}
@@ -153,7 +149,7 @@ export function PortfolioClient({ initialProjects }: { initialProjects: Project[
               {f}
               {f !== "Tous" && (
                 <span style={{ marginLeft: "6px", opacity: 0.45 }}>
-                  {initialProjects.filter(p => p.category === f).length}
+                  {initialProjects.filter(p => p.section?.name === f).length}
                 </span>
               )}
             </button>

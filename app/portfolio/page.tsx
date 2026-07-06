@@ -16,21 +16,26 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function PortfolioPage() {
-  let projects: { id: string; slug: string; title: string; tag: string; description: string; imageSrc: string; category: string }[] = [];
+  type ProjectRow = { id: string; slug: string; title: string; tag: string; description: string; imageSrc: string; section: { id: string; name: string; color: string } | null };
+  let projects: ProjectRow[] = [];
+  let sections: { id: string; name: string; color: string }[] = [];
 
   try {
-    projects = await prisma.portfolioProject.findMany({
-      where: { published: true },
-      orderBy: { order: "asc" },
-      select: { id: true, slug: true, title: true, tag: true, description: true, imageSrc: true, category: true },
-    });
+    [projects, sections] = await Promise.all([
+      prisma.portfolioProject.findMany({
+        where: { published: true },
+        orderBy: { order: "asc" },
+        select: { id: true, slug: true, title: true, tag: true, description: true, imageSrc: true, section: { select: { id: true, name: true, color: true } } },
+      }),
+      prisma.portfolioSection.findMany({ orderBy: { order: "asc" } }),
+    ]);
   } catch (err) {
     console.error("[portfolio] DB fetch failed:", err);
   }
 
   return (
     <Suspense>
-      <PortfolioClient initialProjects={projects} />
+      <PortfolioClient initialProjects={projects} sections={sections} />
     </Suspense>
   );
 }

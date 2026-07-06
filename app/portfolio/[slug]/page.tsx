@@ -6,6 +6,7 @@ export default async function PortfolioSlugPage({ params }: { params: Promise<{ 
   const { slug } = await params;
   const project = await prisma.portfolioProject.findUnique({
     where: { slug, published: true },
+    include: { section: true },
   });
   if (!project) notFound();
   return <PortfolioDetail project={project} />;

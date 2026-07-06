@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { ScrollFillText } from "@/components/ui/scroll-fill-text";
+import { hexToRgb } from "@/lib/utils";
 
 type Project = {
   id: string;
@@ -12,20 +13,14 @@ type Project = {
   tag: string;
   description: string;
   imageSrc: string;
-  category?: string;
+  section?: { name: string; color: string } | null;
 };
 
 const FALLBACK: Project[] = [
-  { id: "1", slug: "yevta",      category: "Visuel", title: "Yevta",        tag: "Direction artistique · 2024", description: "Identité visuelle complète pour un artiste musical émergent. Covers, charte graphique et assets de communication.", imageSrc: "/images/01hero.jpg" },
-  { id: "2", slug: "vzx-build",  category: "Web",    title: "VZX Build",    tag: "Branding & Dev Web · 2024",   description: "Branding moderne et site vitrine pour un assembleur PC. Identité forte, palette sombre et typographie percutante.",    imageSrc: "/images/jjj.jpg" },
-  { id: "3", slug: "vto-studio", category: "Visuel", title: "V.T.O Studio", tag: "Identité visuelle · 2024",    description: "Direction artistique pour un collectif créatif. Logo, supports de communication et présence digitale cohérente.",         imageSrc: "/images/vto.jpg" },
+  { id: "1", slug: "yevta",      section: { name: "Visuel", color: "#a78bfa" }, title: "Yevta",        tag: "Direction artistique · 2024", description: "Identité visuelle complète pour un artiste musical émergent. Covers, charte graphique et assets de communication.", imageSrc: "/images/01hero.jpg" },
+  { id: "2", slug: "vzx-build",  section: { name: "Web", color: "#5c5cf5" },    title: "VZX Build",    tag: "Branding & Dev Web · 2024",   description: "Branding moderne et site vitrine pour un assembleur PC. Identité forte, palette sombre et typographie percutante.",    imageSrc: "/images/jjj.jpg" },
+  { id: "3", slug: "vto-studio", section: { name: "Visuel", color: "#a78bfa" }, title: "V.T.O Studio", tag: "Identité visuelle · 2024",    description: "Direction artistique pour un collectif créatif. Logo, supports de communication et présence digitale cohérente.",         imageSrc: "/images/vto.jpg" },
 ];
-
-const CAT_COLOR: Record<string, string> = {
-  Web:    "rgba(92,92,245,0.85)",
-  Visuel: "rgba(167,139,250,0.85)",
-  Cover:  "rgba(251,191,36,0.85)",
-};
 
 export function PortfolioTeaser({ projects }: { projects?: Project[] }) {
   const items = (projects && projects.length >= 3 ? projects.slice(0, 3) : FALLBACK);
@@ -78,10 +73,10 @@ export function PortfolioTeaser({ projects }: { projects?: Project[] }) {
                   />
                 )}
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(14,12,10,0.9) 0%, rgba(14,12,10,0.1) 60%)" }} />
-                {featured.category && (
+                {featured.section?.name && (
                   <div style={{ position: "absolute", top: 20, left: 20 }}>
-                    <span className="vto-label" style={{ fontSize: "7px", letterSpacing: "3px", color: "rgba(255,255,255,0.9)", border: `1px solid ${(CAT_COLOR[featured.category] ?? "rgba(255,255,255,0.5)").replace("0.85", "0.35")}`, padding: "3px 10px", background: "rgba(0,0,0,0.35)" }}>
-                      {featured.category}
+                    <span className="vto-label" style={{ fontSize: "7px", letterSpacing: "3px", color: "rgba(255,255,255,0.9)", border: `1px solid rgba(${hexToRgb(featured.section.color)},0.35)`, padding: "3px 10px", background: "rgba(0,0,0,0.35)" }}>
+                      {featured.section.name}
                     </span>
                   </div>
                 )}
@@ -121,10 +116,10 @@ export function PortfolioTeaser({ projects }: { projects?: Project[] }) {
                     />
                   )}
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(14,12,10,0.8) 0%, rgba(14,12,10,0.05) 60%)" }} />
-                  {p.category && (
+                  {p.section?.name && (
                     <div style={{ position: "absolute", top: 16, left: 16 }}>
-                      <span className="vto-label" style={{ fontSize: "7px", letterSpacing: "3px", color: "rgba(255,255,255,0.9)", border: `1px solid ${(CAT_COLOR[p.category] ?? "rgba(255,255,255,0.5)").replace("0.85", "0.35")}`, padding: "2px 8px", background: "rgba(0,0,0,0.35)" }}>
-                        {p.category}
+                      <span className="vto-label" style={{ fontSize: "7px", letterSpacing: "3px", color: "rgba(255,255,255,0.9)", border: `1px solid rgba(${hexToRgb(p.section.color)},0.35)`, padding: "2px 8px", background: "rgba(0,0,0,0.35)" }}>
+                        {p.section.name}
                       </span>
                     </div>
                   )}

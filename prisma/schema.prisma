@@ -126,7 +126,8 @@ model PortfolioProject {
   description     String   @default("")
   imageSrc        String   @default("")
   logoSrc         String   @default("")
-  category        String   @default("")
+  sectionId       String?
+  section         PortfolioSection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
   year            String   @default("")
   client          String   @default("")
   fullDescription String   @default("")
@@ -141,6 +142,16 @@ model PortfolioProject {
   published       Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+model PortfolioSection {
+  id        String             @id @default(cuid())
+  name      String             @unique
+  color     String             @default("#5c5cf5")
+  order     Int                @default(0)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  projects  PortfolioProject[]
 }
 
 model KanbanColumn {
