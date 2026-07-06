@@ -439,8 +439,15 @@ export default function PortfolioDetail({ project }: { project: Project }) {
                         {project.externalLink ? project.externalLink.replace(/^https?:\/\//, "") : project.slug + ".fr"}
                       </div>
                     </div>
-                    <div style={{ position: "relative", aspectRatio: "16/9", overflow: "hidden" }}>
-                      <Image src={src} alt={`${project.title} — aperçu ${i + 1}`} fill style={{ objectFit: "cover", objectPosition: "top" }} sizes="100vw" />
+                    <div style={{ position: "relative", overflow: "hidden", lineHeight: 0 }}>
+                      <Image
+                        src={src}
+                        alt={`${project.title} — aperçu ${i + 1}`}
+                        width={1600}
+                        height={900}
+                        style={{ width: "100%", height: "auto", display: "block" }}
+                        sizes="100vw"
+                      />
                     </div>
                   </div>
                 </motion.div>
