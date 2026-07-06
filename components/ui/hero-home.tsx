@@ -100,7 +100,7 @@ export function HeroHome({ content }: { content?: HeroContent }) {
             color: "white", margin: "0 0 48px",
             lineHeight: 0.92,
           }}>
-            <LineReveal delay={0.05}>Designer</LineReveal>
+            <LineReveal delay={0.05}>Graphiste</LineReveal>
             <LineReveal delay={0.15}>
               <motion.span style={{
                 display: "block",

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { put, list } from "@vercel/blob";
+import { validateUpload, safeLibraryFilename } from "@/lib/upload-validation";
 
 function isAdmin(email?: string | null) {
   return email === process.env.ADMIN_EMAIL;
@@ -53,11 +54,14 @@ export async function POST(req: NextRequest) {
   const file = formData.get("file") as File | null;
   if (!file) return NextResponse.json({ error: "Fichier manquant" }, { status: 400 });
 
+  const validationError = validateUpload(file, "image");
+  if (validationError) return NextResponse.json({ error: validationError }, { status: 400 });
+
   try {
-    const blob = await put(`library/${Date.now()}-${file.name}`, file, { access: "public" });
+    const blob = await put(`library/${safeLibraryFilename(file)}`, file, { access: "public" });
     return NextResponse.json({ url: blob.url, name: file.name });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Erreur upload";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error("[image-library] upload failed:", e);
+    return NextResponse.json({ error: "Erreur upload" }, { status: 500 });
   }
 }

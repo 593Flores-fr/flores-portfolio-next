@@ -59,7 +59,6 @@ function InvoicePrint({ invoice }: { invoice: Invoice }) {
         <div>
           <p style={{ fontSize: "24px", fontWeight: 800, margin: "0 0 4px", letterSpacing: "-0.02em" }}>Flores</p>
           <p style={{ fontSize: "11px", color: "#555", margin: 0 }}>Allan — Graphiste & Développeur Web</p>
-          <p style={{ fontSize: "11px", color: "#555", margin: 0 }}>flores@example.com · flores-fr.com</p>
         </div>
         <div style={{ textAlign: "right" }}>
           <p style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 4px", color: invoice.type === "facture" ? "#1a1aff" : "#333" }}>

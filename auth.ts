@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import Discord from "next-auth/providers/discord";
 import { compare } from "bcryptjs";
 import prisma from "@/lib/prisma";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -15,10 +16,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
         rememberMe: { label: "Remember me", type: "text" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         if (!credentials?.email || !credentials?.password) return null;
+
+        const email = (credentials.email as string).toLowerCase();
+        const ip = getClientIp(request);
+        const [ipOk, emailOk] = await Promise.all([
+          checkRateLimit(`login-ip:${ip}`, 20, 15 * 60 * 1000),
+          checkRateLimit(`login-email:${email}`, 10, 15 * 60 * 1000),
+        ]);
+        if (!ipOk || !emailOk) return null;
+
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
+          where: { email },
         });
         if (!user || !user.password) return null;
         const valid = await compare(credentials.password as string, user.password);

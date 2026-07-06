@@ -48,8 +48,8 @@ export function PageLoader() {
               Studio · 2025
             </p>
 
-            {/* FLORES */}
-            <h1 style={{
+            {/* FLORES — écran de chargement décoratif, pas un titre de page */}
+            <p aria-hidden style={{
               fontFamily: "var(--font-six-caps), sans-serif",
               fontSize: "clamp(4.5rem, 9vw, 8.5rem)",
               fontWeight: 400,
@@ -60,7 +60,7 @@ export function PageLoader() {
               lineHeight: 1,
             }}>
               FLORES
-            </h1>
+            </p>
 
             {/* Accent line */}
             <div style={{

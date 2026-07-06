@@ -48,7 +48,7 @@ export async function GET(
     return NextResponse.json({ user, messages, projects, reports });
   } catch (err) {
     console.error("[admin/messages/userId] DB error:", err);
-    return NextResponse.json({ error: "Erreur serveur", details: String(err) }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 
@@ -74,6 +74,6 @@ export async function POST(
     return NextResponse.json(message, { status: 201 });
   } catch (err) {
     console.error("[admin/messages/userId] POST error:", err);
-    return NextResponse.json({ error: "Erreur serveur", details: String(err) }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

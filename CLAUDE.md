@@ -78,15 +78,29 @@ Uploaded files (portfolio images, deliverables, moodboard, about image) go to **
 ## Environment variables
 
 ```
-DATABASE_URL           # Neon PostgreSQL connection string
-NEXTAUTH_SECRET        # NextAuth JWT secret
-NEXTAUTH_URL           # e.g. http://localhost:3000
-DISCORD_CLIENT_ID      # Discord OAuth app (empty = Discord login disabled)
+DATABASE_URL              # Neon PostgreSQL connection string
+NEXTAUTH_SECRET           # NextAuth JWT secret
+NEXTAUTH_URL              # e.g. http://localhost:3000
+DISCORD_CLIENT_ID         # Discord OAuth app (empty = Discord login disabled)
 DISCORD_CLIENT_SECRET
-ADMIN_EMAIL            # Email address of the site owner (gates all admin access)
-ADMIN_DISCORD_ID       # Discord providerAccountId of the admin
-BLOB_STORE_ID          # Vercel Blob store ID
-BLOB_READ_WRITE_TOKEN  # Vercel Blob token
+ADMIN_EMAIL               # Email address of the site owner (gates all admin access)
+ADMIN_DISCORD_ID          # Discord providerAccountId of the admin
+BLOB_STORE_ID             # Vercel Blob store ID
+BLOB_READ_WRITE_TOKEN     # Vercel Blob token
+NEXT_PUBLIC_URL           # Optional — set once a custom domain is live. Falls back to VERCEL_PROJECT_PRODUCTION_URL (see lib/site-url.ts)
+GOOGLE_SITE_VERIFICATION  # Optional — Google Search Console verification code (metadata.verification.google in app/layout.tsx)
 ```
 
 `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET` being empty disables the Discord provider entirely (see `auth.ts` conditional spread).
+
+### SEO / canonical URL (`lib/site-url.ts`)
+
+`SITE_URL` resolves `NEXT_PUBLIC_URL` → `VERCEL_PROJECT_PRODUCTION_URL` (auto-set by Vercel) → `localhost:3000`. Used for `metadataBase`, sitemap, robots.txt, OG/canonical URLs. No manual config needed until a custom domain is bought — then set `NEXT_PUBLIC_URL` in Vercel.
+
+### Rate limiting (`lib/rate-limit.ts`)
+
+DB-backed sliding-window limiter (`RateLimitHit` table) — no Redis in the stack. Applied to: credentials login (by email + IP, in `auth.ts`), `/api/auth/register`, `/api/views`, `/api/reports`, `/api/projects` POST.
+
+### Upload validation (`lib/upload-validation.ts`)
+
+All Vercel Blob upload routes validate real MIME type + size before calling `put()`, and generate a random/sanitized filename instead of using the raw client-supplied name in the blob path.

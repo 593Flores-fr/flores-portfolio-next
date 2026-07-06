@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function GET() {
   const session = await auth();
@@ -16,6 +17,9 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
+  const allowed = await checkRateLimit(`reports:${session.user.id}`, 10, 60 * 60 * 1000);
+  if (!allowed) return NextResponse.json({ error: "Trop de signalements, réessayez plus tard." }, { status: 429 });
 
   const { title, type, description, url } = await req.json();
   if (!title?.trim() || !description?.trim()) {

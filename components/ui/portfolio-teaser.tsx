@@ -66,7 +66,7 @@ export function PortfolioTeaser({ projects }: { projects?: Project[] }) {
                 {featured.imageSrc && (
                   <Image
                     src={featured.imageSrc} alt={featured.title} fill
-                    unoptimized={featured.imageSrc.startsWith("http")}
+                    priority
                     style={{ objectFit: "cover", transition: "transform 0.7s ease" }}
                     sizes="50vw"
                     className="portfolio-card-img"
@@ -109,7 +109,6 @@ export function PortfolioTeaser({ projects }: { projects?: Project[] }) {
                   {p.imageSrc && (
                     <Image
                       src={p.imageSrc} alt={p.title} fill
-                      unoptimized={p.imageSrc.startsWith("http")}
                       style={{ objectFit: "cover", transition: "transform 0.7s ease" }}
                       sizes="50vw"
                       className="portfolio-card-img"

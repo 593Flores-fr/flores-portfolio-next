@@ -1,6 +1,7 @@
 import { HeroHome } from "@/components/ui/hero-home";
 import { AboutSection } from "@/components/ui/about-section";
 import { PortfolioTeaser } from "@/components/ui/portfolio-teaser";
+import { FeaturesSection } from "@/components/ui/features-section";
 import { TarifsTeaser } from "@/components/ui/tarifs-teaser";
 import { EspaceTeaser } from "@/components/ui/espace-teaser";
 import { Footer } from "@/components/ui/footer";
@@ -50,6 +51,7 @@ export default async function Home() {
       <HeroHome content={content.hero} />
       <PortfolioTeaser projects={featuredProjects} />
       <AboutSection content={content.about} />
+      <FeaturesSection content={content.features} />
       <TarifsTeaser />
       <EspaceTeaser />
       <Footer content={content.footer} />

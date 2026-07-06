@@ -42,7 +42,6 @@ function ProjectCard({ p, index, featured }: { p: Project; index: number; featur
             {p.imageSrc && (
               <Image
                 src={p.imageSrc} alt={p.title} fill
-                unoptimized={p.imageSrc.startsWith("http")}
                 style={{ objectFit: "cover", transition: "transform 0.6s ease" }}
                 sizes="(max-width: 768px) 100vw, 60vw"
                 className="portfolio-card-img"
