@@ -20,6 +20,14 @@
   --accent-green:         #4ade80;
   --border-subtle:        var(--vto-border);
   --border-light:         rgba(255, 255, 255, 0.1);
+
+  /* ── Échelle typographique — ajuster ici, tout le site suit ── */
+  --fs-2xs:  10px;  /* badges, micro-labels (avant 7–8px) */
+  --fs-xs:   11px;  /* labels uppercase, tags (avant 9px) */
+  --fs-sm:   12px;  /* méta, texte tertiaire (avant 10px) */
+  --fs-base: 14px;  /* corps de texte (avant 11px) */
+  --fs-md:   15px;  /* titres de cartes (avant 12px) */
+  --fs-lg:   16px;  /* leads, sous-titres (avant 13px) */
 }
 
 /* ── VTO CTA links — texte + ligne animée ── */
@@ -28,7 +36,7 @@
   align-items: center;
   gap: 18px;
   font-family: var(--font-poppins);
-  font-size: 9px;
+  font-size: var(--fs-xs);
   letter-spacing: 4px;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.65);
@@ -50,6 +58,36 @@
 .vto-cta-link:hover .vto-cta-line { width: 56px; }
 .vto-cta-link--accent .vto-cta-line { background: var(--vto-primary); }
 
+/* ── VTO button — CTA bordé accent ── */
+.vto-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-poppins);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #fff;
+  background: rgba(92, 92, 245, 0.08);
+  border: 1px solid rgba(92, 92, 245, 0.55);
+  padding: 15px 28px;
+  text-decoration: none;
+  width: fit-content;
+  cursor: pointer;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+.vto-btn:hover {
+  background: rgba(92, 92, 245, 0.18);
+  border-color: var(--vto-primary);
+}
+.vto-btn-arrow {
+  transition: transform 0.3s ease;
+}
+.vto-btn:hover .vto-btn-arrow {
+  transform: translateX(4px);
+}
+
 /* ── VTO gradient bar (séparateur décoratif) ── */
 .vto-sep {
   width: 100%;
@@ -60,7 +98,7 @@
 /* ── VTO section label ── */
 .vto-label {
   font-family: var(--font-poppins);
-  font-size: 9px;
+  font-size: var(--fs-xs);
   letter-spacing: 5px;
   text-transform: uppercase;
   color: var(--vto-text-muted);

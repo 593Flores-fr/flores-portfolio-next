@@ -77,20 +77,20 @@ export function PortfolioTeaser({ projects, content = SITE_DEFAULTS.portfolioTea
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(14,12,10,0.9) 0%, rgba(14,12,10,0.1) 60%)" }} />
                 {featured.section?.name && (
                   <div style={{ position: "absolute", top: 20, left: 20 }}>
-                    <span className="vto-label" style={{ fontSize: "7px", letterSpacing: "3px", color: "rgba(255,255,255,0.9)", border: `1px solid rgba(${hexToRgb(featured.section.color)},0.35)`, padding: "3px 10px", background: "rgba(0,0,0,0.35)" }}>
+                    <span className="vto-label" style={{ fontSize: "var(--fs-2xs)", letterSpacing: "3px", color: "rgba(255,255,255,0.9)", border: `1px solid rgba(${hexToRgb(featured.section.color)},0.35)`, padding: "3px 10px", background: "rgba(0,0,0,0.35)" }}>
                       {featured.section.name}
                     </span>
                   </div>
                 )}
                 <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "32px" }}>
-                  <p className="vto-label" style={{ fontSize: "7px", letterSpacing: "3px", color: "rgba(255,255,255,0.30)", margin: "0 0 10px" }}>{featured.tag}</p>
+                  <p className="vto-label" style={{ fontSize: "var(--fs-2xs)", letterSpacing: "3px", color: "rgba(255,255,255,0.30)", margin: "0 0 10px" }}>{featured.tag}</p>
                   <h3 style={{ fontFamily: "var(--font-six-caps), sans-serif", fontSize: "clamp(2.2rem, 3.5vw, 4rem)", fontWeight: 400, color: "white", letterSpacing: "4px", textTransform: "uppercase", lineHeight: 1.0, margin: "0 0 14px" }}>
                     {featured.title}
                   </h3>
-                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(255,255,255,0.45)", lineHeight: 1.8, margin: "0 0 20px" }}>
+                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-base)", color: "rgba(255,255,255,0.55)", lineHeight: 1.8, margin: "0 0 20px" }}>
                     {featured.description}
                   </p>
-                  <span className="vto-cta-link portfolio-card-cta" style={{ color: "rgba(255,255,255,0.45)", fontSize: "8px", letterSpacing: "3px" }}>
+                  <span className="vto-cta-link portfolio-card-cta" style={{ color: "rgba(255,255,255,0.55)", fontSize: "var(--fs-2xs)", letterSpacing: "3px" }}>
                     Voir le projet <span className="vto-cta-line" />
                   </span>
                 </div>
@@ -119,14 +119,14 @@ export function PortfolioTeaser({ projects, content = SITE_DEFAULTS.portfolioTea
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(14,12,10,0.8) 0%, rgba(14,12,10,0.05) 60%)" }} />
                   {p.section?.name && (
                     <div style={{ position: "absolute", top: 16, left: 16 }}>
-                      <span className="vto-label" style={{ fontSize: "7px", letterSpacing: "3px", color: "rgba(255,255,255,0.9)", border: `1px solid rgba(${hexToRgb(p.section.color)},0.35)`, padding: "2px 8px", background: "rgba(0,0,0,0.35)" }}>
+                      <span className="vto-label" style={{ fontSize: "var(--fs-2xs)", letterSpacing: "3px", color: "rgba(255,255,255,0.9)", border: `1px solid rgba(${hexToRgb(p.section.color)},0.35)`, padding: "2px 8px", background: "rgba(0,0,0,0.35)" }}>
                         {p.section.name}
                       </span>
                     </div>
                   )}
                   <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "20px 24px" }}>
-                    <p className="vto-label" style={{ fontSize: "7px", letterSpacing: "3px", color: "rgba(255,255,255,0.28)", margin: "0 0 6px" }}>{p.tag}</p>
-                    <h3 style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 700, color: "rgba(255,255,255,0.88)", margin: 0, letterSpacing: "0.2px" }}>
+                    <p className="vto-label" style={{ fontSize: "var(--fs-2xs)", letterSpacing: "3px", color: "rgba(255,255,255,0.42)", margin: "0 0 6px" }}>{p.tag}</p>
+                    <h3 style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-lg)", fontWeight: 700, color: "rgba(255,255,255,0.88)", margin: 0, letterSpacing: "0.2px" }}>
                       {p.title}
                     </h3>
                   </div>

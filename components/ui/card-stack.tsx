@@ -236,7 +236,7 @@ export function CardStack<T extends CardStackItem>({
               href={activeItem.href}
               target="_blank"
               rel="noreferrer"
-              style={{ color: "rgba(255,255,255,0.4)", marginLeft: "8px", display: "flex", alignItems: "center", transition: "color 0.2s" }}
+              style={{ color: "rgba(255,255,255,0.5)", marginLeft: "8px", display: "flex", alignItems: "center", transition: "color 0.2s" }}
               aria-label="Ouvrir le projet"
             >
               <SquareArrowOutUpRight style={{ width: "16px", height: "16px" }} />
@@ -255,7 +255,7 @@ function DefaultFanCard({ item, active }: { item: CardStackItem; active: boolean
         {item.imageSrc ? (
           <Image src={item.imageSrc} alt={item.title} fill sizes="(max-width: 768px) 100vw, 500px" style={{ objectFit: "cover" }} draggable={false} priority={false} />
         ) : (
-          <div className="flex h-full w-full items-center justify-center" style={{ background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.3)", fontSize: "13px" }}>
+          <div className="flex h-full w-full items-center justify-center" style={{ background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.45)", fontSize: "var(--fs-lg)" }}>
             Pas d&apos;image
           </div>
         )}
@@ -263,7 +263,7 @@ function DefaultFanCard({ item, active }: { item: CardStackItem; active: boolean
       <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 50%, transparent 100%)" }} />
       <div className="relative z-10 flex h-full flex-col justify-end p-6">
         {item.tag && (
-          <span style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(255,255,255,0.45)", fontWeight: 500, marginBottom: "6px", display: "block" }}>
+          <span style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-sm)", textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(255,255,255,0.55)", fontWeight: 500, marginBottom: "6px", display: "block" }}>
             {item.tag}
           </span>
         )}
@@ -271,7 +271,7 @@ function DefaultFanCard({ item, active }: { item: CardStackItem; active: boolean
           {item.title}
         </p>
         {item.description && (
-          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", color: "rgba(255,255,255,0.6)", fontWeight: 300, lineHeight: 1.6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-md)", color: "rgba(255,255,255,0.6)", fontWeight: 300, lineHeight: 1.6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
             {item.description}
           </p>
         )}
@@ -292,7 +292,7 @@ function DefaultFanCard({ item, active }: { item: CardStackItem; active: boolean
               backdropFilter: "blur(8px)",
               border: "1px solid rgba(255,255,255,0.15)",
               color: "white",
-              fontSize: "11px",
+              fontSize: "var(--fs-base)",
               fontFamily: "var(--font-poppins)",
               fontWeight: 600,
               letterSpacing: "0.08em",

@@ -21,7 +21,7 @@ export default function NotFound() {
       textAlign: "center",
     }}>
       <p style={{
-        fontSize: "11px",
+        fontSize: "var(--fs-base)",
         textTransform: "uppercase",
         letterSpacing: "0.28em",
         color: "rgba(255,255,255,0.22)",
@@ -46,7 +46,7 @@ export default function NotFound() {
       <p style={{
         fontSize: "14px",
         fontWeight: 300,
-        color: "rgba(255,255,255,0.35)",
+        color: "rgba(255,255,255,0.5)",
         maxWidth: "340px",
         lineHeight: 1.75,
         marginBottom: "44px",
@@ -62,7 +62,7 @@ export default function NotFound() {
         borderRadius: "999px",
         background: "white",
         color: "black",
-        fontSize: "12px",
+        fontSize: "var(--fs-md)",
         fontWeight: 600,
         letterSpacing: "0.08em",
         textTransform: "uppercase",

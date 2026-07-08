@@ -84,8 +84,8 @@ export function HeroHome({ content }: { content?: HeroContent }) {
           >
             <span style={{
               display: "inline-flex", alignItems: "center", gap: "8px",
-              fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600,
-              letterSpacing: "3px", textTransform: "uppercase", color: "rgba(255,255,255,0.55)",
+              fontFamily: "var(--font-poppins)", fontSize: "var(--fs-xs)", fontWeight: 600,
+              letterSpacing: "3px", textTransform: "uppercase", color: "rgba(255,255,255,0.7)",
             }}>
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 8px rgba(74,222,128,0.9)", flexShrink: 0 }} />
               {badge}
@@ -128,7 +128,7 @@ export function HeroHome({ content }: { content?: HeroContent }) {
             }}
           >
             <p className="hero-description" style={{
-              fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 400,
+              fontFamily: "var(--font-poppins)", fontSize: "var(--fs-lg)", fontWeight: 400,
               color: "rgba(255,255,255,0.68)", lineHeight: 1.85, margin: 0,
               whiteSpace: "nowrap",
             }}>
@@ -173,7 +173,7 @@ export function HeroHome({ content }: { content?: HeroContent }) {
           initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           transition={{ delay: 0.85, duration: 0.5 }}
           className="vto-label"
-          style={{ fontSize: "7px", letterSpacing: "4px", color: "rgba(255,255,255,0.25)" }}
+          style={{ fontSize: "var(--fs-2xs)", letterSpacing: "4px", color: "rgba(255,255,255,0.4)" }}
         >
           Scroll pour découvrir
         </motion.span>

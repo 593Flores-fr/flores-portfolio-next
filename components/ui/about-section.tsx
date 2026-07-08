@@ -39,7 +39,7 @@ export function AboutSection({ content = SITE_DEFAULTS.about }: { content?: Site
         {/* Badge disponibilité */}
         <div style={{ position: "absolute", bottom: "28px", left: "max(48px, 6vw)", zIndex: 3, display: "flex", alignItems: "center", gap: "8px" }}>
           <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 8px rgba(74,222,128,0.9)", flexShrink: 0 }} />
-          <span style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, letterSpacing: "3px", textTransform: "uppercase", color: "rgba(255,255,255,0.55)" }}>
+          <span style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-xs)", fontWeight: 600, letterSpacing: "3px", textTransform: "uppercase", color: "rgba(255,255,255,0.7)" }}>
             Disponible
           </span>
         </div>
@@ -77,13 +77,13 @@ export function AboutSection({ content = SITE_DEFAULTS.about }: { content?: Site
               viewport={{ once: true, margin: "-80px" }}
               transition={{ delay: i * 0.1, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
             >
-              <span className="vto-label" style={{ fontSize: "9px", letterSpacing: "2px", color: "rgba(255,255,255,0.38)", display: "block", marginBottom: "14px" }}>
+              <span className="vto-label" style={{ fontSize: "var(--fs-xs)", letterSpacing: "2px", color: "rgba(255,255,255,0.48)", display: "block", marginBottom: "14px" }}>
                 {p.num}
               </span>
-              <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.8)", marginBottom: "10px", letterSpacing: "0.5px" }}>
+              <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-md)", fontWeight: 600, color: "rgba(255,255,255,0.8)", marginBottom: "10px", letterSpacing: "0.5px" }}>
                 {p.title}
               </p>
-              <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 400, color: "rgba(255,255,255,0.55)", lineHeight: 1.9 }}>
+              <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-base)", fontWeight: 400, color: "rgba(255,255,255,0.7)", lineHeight: 1.9 }}>
                 {p.text}
               </p>
             </motion.div>

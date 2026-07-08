@@ -38,11 +38,11 @@ export function PageLoader() {
             {/* Surtitle */}
             <p style={{
               fontFamily: "var(--font-poppins)",
-              fontSize: "7px",
+              fontSize: "var(--fs-2xs)",
               fontWeight: 500,
               letterSpacing: "5px",
               textTransform: "uppercase",
-              color: "rgba(255,255,255,0.2)",
+              color: "rgba(255,255,255,0.35)",
               margin: "0 0 14px",
             }}>
               Studio · 2025

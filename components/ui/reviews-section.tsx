@@ -40,8 +40,8 @@ function ReviewCard({ r }: { r: Avis }) {
     }}>
       <Stars n={r.rating} />
       <p style={{
-        fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 400,
-        color: "rgba(255,255,255,0.58)", lineHeight: 1.9, margin: "0 0 auto", paddingBottom: "20px",
+        fontFamily: "var(--font-poppins)", fontSize: "var(--fs-base)", fontWeight: 400,
+        color: "rgba(255,255,255,0.72)", lineHeight: 1.9, margin: "0 0 auto", paddingBottom: "20px",
         display: "-webkit-box", WebkitLineClamp: 5, WebkitBoxOrient: "vertical", overflow: "hidden",
       }}>
         &ldquo;{r.content}&rdquo;
@@ -56,15 +56,15 @@ function ReviewCard({ r }: { r: Avis }) {
             background: "rgba(92,92,245,0.12)",
             border: "1px solid rgba(92,92,245,0.2)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 700,
+            fontFamily: "var(--font-poppins)", fontSize: "var(--fs-base)", fontWeight: 700,
             color: "var(--vto-primary)",
           }}>{initial}</div>
         )}
         <div>
-          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.6)", margin: 0, letterSpacing: "0.2px" }}>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-base)", fontWeight: 600, color: "rgba(255,255,255,0.6)", margin: 0, letterSpacing: "0.2px" }}>
             {r.user.name ?? "Client"}
           </p>
-          <p className="vto-label" style={{ fontSize: "8px", letterSpacing: "3px", color: "rgba(255,255,255,0.40)", margin: "3px 0 0" }}>
+          <p className="vto-label" style={{ fontSize: "var(--fs-2xs)", letterSpacing: "3px", color: "rgba(255,255,255,0.40)", margin: "3px 0 0" }}>
             {r.project.title}
           </p>
         </div>

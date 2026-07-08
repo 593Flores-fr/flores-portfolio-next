@@ -84,7 +84,7 @@ export function AboutPageContent({ content = SITE_DEFAULTS.aboutPage, reviews = 
           </h1>
           <p style={{
             fontFamily: "var(--font-poppins)",
-            fontSize: "12px",
+            fontSize: "var(--fs-md)",
             fontWeight: 400,
             color: "rgba(255,255,255,0.60)",
             maxWidth: "400px",
@@ -173,14 +173,14 @@ export function AboutPageContent({ content = SITE_DEFAULTS.aboutPage, reviews = 
                     gap: "32px",
                   }}
                 >
-                  <span className="vto-label" style={{ fontSize: "8px", letterSpacing: "3px", color: "rgba(255,255,255,0.35)", paddingTop: "3px", lineHeight: 1.6 }}>
+                  <span className="vto-label" style={{ fontSize: "var(--fs-2xs)", letterSpacing: "3px", color: "rgba(255,255,255,0.5)", paddingTop: "3px", lineHeight: 1.6 }}>
                     {p.date}
                   </span>
                   <div>
-                    <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.80)", margin: "0 0 12px", letterSpacing: "0.3px" }}>
+                    <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-md)", fontWeight: 600, color: "rgba(255,255,255,0.80)", margin: "0 0 12px", letterSpacing: "0.3px" }}>
                       {p.title}
                     </p>
-                    <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 400, color: "rgba(255,255,255,0.55)", lineHeight: 1.9, margin: 0 }}>
+                    <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-md)", fontWeight: 400, color: "rgba(255,255,255,0.7)", lineHeight: 1.9, margin: 0 }}>
                       {p.text}
                     </p>
                   </div>
@@ -213,10 +213,10 @@ export function AboutPageContent({ content = SITE_DEFAULTS.aboutPage, reviews = 
                   viewport={{ once: true, margin: "-40px" }}
                   style={{ padding: "16px 0", borderTop: "1px solid rgba(255,255,255,0.05)" }}
                 >
-                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.75)", margin: "0 0 5px", letterSpacing: "0.3px" }}>
+                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-base)", fontWeight: 600, color: "rgba(255,255,255,0.75)", margin: "0 0 5px", letterSpacing: "0.3px" }}>
                     {item.label}
                   </p>
-                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 400, color: "rgba(255,255,255,0.50)", lineHeight: 1.8, margin: 0 }}>
+                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-sm)", fontWeight: 400, color: "rgba(255,255,255,0.50)", lineHeight: 1.8, margin: 0 }}>
                     {item.desc}
                   </p>
                 </motion.div>
@@ -244,10 +244,10 @@ export function AboutPageContent({ content = SITE_DEFAULTS.aboutPage, reviews = 
             {/* Col 3 — Description + liens */}
             <div style={{ padding: "52px 44px", background: "#0e0c0a", display: "flex", flexDirection: "column" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "18px", marginBottom: "40px", flex: 1 }}>
-                <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 400, color: "rgba(255,255,255,0.60)", lineHeight: 1.9, margin: 0 }}>
+                <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-md)", fontWeight: 400, color: "rgba(255,255,255,0.60)", lineHeight: 1.9, margin: 0 }}>
                   {content.vtoDesc1}
                 </p>
-                <p style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 400, color: "rgba(255,255,255,0.48)", lineHeight: 1.9, margin: 0 }}>
+                <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-md)", fontWeight: 400, color: "rgba(255,255,255,0.48)", lineHeight: 1.9, margin: 0 }}>
                   {content.vtoDesc2}
                 </p>
               </div>
@@ -273,8 +273,8 @@ export function AboutPageContent({ content = SITE_DEFAULTS.aboutPage, reviews = 
                     }}
                   >
                     <div>
-                      <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.75)", margin: "0 0 2px" }}>{link.label}</p>
-                      <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 400, color: "rgba(255,255,255,0.45)", margin: 0 }}>{link.desc}</p>
+                      <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-base)", fontWeight: 600, color: "rgba(255,255,255,0.75)", margin: "0 0 2px" }}>{link.label}</p>
+                      <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-sm)", fontWeight: 400, color: "rgba(255,255,255,0.55)", margin: 0 }}>{link.desc}</p>
                     </div>
                     <ExternalLink size={10} color="rgba(255,255,255,0.28)" style={{ flexShrink: 0 }} />
                   </a>
@@ -304,16 +304,16 @@ export function AboutPageContent({ content = SITE_DEFAULTS.aboutPage, reviews = 
                 viewport={{ once: true, margin: "-60px" }}
                 style={{ padding: "40px 44px", background: "#0e0c0a" }}
               >
-                <span className="vto-label" style={{ fontSize: "9px", letterSpacing: "2px", color: "rgba(255,255,255,0.38)", display: "block", marginBottom: "16px" }}>{p.num}</span>
+                <span className="vto-label" style={{ fontSize: "var(--fs-xs)", letterSpacing: "2px", color: "rgba(255,255,255,0.48)", display: "block", marginBottom: "16px" }}>{p.num}</span>
 
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
                   <span style={{ fontSize: "18px", lineHeight: 1 }}>{p.emoji}</span>
-                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.85)", margin: 0, letterSpacing: "0.2px" }}>
+                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-lg)", fontWeight: 600, color: "rgba(255,255,255,0.85)", margin: 0, letterSpacing: "0.2px" }}>
                     {p.title}
                   </p>
                 </div>
 
-                <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 400, color: "rgba(255,255,255,0.52)", lineHeight: 1.9, margin: 0 }}>
+                <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-base)", fontWeight: 400, color: "rgba(255,255,255,0.52)", lineHeight: 1.9, margin: 0 }}>
                   {p.text}
                 </p>
               </motion.div>
@@ -337,7 +337,7 @@ export function AboutPageContent({ content = SITE_DEFAULTS.aboutPage, reviews = 
             {toolGroups.map((group) => (
               <div key={group.category}>
                 <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "12px" }}>
-                  <p className="vto-label" style={{ fontSize: "8px", letterSpacing: "4px", color: "rgba(255,255,255,0.38)", margin: 0 }}>
+                  <p className="vto-label" style={{ fontSize: "var(--fs-2xs)", letterSpacing: "4px", color: "rgba(255,255,255,0.48)", margin: 0 }}>
                     {group.category}
                   </p>
                   <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.04)" }} />
@@ -357,16 +357,16 @@ export function AboutPageContent({ content = SITE_DEFAULTS.aboutPage, reviews = 
                         width: 32, height: 32, flexShrink: 0,
                         background: t.bg,
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 700,
+                        fontFamily: "var(--font-poppins)", fontSize: "var(--fs-sm)", fontWeight: 700,
                         color: t.color ?? "white", letterSpacing: "-0.02em",
                       }}>
                         {t.label}
                       </div>
                       <div>
-                        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.72)", margin: "0 0 4px", letterSpacing: "0.2px" }}>
+                        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-base)", fontWeight: 600, color: "rgba(255,255,255,0.72)", margin: "0 0 4px", letterSpacing: "0.2px" }}>
                           {t.name}
                         </p>
-                        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 400, color: "rgba(255,255,255,0.50)", lineHeight: 1.7, margin: 0 }}>
+                        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-sm)", fontWeight: 400, color: "rgba(255,255,255,0.50)", lineHeight: 1.7, margin: 0 }}>
                           {t.desc}
                         </p>
                       </div>

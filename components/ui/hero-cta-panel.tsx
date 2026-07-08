@@ -40,7 +40,7 @@ export function HeroCtaPanel() {
       {/* Label */}
       <p style={{
         fontFamily: "var(--font-poppins)",
-        fontSize: "10px", fontWeight: 500,
+        fontSize: "var(--fs-sm)", fontWeight: 500,
         textTransform: "uppercase", letterSpacing: "0.25em",
         color: "rgba(255,255,255,0.22)", margin: "0 0 14px",
       }}>
@@ -60,8 +60,8 @@ export function HeroCtaPanel() {
 
       <p style={{
         fontFamily: "var(--font-poppins)",
-        fontSize: "12px", fontWeight: 300,
-        color: "rgba(255,255,255,0.3)", lineHeight: 1.75,
+        fontSize: "var(--fs-md)", fontWeight: 300,
+        color: "rgba(255,255,255,0.45)", lineHeight: 1.75,
         margin: "0 0 22px",
       }}>
         Créez un compte pour suivre l&rsquo;avancement de votre projet, échanger et gérer vos devis directement depuis votre espace personnel.
@@ -79,8 +79,8 @@ export function HeroCtaPanel() {
               <Icon size={13} color="rgba(100,140,255,0.8)" strokeWidth={1.5} />
             </div>
             <span style={{
-              fontFamily: "var(--font-poppins)", fontSize: "12px",
-              fontWeight: 400, color: "rgba(255,255,255,0.55)",
+              fontFamily: "var(--font-poppins)", fontSize: "var(--fs-md)",
+              fontWeight: 400, color: "rgba(255,255,255,0.7)",
             }}>
               {text}
             </span>
@@ -95,7 +95,7 @@ export function HeroCtaPanel() {
           display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
           width: "100%", padding: "12px 20px", borderRadius: "12px",
           background: "rgba(60,100,255,0.7)", border: "1px solid rgba(60,100,255,0.4)",
-          fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600,
+          fontFamily: "var(--font-poppins)", fontSize: "var(--fs-lg)", fontWeight: 600,
           color: "white", textDecoration: "none", letterSpacing: "0.01em",
           boxShadow: "0 6px 24px rgba(60,100,255,0.2)",
           marginBottom: "10px",
@@ -106,7 +106,7 @@ export function HeroCtaPanel() {
       </Link>
 
       <p style={{
-        fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 300,
+        fontFamily: "var(--font-poppins)", fontSize: "var(--fs-sm)", fontWeight: 300,
         color: "rgba(255,255,255,0.40)", textAlign: "center",
         letterSpacing: "0.04em", margin: 0,
       }}>

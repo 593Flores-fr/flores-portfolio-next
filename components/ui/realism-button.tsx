@@ -47,7 +47,7 @@ export function RealismButton({ text, onClick, type = "button", fullWidth, disab
           padding: "13px 28px",
           background: "radial-gradient(circle 80px at 80% -50%, #3a5a99, #080e1e)",
           fontFamily: "var(--font-poppins)",
-          fontSize: "13px",
+          fontSize: "var(--fs-lg)",
           fontWeight: 600,
           letterSpacing: "0.06em",
           textTransform: "uppercase",

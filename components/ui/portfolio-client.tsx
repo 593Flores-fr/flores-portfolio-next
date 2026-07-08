@@ -51,7 +51,7 @@ function ProjectCard({ p, index, featured }: { p: Project; index: number; featur
 
             {p.section?.name && (
               <div style={{ position: "absolute", top: 16, left: 16 }}>
-                <span className="vto-label" style={{ fontSize: "8px", letterSpacing: "3px", color: "rgba(255,255,255,0.9)", border: `1px solid ${accent.replace("0.9", "0.35")}`, padding: "3px 10px", background: "rgba(0,0,0,0.35)" }}>
+                <span className="vto-label" style={{ fontSize: "var(--fs-2xs)", letterSpacing: "3px", color: "rgba(255,255,255,0.9)", border: `1px solid ${accent.replace("0.9", "0.35")}`, padding: "3px 10px", background: "rgba(0,0,0,0.35)" }}>
                   {p.section.name}
                 </span>
               </div>
@@ -60,10 +60,10 @@ function ProjectCard({ p, index, featured }: { p: Project; index: number; featur
 
           {/* Content */}
           <div style={{ padding: featured ? "44px 48px" : "24px", display: "flex", flexDirection: "column", justifyContent: featured ? "center" : undefined, flex: 1 }}>
-            <p className="vto-label" style={{ fontSize: "8px", letterSpacing: "3px", color: "rgba(255,255,255,0.2)", margin: "0 0 10px" }}>{p.tag}</p>
+            <p className="vto-label" style={{ fontSize: "var(--fs-2xs)", letterSpacing: "3px", color: "rgba(255,255,255,0.35)", margin: "0 0 10px" }}>{p.tag}</p>
             <h3 style={{
               fontFamily: featured ? "var(--font-six-caps), sans-serif" : "var(--font-poppins)",
-              fontSize: featured ? "clamp(2rem, 3vw, 3.5rem)" : "13px",
+              fontSize: featured ? "clamp(2rem, 3vw, 3.5rem)" : "var(--fs-lg)",
               fontWeight: featured ? 400 : 600,
               color: "rgba(255,255,255,0.88)",
               margin: "0 0 14px",
@@ -73,12 +73,12 @@ function ProjectCard({ p, index, featured }: { p: Project; index: number; featur
             }}>
               {p.title}
             </h3>
-            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 400, color: "rgba(255,255,255,0.32)", lineHeight: 1.85, margin: 0, flex: 1 }}>
+            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-base)", fontWeight: 400, color: "rgba(255,255,255,0.48)", lineHeight: 1.85, margin: 0, flex: 1 }}>
               {p.description}
             </p>
 
             <div style={{ marginTop: featured ? "32px" : "20px" }}>
-              <span className="vto-cta-link portfolio-card-cta" style={{ color: "rgba(255,255,255,0.38)", fontSize: "8px", letterSpacing: "3px" }}>
+              <span className="vto-cta-link portfolio-card-cta" style={{ color: "rgba(255,255,255,0.48)", fontSize: "var(--fs-2xs)", letterSpacing: "3px" }}>
                 Voir le projet
                 <span className="vto-cta-line" />
               </span>
@@ -139,7 +139,7 @@ export function PortfolioClient({ initialProjects, sections }: { initialProjects
               style={{
                 padding: "10px 20px", cursor: "pointer", border: "none",
                 background: active === f ? "rgba(92,92,245,0.12)" : "#0e0c0a",
-                fontFamily: "var(--font-poppins)", fontSize: "9px", letterSpacing: "4px",
+                fontFamily: "var(--font-poppins)", fontSize: "var(--fs-xs)", letterSpacing: "4px",
                 textTransform: "uppercase",
                 color: active === f ? "var(--vto-primary)" : "rgba(255,255,255,0.50)",
                 transition: "all 0.2s ease",

@@ -151,7 +151,7 @@ export const SITE_DEFAULTS: SiteContentMap = {
     title: "Votre projet.\nVotre espace.",
     paragraph1: "Tout commence depuis l'espace : un formulaire adapté pour poser les bases du projet, ou la réservation d'un premier RDV. Pas d'email générique, pas d'aller-retour inutile.",
     paragraph2: "Une fois le projet lancé : avancement en temps réel, messagerie dédiée, devis et factures en ligne. Tout simplement la meilleure façon de bosser ensemble.",
-    ctaLabel: "Créer un compte · Se connecter",
+    ctaLabel: "Accéder à mon espace",
     discordNote: "Connexion Discord disponible",
     pilliers: [
       { title: "Ça commence ici", desc: "Formulaire de brief structuré ou réservation d'un premier RDV, directement depuis l'espace. Pas d'email, pas de contact générique. Les bases du projet posées proprement, dès le départ." },

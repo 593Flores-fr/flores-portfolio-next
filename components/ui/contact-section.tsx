@@ -47,7 +47,7 @@ export function ContactSection({ discordUrl = "" }: { discordUrl?: string }) {
               initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-80px" }}
               transition={{ delay: 0.1, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-              style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 400, color: "rgba(255,255,255,0.55)", lineHeight: 1.9, margin: "0 0 44px", maxWidth: "400px" }}
+              style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-base)", fontWeight: 400, color: "rgba(255,255,255,0.7)", lineHeight: 1.9, margin: "0 0 44px", maxWidth: "400px" }}
             >
               Créez un compte ou connectez-vous avec Discord pour accéder à votre espace personnel. Démarrez une discussion, soumettez un devis et suivez l&apos;avancement de votre projet.
             </motion.p>
@@ -108,10 +108,10 @@ export function ContactSection({ discordUrl = "" }: { discordUrl?: string }) {
                   <Icon width={16} height={16} color="rgba(92,92,245,0.65)" strokeWidth={1.5} style={{ flexShrink: 0 }} />
 
                   <div>
-                    <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.75)", margin: "0 0 3px", letterSpacing: "0.3px" }}>
+                    <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-base)", fontWeight: 600, color: "rgba(255,255,255,0.75)", margin: "0 0 3px", letterSpacing: "0.3px" }}>
                       {perk.label}
                     </p>
-                    <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 400, color: "rgba(255,255,255,0.50)", margin: 0, letterSpacing: "0.2px" }}>
+                    <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-sm)", fontWeight: 400, color: "rgba(255,255,255,0.50)", margin: 0, letterSpacing: "0.2px" }}>
                       {perk.desc}
                     </p>
                   </div>
@@ -120,7 +120,7 @@ export function ContactSection({ discordUrl = "" }: { discordUrl?: string }) {
             })}
 
             <div style={{ padding: "16px 28px", background: "#0e0c0a" }}>
-              <p className="vto-label" style={{ fontSize: "8px", letterSpacing: "3px", color: "rgba(255,255,255,0.30)" }}>
+              <p className="vto-label" style={{ fontSize: "var(--fs-2xs)", letterSpacing: "3px", color: "rgba(255,255,255,0.30)" }}>
                 Connexion Discord ou email · Gratuit · Aucune CB requise
               </p>
             </div>

@@ -18,7 +18,7 @@ function FeatureCard({ feature }: { feature: Feature }) {
       </div>
 
       {/* Tag VTO */}
-      <p className="vto-label" style={{ fontSize: "8px", letterSpacing: "3px", color: "rgba(255,255,255,0.40)", marginBottom: "10px" }}>
+      <p className="vto-label" style={{ fontSize: "var(--fs-2xs)", letterSpacing: "3px", color: "rgba(255,255,255,0.40)", marginBottom: "10px" }}>
         {feature.title}
       </p>
 
@@ -27,7 +27,7 @@ function FeatureCard({ feature }: { feature: Feature }) {
         {feature.title}
       </h3>
 
-      <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 400, color: "rgba(255,255,255,0.55)", lineHeight: 1.85, margin: 0 }}>
+      <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-base)", fontWeight: 400, color: "rgba(255,255,255,0.7)", lineHeight: 1.85, margin: 0 }}>
         {feature.description}
       </p>
 
@@ -58,7 +58,7 @@ export function FeaturesSection({ content = SITE_DEFAULTS.features }: { content?
           <h2 style={{ fontFamily: "var(--font-six-caps), sans-serif", fontSize: "clamp(3rem, 5.5vw, 5.5rem)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "5px", color: "white", textTransform: "uppercase", marginBottom: "16px" }}>
             {content.title}
           </h2>
-          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", color: "rgba(255,255,255,0.52)", fontWeight: 400, maxWidth: "380px", lineHeight: 1.85 }}>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-base)", color: "rgba(255,255,255,0.52)", fontWeight: 400, maxWidth: "380px", lineHeight: 1.85 }}>
             {content.subtitle}
           </p>
         </motion.div>

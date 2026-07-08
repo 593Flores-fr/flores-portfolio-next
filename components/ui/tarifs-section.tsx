@@ -25,28 +25,28 @@ function ServiceRow({ s, index }: { s: ServiceItem; index: number }) {
       <div>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
           <div style={{ width: "16px", height: "1px", background: "rgba(255,255,255,0.18)", flexShrink: 0 }} />
-          <span style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.80)", letterSpacing: "0.2px" }}>
+          <span style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-md)", fontWeight: 600, color: "rgba(255,255,255,0.80)", letterSpacing: "0.2px" }}>
             {s.name}
           </span>
           {s.badge && (
-            <span style={{ fontFamily: "var(--font-poppins)", fontSize: "7px", fontWeight: 600, letterSpacing: "3px", textTransform: "uppercase", color: "rgba(74,222,128,0.8)", border: "1px solid rgba(74,222,128,0.2)", padding: "2px 7px" }}>
+            <span style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-2xs)", fontWeight: 600, letterSpacing: "3px", textTransform: "uppercase", color: "rgba(74,222,128,0.8)", border: "1px solid rgba(74,222,128,0.2)", padding: "2px 7px" }}>
               {s.badge}
             </span>
           )}
           {s.soon && (
-            <span className="vto-label" style={{ fontSize: "7px", color: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.08)", padding: "2px 7px" }}>
+            <span className="vto-label" style={{ fontSize: "var(--fs-2xs)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.08)", padding: "2px 7px" }}>
               Bientôt
             </span>
           )}
         </div>
-        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 400, color: "rgba(255,255,255,0.50)", margin: "0 0 0 26px", lineHeight: 1.75 }}>
+        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-sm)", fontWeight: 400, color: "rgba(255,255,255,0.50)", margin: "0 0 0 26px", lineHeight: 1.75 }}>
           {s.description}
         </p>
       </div>
       <div style={{ textAlign: "right", flexShrink: 0 }}>
         <span style={{
           fontFamily: "var(--font-poppins), sans-serif",
-          fontSize: "13px",
+          fontSize: "var(--fs-lg)",
           fontWeight: 600,
           letterSpacing: "0px",
           color: (s.price === "Sur devis" || s.price === "À venir") ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.88)",
@@ -74,7 +74,7 @@ function TarifCol({ number, title, services, delay = 0 }: {
       transition={{ delay, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
       style={{ flex: 1, minWidth: 0, padding: "48px 48px 44px", background: "#0e0c0a" }}
     >
-      <p className="vto-label" style={{ fontSize: "8px", letterSpacing: "4px", color: "rgba(255,255,255,0.40)", marginBottom: "16px" }}>
+      <p className="vto-label" style={{ fontSize: "var(--fs-2xs)", letterSpacing: "4px", color: "rgba(255,255,255,0.40)", marginBottom: "16px" }}>
         {number}
       </p>
       <h3 style={{
@@ -123,7 +123,7 @@ export function TarifsSection({ content = SITE_DEFAULTS.tarifs }: { content?: Si
         >
           <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: "20px", paddingBottom: "32px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
             <div>
-              <p style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 500, letterSpacing: "4px", textTransform: "uppercase", color: "rgba(255,255,255,0.28)", margin: "0 0 16px" }}>Tarifs</p>
+              <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-xs)", fontWeight: 500, letterSpacing: "4px", textTransform: "uppercase", color: "rgba(255,255,255,0.42)", margin: "0 0 16px" }}>Tarifs</p>
               <h2 style={{
                 fontFamily: "var(--font-six-caps), sans-serif",
                 fontSize: "clamp(3rem, 5.5vw, 5.5rem)",
@@ -137,7 +137,7 @@ export function TarifsSection({ content = SITE_DEFAULTS.tarifs }: { content?: Si
                 Aperçu des tarifs.
               </h2>
             </div>
-            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 400, color: "rgba(255,255,255,0.30)", maxWidth: "240px", lineHeight: 2, margin: 0, letterSpacing: "0.2px" }}>
+            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-sm)", fontWeight: 400, color: "rgba(255,255,255,0.30)", maxWidth: "240px", lineHeight: 2, margin: 0, letterSpacing: "0.2px" }}>
               Chaque projet est unique.<br />
               Devis gratuit sous 24h, sans engagement.
             </p>
@@ -154,7 +154,7 @@ export function TarifsSection({ content = SITE_DEFAULTS.tarifs }: { content?: Si
           initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
           viewport={{ once: true }} transition={{ delay: 0.4, duration: 0.6 }}
           className="vto-label"
-          style={{ fontSize: "8px", letterSpacing: "3px", color: "rgba(255,255,255,0.1)", textAlign: "center", marginTop: "48px" }}
+          style={{ fontSize: "var(--fs-2xs)", letterSpacing: "3px", color: "rgba(255,255,255,0.1)", textAlign: "center", marginTop: "48px" }}
         >
           {content.footerNote}
         </motion.p>

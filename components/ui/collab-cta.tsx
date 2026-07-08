@@ -78,7 +78,7 @@ export function CollabCTA({
           <div>
             <div style={{ display: "inline-flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: "rgba(92,92,245,0.8)", boxShadow: "0 0 10px rgba(92,92,245,0.6)", flexShrink: 0, display: "inline-block" }} />
-              <p className="vto-label" style={{ fontSize: "8px", color: "rgba(92,92,245,0.7)", letterSpacing: "4px", margin: 0 }}>Collaboration</p>
+              <p className="vto-label" style={{ fontSize: "var(--fs-2xs)", color: "rgba(92,92,245,0.7)", letterSpacing: "4px", margin: 0 }}>Collaboration</p>
             </div>
             <h2 style={{
               fontFamily: "var(--font-six-caps), sans-serif",
@@ -114,7 +114,7 @@ export function CollabCTA({
               <p style={{ fontFamily: "var(--font-six-caps), sans-serif", fontSize: "clamp(1.2rem, 2vw, 1.6rem)", letterSpacing: "3px", color: "rgba(255,255,255,0.75)", margin: "0 0 4px", textTransform: "uppercase" }}>
                 {p.label}
               </p>
-              <p style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", color: "rgba(255,255,255,0.28)", letterSpacing: "1px", margin: 0 }}>
+              <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-xs)", color: "rgba(255,255,255,0.42)", letterSpacing: "1px", margin: 0 }}>
                 {p.sub}
               </p>
             </motion.div>

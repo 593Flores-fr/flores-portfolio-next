@@ -25,7 +25,7 @@ export function Footer({ content = SITE_DEFAULTS.footer }: { content?: SiteConte
       }}>
 
         {/* Copyright */}
-        <p className="vto-label" style={{ fontSize: "8px", letterSpacing: "3px", color: "rgba(255,255,255,0.28)", margin: 0, whiteSpace: "nowrap" }}>
+        <p className="vto-label" style={{ fontSize: "var(--fs-2xs)", letterSpacing: "3px", color: "rgba(255,255,255,0.42)", margin: 0, whiteSpace: "nowrap" }}>
           © {year} {content.brandName}
         </p>
 
@@ -38,9 +38,9 @@ export function Footer({ content = SITE_DEFAULTS.footer }: { content?: SiteConte
                 href={l.href}
                 style={{
                   fontFamily: "var(--font-poppins)",
-                  fontSize: "8px", fontWeight: 500,
+                  fontSize: "var(--fs-2xs)", fontWeight: 500,
                   letterSpacing: "2.5px", textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.25)",
+                  color: "rgba(255,255,255,0.4)",
                   textDecoration: "none",
                   transition: "color 0.2s",
                 }}
@@ -53,7 +53,7 @@ export function Footer({ content = SITE_DEFAULTS.footer }: { content?: SiteConte
         </nav>
 
         {/* Mention légale */}
-        <p className="vto-label hide-mobile" style={{ fontSize: "8px", letterSpacing: "3px", color: "rgba(255,255,255,0.18)", margin: 0, whiteSpace: "nowrap" }}>
+        <p className="vto-label hide-mobile" style={{ fontSize: "var(--fs-2xs)", letterSpacing: "3px", color: "rgba(255,255,255,0.18)", margin: 0, whiteSpace: "nowrap" }}>
           {content.legalNote}
         </p>
 

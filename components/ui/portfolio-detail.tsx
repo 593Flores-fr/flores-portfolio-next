@@ -144,7 +144,7 @@ function VideoBlockView({ url, caption }: { url: string; caption?: string }) {
         )}
       </div>
       {caption && (
-        <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", marginTop: "14px", textAlign: "center" }}>{caption}</p>
+        <p style={{ fontSize: "var(--fs-base)", color: "rgba(255,255,255,0.5)", marginTop: "14px", textAlign: "center" }}>{caption}</p>
       )}
     </div>
   );
@@ -159,7 +159,7 @@ function StatsBlockView({ items, accentRgb }: { items: { value: string; label: s
           <p style={{ fontFamily: "var(--font-six-caps)", fontSize: "clamp(2.2rem,3.5vw,3.5rem)", color: `rgba(${accentRgb},0.9)`, margin: "0 0 8px", letterSpacing: "2px", lineHeight: 1 }}>
             {it.value}
           </p>
-          <p style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.15em", color: "rgba(255,255,255,0.4)", margin: 0 }}>
+          <p style={{ fontSize: "var(--fs-sm)", textTransform: "uppercase", letterSpacing: "0.15em", color: "rgba(255,255,255,0.5)", margin: 0 }}>
             {it.label}
           </p>
         </div>
@@ -205,12 +205,12 @@ export default function PortfolioDetail({ project }: { project: Project }) {
         padding: "20px 6vw",
         background: "linear-gradient(to bottom, rgba(6,10,14,0.9) 0%, transparent 100%)",
       }}>
-        <Link href="/portfolio" style={{ display: "flex", alignItems: "center", gap: "8px", textDecoration: "none", fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 500, color: "rgba(255,255,255,0.45)" }}>
+        <Link href="/portfolio" style={{ display: "flex", alignItems: "center", gap: "8px", textDecoration: "none", fontFamily: "var(--font-poppins)", fontSize: "var(--fs-md)", fontWeight: 500, color: "rgba(255,255,255,0.55)" }}>
           <ArrowLeft size={14} /> Portfolio
         </Link>
         {project.externalLink && (
           <a href={project.externalLink} target="_blank" rel="noopener noreferrer"
-            style={{ display: "flex", alignItems: "center", gap: "6px", textDecoration: "none", fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 500, color: `rgba(${accentRgb},0.7)` }}>
+            style={{ display: "flex", alignItems: "center", gap: "6px", textDecoration: "none", fontFamily: "var(--font-poppins)", fontSize: "var(--fs-base)", fontWeight: 500, color: `rgba(${accentRgb},0.7)` }}>
             Voir le projet <ExternalLink size={12} />
           </a>
         )}
@@ -250,7 +250,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
             >
               {project.section?.name && (
                 <span style={{
-                  fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.2em",
+                  fontSize: "var(--fs-sm)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.2em",
                   color: `rgba(${accentRgb},0.9)`, border: `1px solid rgba(${accentRgb},0.3)`,
                   background: `rgba(${accentRgb},0.08)`, padding: "4px 12px", borderRadius: "999px",
                 }}>
@@ -258,7 +258,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
                 </span>
               )}
               {project.year && (
-                <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", fontWeight: 300 }}>{project.year}</span>
+                <span style={{ fontSize: "var(--fs-base)", color: "rgba(255,255,255,0.45)", fontWeight: 300 }}>{project.year}</span>
               )}
             </motion.div>
 
@@ -279,7 +279,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
             <motion.p
               initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-              style={{ fontSize: "14px", fontWeight: 300, color: "rgba(255,255,255,0.45)", maxWidth: "560px", lineHeight: 1.7, margin: 0 }}
+              style={{ fontSize: "14px", fontWeight: 300, color: "rgba(255,255,255,0.55)", maxWidth: "560px", lineHeight: 1.7, margin: 0 }}
             >
               {project.description}
             </motion.p>
@@ -294,7 +294,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
           <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
             style={{ width: "1px", height: "32px", background: "linear-gradient(to bottom, transparent, rgba(255,255,255,0.3))" }}
           />
-          <span style={{ fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.2em", color: "rgba(255,255,255,0.2)", writingMode: "vertical-rl" }}>Scroll</span>
+          <span style={{ fontSize: "var(--fs-xs)", textTransform: "uppercase", letterSpacing: "0.2em", color: "rgba(255,255,255,0.35)", writingMode: "vertical-rl" }}>Scroll</span>
         </motion.div>
       </div>
 
@@ -308,7 +308,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
           <motion.div
             variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }}
           >
-            <p style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.25em", color: `rgba(${accentRgb},0.6)`, marginBottom: "20px" }}>
+            <p style={{ fontSize: "var(--fs-base)", textTransform: "uppercase", letterSpacing: "0.25em", color: `rgba(${accentRgb},0.6)`, marginBottom: "20px" }}>
               Présentation
             </p>
             <p style={{ fontSize: "16px", fontWeight: 300, color: "rgba(255,255,255,0.65)", lineHeight: 1.9, margin: 0, whiteSpace: "pre-line" }}>
@@ -335,16 +335,16 @@ export default function PortfolioDetail({ project }: { project: Project }) {
               project.tag ? { label: "Type", value: project.tag } : null,
             ].filter(Boolean).map((row, i) => (
               <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "12px 0", borderBottom: i < 3 ? "1px solid rgba(255,255,255,0.05)" : "none", gap: "16px" }}>
-                <span style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,255,255,0.45)", flexShrink: 0 }}>{row!.label}</span>
-                <span style={{ fontSize: "12px", fontWeight: 400, color: "rgba(255,255,255,0.62)", textAlign: "right", lineHeight: 1.5 }}>{row!.value}</span>
+                <span style={{ fontSize: "var(--fs-sm)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,255,255,0.55)", flexShrink: 0 }}>{row!.label}</span>
+                <span style={{ fontSize: "var(--fs-md)", fontWeight: 400, color: "rgba(255,255,255,0.62)", textAlign: "right", lineHeight: 1.5 }}>{row!.value}</span>
               </div>
             ))}
             {tools.length > 0 && (
               <div style={{ paddingTop: "16px" }}>
-                <span style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,255,255,0.45)", display: "block", marginBottom: "10px" }}>Outils</span>
+                <span style={{ fontSize: "var(--fs-sm)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(255,255,255,0.55)", display: "block", marginBottom: "10px" }}>Outils</span>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
                   {tools.map(t => (
-                    <span key={t} style={{ fontSize: "10px", padding: "3px 10px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.45)" }}>{t}</span>
+                    <span key={t} style={{ fontSize: "var(--fs-sm)", padding: "3px 10px", borderRadius: "999px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.55)" }}>{t}</span>
                   ))}
                 </div>
               </div>
@@ -354,7 +354,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
                 display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
                 marginTop: "20px", padding: "11px 18px", borderRadius: "12px",
                 border: `1px solid rgba(${accentRgb},0.3)`, background: `rgba(${accentRgb},0.1)`,
-                fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600,
+                fontFamily: "var(--font-poppins)", fontSize: "var(--fs-md)", fontWeight: 600,
                 color: `rgba(${accentRgb},0.9)`, textDecoration: "none",
               }}>
                 Voir le projet <ExternalLink size={13} />
@@ -369,7 +369,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
             variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }}
             style={{ marginBottom: "120px" }}
           >
-            <p style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.25em", color: `rgba(${accentRgb},0.6)`, marginBottom: "24px" }}>
+            <p style={{ fontSize: "var(--fs-base)", textTransform: "uppercase", letterSpacing: "0.25em", color: `rgba(${accentRgb},0.6)`, marginBottom: "24px" }}>
               Enjeu & Brief
             </p>
             <div className="pd-challenge" style={{ padding: "48px", borderRadius: "20px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", position: "relative", overflow: "hidden" }}>
@@ -395,7 +395,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
         {/* Gallery */}
         {images.length > 0 && (
           <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: "120px" }}>
-            <p style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.25em", color: `rgba(${accentRgb},0.6)`, marginBottom: "28px" }}>
+            <p style={{ fontSize: "var(--fs-base)", textTransform: "uppercase", letterSpacing: "0.25em", color: `rgba(${accentRgb},0.6)`, marginBottom: "28px" }}>
               Visuels
             </p>
             <div className="pd-gallery" style={{ display: "grid", gridTemplateColumns: images.length === 1 ? "1fr" : images.length === 2 ? "1fr 1fr" : "repeat(auto-fit, minmax(340px, 1fr))", gap: "16px" }}>
@@ -421,7 +421,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
         {/* Mockup browser frames */}
         {mockupImages.length > 0 && (
           <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: "120px" }}>
-            <p style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.25em", color: `rgba(${accentRgb},0.6)`, marginBottom: "28px" }}>
+            <p style={{ fontSize: "var(--fs-base)", textTransform: "uppercase", letterSpacing: "0.25em", color: `rgba(${accentRgb},0.6)`, marginBottom: "28px" }}>
               Interface & aperçu
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: "40px" }}>
@@ -435,7 +435,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
                         <div style={{ width: 10, height: 10, borderRadius: "50%", background: "rgba(255,200,97,0.5)" }} />
                         <div style={{ width: 10, height: 10, borderRadius: "50%", background: "rgba(97,205,97,0.5)" }} />
                       </div>
-                      <div style={{ flex: 1, background: "rgba(255,255,255,0.04)", borderRadius: "6px", padding: "4px 12px", fontSize: "10px", color: "rgba(255,255,255,0.2)", fontFamily: "var(--font-poppins)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <div style={{ flex: 1, background: "rgba(255,255,255,0.04)", borderRadius: "6px", padding: "4px 12px", fontSize: "var(--fs-sm)", color: "rgba(255,255,255,0.35)", fontFamily: "var(--font-poppins)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {project.externalLink ? project.externalLink.replace(/^https?:\/\//, "") : project.slug + ".fr"}
                       </div>
                     </div>
@@ -480,7 +480,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
                 <p style={{ fontSize: "15px", fontWeight: 700, color: "white", margin: "0 0 4px" }}>
                   Rejoindre la communauté {project.title}
                 </p>
-                <p style={{ fontSize: "12px", fontWeight: 300, color: "rgba(255,255,255,0.4)", margin: 0 }}>
+                <p style={{ fontSize: "var(--fs-md)", fontWeight: 300, color: "rgba(255,255,255,0.5)", margin: 0 }}>
                   Échangez avec les membres et suivez les actualités du projet sur Discord.
                 </p>
               </div>
@@ -489,7 +489,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
               display: "flex", alignItems: "center", gap: "8px", flexShrink: 0,
               padding: "12px 22px", borderRadius: "12px",
               border: "1px solid rgba(88,101,242,0.4)", background: "rgba(88,101,242,0.85)",
-              fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "white",
+              fontFamily: "var(--font-poppins)", fontSize: "var(--fs-md)", fontWeight: 600, color: "white",
             }}>
               Rejoindre le serveur <ArrowRight size={14} />
             </span>
@@ -503,8 +503,8 @@ export default function PortfolioDetail({ project }: { project: Project }) {
         >
           <Link href="/portfolio" style={{
             display: "flex", alignItems: "center", gap: "8px", textDecoration: "none",
-            fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 500,
-            color: "rgba(255,255,255,0.3)",
+            fontFamily: "var(--font-poppins)", fontSize: "var(--fs-md)", fontWeight: 500,
+            color: "rgba(255,255,255,0.45)",
           }}>
             <ArrowLeft size={13} /> Retour au portfolio
           </Link>
@@ -514,7 +514,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
             padding: "13px 26px", borderRadius: "12px",
             border: `1px solid rgba(${accentRgb},0.35)`,
             background: `rgba(${accentRgb},0.12)`,
-            fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 600,
+            fontFamily: "var(--font-poppins)", fontSize: "var(--fs-lg)", fontWeight: 600,
             color: `rgba(${accentRgb === "60,100,255" ? "100,140,255" : accentRgb},0.95)`,
             textDecoration: "none",
           }}>

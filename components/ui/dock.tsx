@@ -56,7 +56,7 @@ function DockItem({
               border: "1px solid rgba(255,255,255,0.07)",
               color: "white",
               fontFamily: "var(--font-poppins)",
-              fontSize: "11px",
+              fontSize: "var(--fs-base)",
               fontWeight: 500,
               whiteSpace: "nowrap",
               letterSpacing: "0.02em",

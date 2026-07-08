@@ -37,27 +37,27 @@ function ServiceRow({ s, i }: { s: Service; i: number }) {
       <div>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
           <div style={{ width: "16px", height: "1px", background: "rgba(255,255,255,0.18)", flexShrink: 0 }} />
-          <span style={{ fontFamily: "var(--font-poppins)", fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.82)", letterSpacing: "0.2px" }}>
+          <span style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-md)", fontWeight: 600, color: "rgba(255,255,255,0.82)", letterSpacing: "0.2px" }}>
             {s.name}
           </span>
           {s.badge && (
-            <span style={{ fontFamily: "var(--font-poppins)", fontSize: "7px", fontWeight: 600, letterSpacing: "3px", textTransform: "uppercase", color: "rgba(74,222,128,0.85)", border: "1px solid rgba(74,222,128,0.22)", padding: "2px 7px" }}>
+            <span style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-2xs)", fontWeight: 600, letterSpacing: "3px", textTransform: "uppercase", color: "rgba(74,222,128,0.85)", border: "1px solid rgba(74,222,128,0.22)", padding: "2px 7px" }}>
               {s.badge}
             </span>
           )}
           {s.soon && (
-            <span style={{ fontFamily: "var(--font-poppins)", fontSize: "7px", fontWeight: 500, letterSpacing: "3px", textTransform: "uppercase", color: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.08)", padding: "2px 7px" }}>
+            <span style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-2xs)", fontWeight: 500, letterSpacing: "3px", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.08)", padding: "2px 7px" }}>
               Bientôt
             </span>
           )}
         </div>
-        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 400, color: "rgba(255,255,255,0.50)", margin: "0 0 0 26px", lineHeight: 1.75 }}>
+        <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-sm)", fontWeight: 400, color: "rgba(255,255,255,0.50)", margin: "0 0 0 26px", lineHeight: 1.75 }}>
           {s.description}
         </p>
       </div>
       <span style={{
         fontFamily: "var(--font-poppins), sans-serif",
-        fontSize: "13px",
+        fontSize: "var(--fs-lg)",
         fontWeight: 600,
         letterSpacing: "0px",
         color: (s.price === "Sur devis" || s.price === "À venir") ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.88)",
@@ -94,11 +94,11 @@ function FaqPanel() {
               transition: "background 0.2s, border-color 0.2s",
             }}
           >
-            <span style={{ fontSize: "12px", fontWeight: selected === i ? 600 : 400, color: selected === i ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.38)", letterSpacing: "0.2px", transition: "color 0.2s" }}>
+            <span style={{ fontSize: "var(--fs-md)", fontWeight: selected === i ? 600 : 400, color: selected === i ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.38)", letterSpacing: "0.2px", transition: "color 0.2s" }}>
               {f.q}
             </span>
             {selected === i && (
-              <span style={{ fontSize: "10px", color: "#5C5CF5", flexShrink: 0 }}>→</span>
+              <span style={{ fontSize: "var(--fs-sm)", color: "#5C5CF5", flexShrink: 0 }}>→</span>
             )}
           </button>
         ))}
@@ -114,13 +114,13 @@ function FaqPanel() {
             exit={{ opacity: 0, x: -8 }}
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
           >
-            <p className="vto-label" style={{ fontSize: "8px", letterSpacing: "4px", color: "rgba(92,92,245,0.55)", marginBottom: "20px" }}>
+            <p className="vto-label" style={{ fontSize: "var(--fs-2xs)", letterSpacing: "4px", color: "rgba(92,92,245,0.55)", marginBottom: "20px" }}>
               {String(selected + 1).padStart(2, "0")}
             </p>
             <h3 style={{ fontFamily: "var(--font-six-caps), sans-serif", fontSize: "clamp(1.6rem, 2.4vw, 2.4rem)", fontWeight: 400, letterSpacing: "4px", textTransform: "uppercase", color: "white", margin: "0 0 20px", lineHeight: 1 }}>
               {faq[selected].q}
             </h3>
-            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 400, color: "rgba(255,255,255,0.52)", lineHeight: 1.9, margin: 0 }}>
+            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-base)", fontWeight: 400, color: "rgba(255,255,255,0.52)", lineHeight: 1.9, margin: 0 }}>
               {faq[selected].a}
             </p>
           </motion.div>
@@ -155,7 +155,7 @@ export function TarifPageContent({ content }: { content: SiteContentMap["tarifs"
           }}>
             Aperçu des tarifs.
           </h1>
-          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 400, color: "rgba(255,255,255,0.52)", lineHeight: 1.9, margin: "0 auto", letterSpacing: "0.3px", maxWidth: "420px" }}>
+          <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-base)", fontWeight: 400, color: "rgba(255,255,255,0.52)", lineHeight: 1.9, margin: "0 auto", letterSpacing: "0.3px", maxWidth: "420px" }}>
             Chaque projet est unique, ces fourchettes sont là pour vous orienter.
             Devis gratuit sous 24h, sans engagement.
           </p>
@@ -172,7 +172,7 @@ export function TarifPageContent({ content }: { content: SiteContentMap["tarifs"
             { num: "02", title: content.visualTitle, services: content.visualServices },
           ].map(({ num, title, services }, pi) => (
             <div key={num} style={{ flex: 1, minWidth: "300px", padding: "48px 48px 44px", background: "#0e0c0a" }}>
-              <p className="vto-label" style={{ fontSize: "8px", letterSpacing: "4px", color: "rgba(255,255,255,0.40)", marginBottom: "16px" }}>{num}</p>
+              <p className="vto-label" style={{ fontSize: "var(--fs-2xs)", letterSpacing: "4px", color: "rgba(255,255,255,0.40)", marginBottom: "16px" }}>{num}</p>
               <h2 style={{
                 fontFamily: "var(--font-six-caps), sans-serif",
                 fontSize: "clamp(2.2rem, 3.5vw, 3.8rem)",
@@ -196,7 +196,7 @@ export function TarifPageContent({ content }: { content: SiteContentMap["tarifs"
           ))}
         </motion.div>
 
-        <p className="vto-label" style={{ fontSize: "8px", letterSpacing: "3px", color: "rgba(255,255,255,0.32)", textAlign: "center", marginBottom: "100px" }}>
+        <p className="vto-label" style={{ fontSize: "var(--fs-2xs)", letterSpacing: "3px", color: "rgba(255,255,255,0.48)", textAlign: "center", marginBottom: "100px" }}>
           {content.footerNote}
         </p>
 

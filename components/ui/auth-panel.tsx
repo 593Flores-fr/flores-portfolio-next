@@ -14,12 +14,12 @@ const inp: React.CSSProperties = {
   width: "100%", padding: "11px 13px",
   border: "1px solid rgba(255,255,255,0.08)",
   background: "rgba(255,255,255,0.03)",
-  color: "white", fontFamily: "var(--font-poppins)", fontSize: "12px",
+  color: "white", fontFamily: "var(--font-poppins)", fontSize: "var(--fs-md)",
   fontWeight: 300, outline: "none", boxSizing: "border-box",
   borderRadius: 0,
 };
 const lbl: React.CSSProperties = {
-  fontFamily: "var(--font-poppins)", fontSize: "8px", fontWeight: 600,
+  fontFamily: "var(--font-poppins)", fontSize: "var(--fs-2xs)", fontWeight: 600,
   color: "rgba(255,255,255,0.22)", textTransform: "uppercase",
   letterSpacing: "0.2em", display: "block", marginBottom: "6px",
 };
@@ -66,7 +66,7 @@ export function AuthPanel({ onClose }: AuthPanelProps) {
   return (
     <div style={{ width: "100%", background: "#0e0c0a", border: "1px solid rgba(255,255,255,0.07)", position: "relative" }}>
       {onClose && (
-        <button onClick={onClose} style={{ position: "absolute", top: "14px", right: "14px", background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.25)", padding: "4px", display: "flex" }}>
+        <button onClick={onClose} style={{ position: "absolute", top: "14px", right: "14px", background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", padding: "4px", display: "flex" }}>
           <X size={13} />
         </button>
       )}
@@ -79,7 +79,7 @@ export function AuthPanel({ onClose }: AuthPanelProps) {
             onClick={() => switchMode(tab)}
             style={{
               flex: 1, padding: "14px", border: "none", cursor: "pointer",
-              fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600,
+              fontFamily: "var(--font-poppins)", fontSize: "var(--fs-xs)", fontWeight: 600,
               letterSpacing: "3px", textTransform: "uppercase",
               background: mode === tab ? "#0e0c0a" : "rgba(255,255,255,0.02)",
               color: mode === tab ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.2)",
@@ -100,7 +100,7 @@ export function AuthPanel({ onClose }: AuthPanelProps) {
               initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
               style={{ overflow: "hidden", marginBottom: "16px" }}
             >
-              <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", color: "rgba(248,113,113,0.8)", margin: 0, padding: "10px 12px", border: "1px solid rgba(248,113,113,0.18)", background: "rgba(248,113,113,0.05)" }}>
+              <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-sm)", color: "rgba(248,113,113,0.8)", margin: 0, padding: "10px 12px", border: "1px solid rgba(248,113,113,0.18)", background: "rgba(248,113,113,0.05)" }}>
                 {error}
               </p>
             </motion.div>
@@ -138,7 +138,7 @@ export function AuthPanel({ onClose }: AuthPanelProps) {
                   minLength={mode === "register" ? 8 : undefined}
                   style={{ ...inp, paddingRight: "36px" }}
                 />
-                <button type="button" onClick={() => setShowPass(v => !v)} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.25)", display: "flex" }}>
+                <button type="button" onClick={() => setShowPass(v => !v)} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", display: "flex" }}>
                   {showPass ? <EyeOff size={13} /> : <Eye size={13} />}
                 </button>
               </div>
@@ -152,7 +152,7 @@ export function AuthPanel({ onClose }: AuthPanelProps) {
                   onChange={e => setRememberMe(e.target.checked)}
                   style={{ width: "12px", height: "12px", accentColor: "rgba(92,92,245,0.85)", cursor: "pointer", flexShrink: 0 }}
                 />
-                <span style={{ fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 500, color: "rgba(255,255,255,0.35)", letterSpacing: "0.05em" }}>
+                <span style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-xs)", fontWeight: 500, color: "rgba(255,255,255,0.5)", letterSpacing: "0.05em" }}>
                   Se souvenir de moi — 30 jours
                 </span>
               </label>
@@ -166,7 +166,7 @@ export function AuthPanel({ onClose }: AuthPanelProps) {
                 width: "100%", padding: "13px",
                 background: loading ? "rgba(92,92,245,0.3)" : "rgba(92,92,245,0.85)",
                 border: "1px solid rgba(92,92,245,0.5)",
-                fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600,
+                fontFamily: "var(--font-poppins)", fontSize: "var(--fs-xs)", fontWeight: 600,
                 letterSpacing: "3px", textTransform: "uppercase",
                 color: "white", cursor: loading ? "not-allowed" : "pointer",
                 transition: "background 0.3s ease",
@@ -179,7 +179,7 @@ export function AuthPanel({ onClose }: AuthPanelProps) {
             {/* Discord */}
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.05)" }} />
-              <span className="vto-label" style={{ fontSize: "7px", letterSpacing: "3px" }}>ou</span>
+              <span className="vto-label" style={{ fontSize: "var(--fs-2xs)", letterSpacing: "3px" }}>ou</span>
               <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.05)" }} />
             </div>
 
@@ -189,9 +189,9 @@ export function AuthPanel({ onClose }: AuthPanelProps) {
               style={{
                 width: "100%", padding: "11px",
                 border: "1px solid rgba(88,101,242,0.25)", background: "rgba(88,101,242,0.07)",
-                fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600,
+                fontFamily: "var(--font-poppins)", fontSize: "var(--fs-xs)", fontWeight: 600,
                 letterSpacing: "3px", textTransform: "uppercase",
-                color: "rgba(255,255,255,0.5)", cursor: "pointer",
+                color: "rgba(255,255,255,0.68)", cursor: "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
                 transition: "all 0.2s ease", borderRadius: 0,
               }}

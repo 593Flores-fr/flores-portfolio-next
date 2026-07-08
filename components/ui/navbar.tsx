@@ -79,7 +79,7 @@ export function Navbar() {
           <span style={{
             fontFamily: "var(--font-six-caps), sans-serif",
             fontSize: "17px",
-            color: "rgba(255,255,255,0.55)",
+            color: "rgba(255,255,255,0.7)",
             display: "inline-flex", alignItems: "center",
             transition: "color 0.2s",
           }}>
@@ -102,7 +102,7 @@ export function Navbar() {
                 style={{
                   position: "relative",
                   fontFamily: "var(--font-poppins)",
-                  fontSize: "9px", fontWeight: 600,
+                  fontSize: "var(--fs-xs)", fontWeight: 600,
                   letterSpacing: "3px", textTransform: "uppercase",
                   color: active ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.38)",
                   textDecoration: "none",
@@ -143,14 +143,14 @@ export function Navbar() {
                 width: 26, height: 26, borderRadius: "50%",
                 background: "rgba(92,92,245,0.35)",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 700,
+                fontFamily: "var(--font-poppins)", fontSize: "var(--fs-sm)", fontWeight: 700,
                 color: "rgba(255,255,255,0.8)", flexShrink: 0,
               }}>
                 {(session.user.name ?? session.user.email ?? "?").charAt(0).toUpperCase()}
               </span>
             )}
             <span style={{
-              fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600,
+              fontFamily: "var(--font-poppins)", fontSize: "var(--fs-xs)", fontWeight: 600,
               letterSpacing: "2px", textTransform: "uppercase",
               color: "rgba(255,255,255,0.65)",
             }}>
@@ -249,14 +249,14 @@ export function Navbar() {
                       width: 32, height: 32, borderRadius: "50%",
                       background: "rgba(92,92,245,0.35)",
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      fontFamily: "var(--font-poppins)", fontSize: "13px", fontWeight: 700,
+                      fontFamily: "var(--font-poppins)", fontSize: "var(--fs-lg)", fontWeight: 700,
                       color: "rgba(255,255,255,0.8)", flexShrink: 0,
                     }}>
                       {(session.user.name ?? session.user.email ?? "?").charAt(0).toUpperCase()}
                     </span>
                   )}
                   <span style={{
-                    fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600,
+                    fontFamily: "var(--font-poppins)", fontSize: "var(--fs-base)", fontWeight: 600,
                     letterSpacing: "3px", textTransform: "uppercase",
                     color: "rgba(255,255,255,0.6)",
                   }}>
