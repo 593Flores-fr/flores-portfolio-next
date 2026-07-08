@@ -27,7 +27,7 @@ export function AboutSection({ content = SITE_DEFAULTS.about }: { content?: Site
           src={content.imageSrc || "/images/about.jpg"}
           alt="Flores — Allan"
           fill
-          style={{ objectFit: "cover", objectPosition: "center 30%" }}
+          style={{ objectFit: "cover", objectPosition: "center 30%", filter: "grayscale(1)" }}
           sizes="100vw"
         />
 
