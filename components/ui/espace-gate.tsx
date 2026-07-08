@@ -45,7 +45,7 @@ export function EspaceGate() {
         flexWrap: "wrap",
       }}>
         {/* ── Gauche — copie ── */}
-        <div style={{ flex: "1 1 320px", minWidth: 0, maxWidth: "420px" }}>
+        <div style={{ flex: "1 1 320px", minWidth: 0, maxWidth: "560px" }}>
           <p className="vto-label" style={{ marginBottom: "24px" }}>Espace client</p>
 
           <h1 style={{
@@ -63,19 +63,23 @@ export function EspaceGate() {
 
           <div className="vto-sep" style={{ marginBottom: "40px" }} />
 
-          {/* Feature list — VTO style */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          {/* Feature list — VTO style, toutes les fonctionnalités de l'espace */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "22px 32px" }}>
             {[
-              { num: "01", label: "Demande de devis", desc: "Formulaire structuré · Réponse sous 24h" },
-              { num: "02", label: "Suivi de projet", desc: "Kanban mis à jour en direct" },
-              { num: "03", label: "Messagerie privée", desc: "Échangez directement avec Flores" },
-              { num: "04", label: "Avis & bilan", desc: "Partagez votre expérience" },
+              { num: "01", label: "Brief & devis", desc: "Formulaire structuré · Réponse sous 24h" },
+              { num: "02", label: "Devis & factures", desc: "Signature en ligne, factures téléchargeables" },
+              { num: "03", label: "Suivi de projet", desc: "Kanban partagé, avancement en direct" },
+              { num: "04", label: "Messagerie privée", desc: "Échangez directement avec Flores" },
+              { num: "05", label: "Livrables à valider", desc: "Approuvez ou demandez une retouche en un clic" },
+              { num: "06", label: "Moodboard partagé", desc: "Références et inspirations du projet" },
+              { num: "07", label: "Avis & bilan", desc: "Partagez votre expérience en fin de projet" },
+              { num: "08", label: "Signalements", desc: "Un souci ? Signalez-le, suivi dans l'espace" },
             ].map(f => (
               <div key={f.num} style={{ display: "flex", gap: "20px", alignItems: "flex-start" }}>
-                <span className="vto-label" style={{ fontSize: "8px", letterSpacing: "3px", color: "rgba(255,255,255,0.40)", flexShrink: 0, paddingTop: "2px" }}>{f.num}</span>
+                <span className="vto-label" style={{ fontSize: "var(--fs-2xs)", letterSpacing: "3px", color: "rgba(255,255,255,0.40)", flexShrink: 0, paddingTop: "2px" }}>{f.num}</span>
                 <div>
-                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.65)", margin: "0 0 3px", letterSpacing: "0.3px" }}>{f.label}</p>
-                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "10px", fontWeight: 400, color: "rgba(255,255,255,0.50)", margin: 0, letterSpacing: "0.5px" }}>{f.desc}</p>
+                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-base)", fontWeight: 600, color: "rgba(255,255,255,0.65)", margin: "0 0 3px", letterSpacing: "0.3px" }}>{f.label}</p>
+                  <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-sm)", fontWeight: 400, color: "rgba(255,255,255,0.50)", margin: 0, letterSpacing: "0.5px" }}>{f.desc}</p>
                 </div>
               </div>
             ))}
