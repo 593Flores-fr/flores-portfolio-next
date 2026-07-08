@@ -88,7 +88,7 @@ export function TarifsTeaser({ content = SITE_DEFAULTS.tarifsTeaser }: { content
             <h2 style={{ fontFamily: "var(--font-six-caps), sans-serif", fontSize: "clamp(3rem, 5.5vw, 5.5rem)", fontWeight: 400, lineHeight: 1.0, letterSpacing: "5px", color: "white", textTransform: "uppercase", margin: "0 0 20px" }}>
               <ScrollFillText>{content.title}</ScrollFillText>
             </h2>
-            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 400, color: "rgba(255,255,255,0.48)", maxWidth: "360px", lineHeight: 1.9, margin: 0 }}>
+            <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-base)", fontWeight: 400, color: "rgba(255,255,255,0.48)", maxWidth: "360px", lineHeight: 1.9, margin: 0 }}>
               {content.subtitle}
             </p>
           </div>
@@ -113,31 +113,18 @@ export function TarifsTeaser({ content = SITE_DEFAULTS.tarifsTeaser }: { content
                 {VISUALS[i % VISUALS.length]}
               </div>
 
-              <p className="vto-label" style={{ fontSize: "8px", letterSpacing: "4px", color: "rgba(255,255,255,0.28)", marginBottom: "20px" }}>{String(i + 1).padStart(2, "0")}</p>
+              <p className="vto-label" style={{ fontSize: "var(--fs-2xs)", letterSpacing: "4px", color: "rgba(255,255,255,0.42)", marginBottom: "20px" }}>{String(i + 1).padStart(2, "0")}</p>
               <h3 style={{ fontFamily: "var(--font-six-caps), sans-serif", fontSize: "clamp(2rem, 2.8vw, 3rem)", fontWeight: 400, letterSpacing: "4px", textTransform: "uppercase", color: "white", lineHeight: 1.0, margin: "0 0 20px" }}>
                 {cat.title}
               </h3>
-              <p style={{ fontFamily: "var(--font-poppins)", fontSize: "11px", fontWeight: 400, color: "rgba(255,255,255,0.50)", lineHeight: 1.9, margin: "0 0 32px", flex: 1 }}>
+              <p style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-base)", fontWeight: 400, color: "rgba(255,255,255,0.50)", lineHeight: 1.9, margin: "0 0 32px", flex: 1 }}>
                 {cat.desc}
               </p>
 
               {/* Ancre tarifaire */}
-              <div style={{ display: "flex", alignItems: "baseline", gap: "10px", marginBottom: "24px", position: "relative", zIndex: 1 }}>
-                <span style={{ fontFamily: "var(--font-poppins)", fontSize: "8px", letterSpacing: "3px", textTransform: "uppercase", color: "rgba(255,255,255,0.28)" }}>À partir de</span>
+              <div style={{ display: "flex", alignItems: "baseline", gap: "10px", position: "relative", zIndex: 1 }}>
+                <span style={{ fontFamily: "var(--font-poppins)", fontSize: "var(--fs-2xs)", letterSpacing: "3px", textTransform: "uppercase", color: "rgba(255,255,255,0.42)" }}>À partir de</span>
                 <span style={{ fontFamily: "var(--font-six-caps), sans-serif", fontSize: "clamp(2.2rem, 3vw, 3.2rem)", letterSpacing: "4px", color: "rgba(255,255,255,0.82)", lineHeight: 1 }}>{cat.from}</span>
-              </div>
-
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", position: "relative", zIndex: 1, maxWidth: "55%" }}>
-                {cat.tags.map(tag => (
-                  <span key={tag} style={{
-                    fontFamily: "var(--font-poppins)", fontSize: "8px", fontWeight: 500,
-                    letterSpacing: "2px", textTransform: "uppercase",
-                    color: "rgba(255,255,255,0.32)", border: "1px solid rgba(255,255,255,0.08)",
-                    padding: "3px 8px",
-                  }}>
-                    {tag}
-                  </span>
-                ))}
               </div>
             </motion.div>
           ))}
