@@ -90,12 +90,12 @@ export const SITE_DEFAULTS: SiteContentMap = {
     webImage: "",
   },
   about: {
-    heading: "Créer, c'est ce que je fais.",
+    heading: "Votre image, pas un template.",
     imageSrc: "/images/about.jpg",
     points: [
-      { num: "01", title: "Qui suis-je", text: "Autodidacte depuis 5 ans, j'ai tout appris seul : du logo au site web en passant par la cover musicale. Graphiste freelance & membre de V.T.O Studio, je construis des identités visuelles qui ont du caractère." },
-      { num: "02", title: "Ce que je propose", text: "Identité visuelle, direction artistique, développement web, cover art, suivi créateurs & artistes. Un seul interlocuteur, six expertises, du concept à la livraison." },
-      { num: "03", title: "Pourquoi bosser avec moi", text: "Parce que je m'implique vraiment. Pas de template, pas de copier-coller. Chaque projet est pensé pour vous ressembler et marquer les esprits, avec une réponse sous 24h et un devis gratuit." },
+      { num: "01", title: "Le constat", text: "Trop de sites et de visuels se ressemblent. Je construis des identités qui ont du caractère — pensées pour vous, jamais copiées d'un modèle." },
+      { num: "02", title: "Ce que vous obtenez", text: "Un seul interlocuteur pour tout : identité visuelle, direction artistique, développement web, cover art. Du concept à la livraison, sans jongler entre prestataires." },
+      { num: "03", title: "Comment ça se passe", text: "Devis gratuit sous 24h, échange direct, zéro jargon. Autodidacte depuis 5 ans et membre de V.T.O Studio, je m'implique comme si le projet était le mien." },
     ],
     stats: [
       { val: "30+", label: "Projets livrés" },
