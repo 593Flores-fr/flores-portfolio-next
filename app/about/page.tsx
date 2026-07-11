@@ -20,27 +20,8 @@ export const metadata: Metadata = {
   },
 };
 
-async function getReviews() {
-  try {
-    return await prisma.review.findMany({
-      where: { status: "approved", content: { not: null } },
-      select: {
-        id: true, content: true, rating: true,
-        user: { select: { name: true, image: true } },
-        project: { select: { title: true } },
-      },
-      orderBy: { submittedAt: "desc" },
-    });
-  } catch {
-    return [];
-  }
-}
-
 export default async function AboutPage() {
-  const [row, reviews] = await Promise.all([
-    prisma.siteContent.findUnique({ where: { section: "aboutPage" } }),
-    getReviews(),
-  ]);
+  const row = await prisma.siteContent.findUnique({ where: { section: "aboutPage" } });
   const content = mergeSiteContent("aboutPage", row?.data);
-  return <AboutPageContent content={content} reviews={reviews} />;
+  return <AboutPageContent content={content} />;
 }
