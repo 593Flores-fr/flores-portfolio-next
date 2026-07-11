@@ -157,27 +157,29 @@ export function HeroHome({ content }: { content?: HeroContent }) {
 
       </div>
 
-      {/* Scroll hint — absolue en bas */}
-      <div style={{
-        position: "absolute", bottom: "28px", left: "4vw", zIndex: 5,
-        display: "flex", alignItems: "center", gap: "16px",
-      }}>
-        <motion.div
-          initial={{ scaleY: 0 }} animate={{ scaleY: 1 }}
-          style={{ transformOrigin: "top" }}
-          transition={{ delay: 0.7, duration: 0.6, ease }}
-        >
-          <div style={{ width: "1px", height: "32px", background: "rgba(255,255,255,0.15)" }} />
-        </motion.div>
-        <motion.span
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          transition={{ delay: 0.85, duration: 0.5 }}
-          className="vto-label"
-          style={{ fontSize: "var(--fs-2xs)", letterSpacing: "4px", color: "rgba(255,255,255,0.4)" }}
-        >
+      {/* Scroll hint — absolue en bas, cliquable */}
+      <motion.button
+        type="button"
+        onClick={() => window.scrollTo({ top: window.innerHeight, behavior: "smooth" })}
+        aria-label="Descendre à la section suivante"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+        transition={{ delay: 0.7, duration: 0.6 }}
+        whileHover={{ x: 4 }}
+        style={{
+          position: "absolute", bottom: "28px", left: "4vw", zIndex: 5,
+          display: "flex", alignItems: "center", gap: "16px",
+          background: "none", border: "none", padding: 0, cursor: "pointer",
+        }}
+      >
+        <div style={{
+          width: "2px", height: "48px",
+          background: "linear-gradient(to bottom, rgba(92,92,245,0.95), rgba(92,92,245,0.2))",
+          animation: "scrollHint 2s cubic-bezier(0.45, 0, 0.55, 1) infinite",
+        }} />
+        <span className="vto-label" style={{ fontSize: "var(--fs-xs)", letterSpacing: "4px", color: "rgba(255,255,255,0.75)" }}>
           Scroll pour découvrir
-        </motion.span>
-      </div>
+        </span>
+      </motion.button>
 
     </section>
   );
