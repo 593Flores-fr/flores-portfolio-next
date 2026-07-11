@@ -1,5 +1,6 @@
 export type TextBlock = { type: "text"; title?: string; text: string };
-export type TextImageBlock = { type: "textImage"; title?: string; text: string; image: string; imagePosition: "left" | "right" };
+export type ImageFormat = "standard" | "carre" | "large" | "banniere";
+export type TextImageBlock = { type: "textImage"; title?: string; text: string; image: string; imagePosition: "left" | "right"; imageFormat?: ImageFormat };
 export type CarouselBlock = { type: "carousel"; images: string[] };
 export type VideoBlock = { type: "video"; url: string; caption?: string };
 export type StatsBlock = { type: "stats"; items: { value: string; label: string }[] };
@@ -16,7 +17,7 @@ export function toBlockArray(val: unknown): PortfolioBlock[] {
 export function emptyBlock(type: PortfolioBlock["type"]): PortfolioBlock {
   switch (type) {
     case "text": return { type: "text", title: "", text: "" };
-    case "textImage": return { type: "textImage", title: "", text: "", image: "", imagePosition: "right" };
+    case "textImage": return { type: "textImage", title: "", text: "", image: "", imagePosition: "right", imageFormat: "standard" };
     case "carousel": return { type: "carousel", images: [] };
     case "video": return { type: "video", url: "", caption: "" };
     case "stats": return { type: "stats", items: [{ value: "", label: "" }] };

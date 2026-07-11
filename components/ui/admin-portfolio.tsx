@@ -238,14 +238,15 @@ function BlocksEditor({ blocks, onChange, onPickImage }: {
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 <input value={b.title ?? ""} onChange={e => update(i, { ...b, title: e.target.value })} placeholder="Titre (optionnel)" style={inputStyle} />
                 <textarea value={b.text} onChange={e => update(i, { ...b, text: e.target.value })} rows={5} placeholder="Texte…" style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }} />
-                <div style={{ display: "flex", gap: "6px" }}>
+                <div style={{ display: "flex", gap: "6px", opacity: (b.imageFormat ?? "standard") === "banniere" ? 0.35 : 1 }}>
                   {(["left", "right"] as const).map(pos => (
                     <button
                       key={pos}
                       type="button"
+                      disabled={(b.imageFormat ?? "standard") === "banniere"}
                       onClick={() => update(i, { ...b, imagePosition: pos })}
                       style={{
-                        flex: 1, padding: "7px", borderRadius: "6px", cursor: "pointer",
+                        flex: 1, padding: "7px", borderRadius: "6px", cursor: (b.imageFormat ?? "standard") === "banniere" ? "default" : "pointer",
                         border: `1px solid ${b.imagePosition === pos ? "rgba(92,92,245,0.4)" : "rgba(255,255,255,0.1)"}`,
                         background: b.imagePosition === pos ? "rgba(92,92,245,0.12)" : "transparent",
                         fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase",
@@ -255,6 +256,27 @@ function BlocksEditor({ blocks, onChange, onPickImage }: {
                       Image à {pos === "left" ? "gauche" : "droite"}
                     </button>
                   ))}
+                </div>
+                <div style={{ display: "flex", gap: "6px" }}>
+                  {([["standard", "4:3"], ["carre", "Carré"], ["large", "16:9"], ["banniere", "Bannière"]] as const).map(([val, lab]) => {
+                    const active = (b.imageFormat ?? "standard") === val;
+                    return (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => update(i, { ...b, imageFormat: val })}
+                        style={{
+                          flex: 1, padding: "7px 4px", borderRadius: "6px", cursor: "pointer",
+                          border: `1px solid ${active ? "rgba(92,92,245,0.4)" : "rgba(255,255,255,0.1)"}`,
+                          background: active ? "rgba(92,92,245,0.12)" : "transparent",
+                          fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase",
+                          color: active ? "rgba(92,92,245,0.85)" : "rgba(255,255,255,0.35)",
+                        }}
+                      >
+                        {lab}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               <div>

@@ -55,6 +55,36 @@ function TextBlockView({ title, text }: { title?: string; text: string }) {
 
 function TextImageBlockView({ block, projectTitle }: { block: TextImageBlock; projectTitle: string }) {
   const imageFirst = block.imagePosition === "left";
+  const format = block.imageFormat ?? "standard";
+
+  // Bannière : texte au-dessus, image pleine largeur en dessous
+  if (format === "banniere") {
+    return (
+      <div>
+        {(block.title || block.text) && (
+          <div style={{ maxWidth: "760px", marginBottom: "36px" }}>
+            {block.title && (
+              <h3 style={{ fontFamily: "var(--font-six-caps)", fontSize: "clamp(1.8rem,2.6vw,2.6rem)", letterSpacing: "3px", textTransform: "uppercase", color: "white", margin: "0 0 20px", lineHeight: 1.05 }}>
+                {block.title}
+              </h3>
+            )}
+            {block.text && (
+              <p style={{ fontSize: "15px", fontWeight: 300, color: "rgba(255,255,255,0.6)", lineHeight: 1.9, margin: 0, whiteSpace: "pre-line" }}>
+                {block.text}
+              </p>
+            )}
+          </div>
+        )}
+        <div style={{ position: "relative", aspectRatio: "21/9", borderRadius: "16px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.03)" }}>
+          {block.image && (
+            <Image src={block.image} alt={block.title || projectTitle} fill style={{ objectFit: "cover" }} sizes="(max-width: 768px) 100vw, 1200px" />
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const aspect = format === "carre" ? "1/1" : format === "large" ? "16/9" : "4/3";
   return (
     <div className="pd-split" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "56px", alignItems: "center" }}>
       <div className="pd-split-text" style={{ order: imageFirst ? 2 : 1 }}>
@@ -67,7 +97,7 @@ function TextImageBlockView({ block, projectTitle }: { block: TextImageBlock; pr
           {block.text}
         </p>
       </div>
-      <div className="pd-split-image" style={{ order: imageFirst ? 1 : 2, position: "relative", aspectRatio: "4/3", borderRadius: "16px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.03)" }}>
+      <div className={format === "standard" ? "pd-split-image" : "pd-split-image pd-split-image--fixed"} style={{ order: imageFirst ? 1 : 2, position: "relative", aspectRatio: aspect, borderRadius: "16px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.03)" }}>
         {block.image && (
           <Image src={block.image} alt={block.title || projectTitle} fill style={{ objectFit: "cover" }} sizes="(max-width: 768px) 100vw, 50vw" />
         )}

@@ -511,7 +511,8 @@ html, body {
   .pd-gallery    { grid-template-columns: 1fr !important; }
   .pd-split      { grid-template-columns: 1fr !important; gap: 24px !important; }
   .pd-split-text  { order: 1 !important; }
-  .pd-split-image { order: 2 !important; aspect-ratio: 16/10 !important; }
+  .pd-split-image { order: 2 !important; }
+  .pd-split-image:not(.pd-split-image--fixed) { aspect-ratio: 16/10 !important; }
   .pd-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
 
   /* ── EspaceClient sidebar + accueil grid ── */
