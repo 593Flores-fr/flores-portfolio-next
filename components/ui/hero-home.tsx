@@ -157,29 +157,30 @@ export function HeroHome({ content }: { content?: HeroContent }) {
 
       </div>
 
-      {/* Scroll hint — absolue en bas, cliquable */}
-      <motion.button
-        type="button"
-        onClick={() => window.scrollTo({ top: window.innerHeight, behavior: "smooth" })}
-        aria-label="Descendre à la section suivante"
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-        transition={{ delay: 0.7, duration: 0.6 }}
-        whileHover={{ x: 4 }}
-        style={{
-          position: "absolute", bottom: "28px", left: "4vw", zIndex: 5,
-          display: "flex", alignItems: "center", gap: "16px",
-          background: "none", border: "none", padding: 0, cursor: "pointer",
-        }}
-      >
-        <div style={{
-          width: "2px", height: "48px",
-          background: "linear-gradient(to bottom, rgba(92,92,245,0.95), rgba(92,92,245,0.2))",
-          animation: "scrollHint 2s cubic-bezier(0.45, 0, 0.55, 1) infinite",
-        }} />
-        <span className="vto-label" style={{ fontSize: "var(--fs-xs)", letterSpacing: "4px", color: "rgba(255,255,255,0.75)" }}>
-          Scroll pour découvrir
-        </span>
-      </motion.button>
+      {/* Scroll hint — centré en bas, cliquable */}
+      <div style={{ position: "absolute", bottom: "28px", left: 0, right: 0, zIndex: 5, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
+        <motion.button
+          type="button"
+          onClick={() => window.scrollTo({ top: window.innerHeight, behavior: "smooth" })}
+          aria-label="Descendre à la section suivante"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          transition={{ delay: 0.7, duration: 0.6 }}
+          whileHover={{ y: 4 }}
+          style={{
+            display: "flex", flexDirection: "column", alignItems: "center", gap: "12px",
+            background: "none", border: "none", padding: 0, cursor: "pointer", pointerEvents: "auto",
+          }}
+        >
+          <span className="vto-label" style={{ fontSize: "var(--fs-xs)", letterSpacing: "4px", color: "rgba(255,255,255,0.75)" }}>
+            Scroll pour découvrir
+          </span>
+          <div style={{
+            width: "2px", height: "42px",
+            background: "linear-gradient(to bottom, rgba(92,92,245,0.95), rgba(92,92,245,0.2))",
+            animation: "scrollHint 2s cubic-bezier(0.45, 0, 0.55, 1) infinite",
+          }} />
+        </motion.button>
+      </div>
 
     </section>
   );
