@@ -431,6 +431,15 @@ export function AdminPortfolio() {
     order: p.order, published: p.published, blocks: toBlockArray(p.blocks),
   });
 
+  // Tags distincts des projets existants, triés par fréquence puis alphabétique
+  const usedTags = Array.from(
+    projects.reduce((m, p) => {
+      const t = p.tag?.trim();
+      if (t) m.set(t, (m.get(t) ?? 0) + 1);
+      return m;
+    }, new Map<string, number>())
+  ).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([t]) => t);
+
   const openCreate = () => { setForm(emptyForm); setEditing(null); setCreating(true); setSaveError(""); };
   const openEdit = (p: PortfolioProject) => { setForm(toFormState(p)); setEditing(p); setCreating(false); setSaveError(""); };
   const closePanel = () => { setEditing(null); setCreating(false); setSaveError(""); };
@@ -679,6 +688,29 @@ export function AdminPortfolio() {
                 <div style={{ gridColumn: "1 / -1" }}>
                   <Field label="Tag / Catégorie">
                     <input value={form.tag} onChange={e => setForm(f => ({ ...f, tag: e.target.value }))} placeholder="Identité visuelle" style={inputStyle} />
+                    {usedTags.length > 0 && (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "8px" }}>
+                        {usedTags.map(t => {
+                          const active = form.tag === t;
+                          return (
+                            <button
+                              key={t}
+                              type="button"
+                              onClick={() => setForm(f => ({ ...f, tag: active ? "" : t }))}
+                              style={{
+                                fontSize: "11px", fontWeight: 500, padding: "4px 10px", borderRadius: "6px", cursor: "pointer",
+                                background: active ? "rgba(167,139,250,0.15)" : "rgba(255,255,255,0.05)",
+                                border: `1px solid ${active ? "rgba(167,139,250,0.5)" : "rgba(255,255,255,0.09)"}`,
+                                color: active ? "rgba(167,139,250,0.95)" : "rgba(255,255,255,0.55)",
+                                transition: "all 0.15s ease",
+                              }}
+                            >
+                              {t}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </Field>
                 </div>
 
