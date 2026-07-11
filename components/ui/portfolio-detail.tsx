@@ -33,6 +33,20 @@ function toStringArray(val: unknown): string[] {
   return [];
 }
 
+// Mockups : accepte les anciennes entrées (string) et les nouvelles ({ src, caption })
+type MockupEntry = { src: string; caption?: string };
+function toMockupArray(val: unknown): MockupEntry[] {
+  if (!Array.isArray(val)) return [];
+  return val.flatMap((v): MockupEntry[] => {
+    if (typeof v === "string" && v.trim()) return [{ src: v.trim() }];
+    if (v && typeof v === "object" && typeof (v as { src?: unknown }).src === "string") {
+      const o = v as { src: string; caption?: unknown };
+      return [{ src: o.src, caption: typeof o.caption === "string" && o.caption.trim() ? o.caption.trim() : undefined }];
+    }
+    return [];
+  });
+}
+
 const fadeUp = {
   hidden: { opacity: 0, y: 40 },
   show: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.7, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } }),
@@ -57,8 +71,8 @@ function TextImageBlockView({ block, projectTitle }: { block: TextImageBlock; pr
   const imageFirst = block.imagePosition === "left";
   const format = block.imageFormat ?? "standard";
 
-  // Bannière : texte au-dessus, image pleine largeur en dessous
-  if (format === "banniere") {
+  // Bannière (21:9) et 16:9 : texte au-dessus, image pleine largeur en dessous
+  if (format === "banniere" || format === "large") {
     return (
       <div>
         {(block.title || block.text) && (
@@ -75,7 +89,7 @@ function TextImageBlockView({ block, projectTitle }: { block: TextImageBlock; pr
             )}
           </div>
         )}
-        <div style={{ position: "relative", aspectRatio: "21/9", borderRadius: "16px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.03)" }}>
+        <div style={{ position: "relative", aspectRatio: format === "large" ? "16/9" : "21/9", borderRadius: "16px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.03)" }}>
           {block.image && (
             <Image src={block.image} alt={block.title || projectTitle} fill style={{ objectFit: "cover" }} sizes="(max-width: 768px) 100vw, 1200px" />
           )}
@@ -84,7 +98,7 @@ function TextImageBlockView({ block, projectTitle }: { block: TextImageBlock; pr
     );
   }
 
-  const aspect = format === "carre" ? "1/1" : format === "large" ? "16/9" : "4/3";
+  const aspect = format === "carre" ? "1/1" : "4/3";
   return (
     <div className="pd-split" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "56px", alignItems: "center" }}>
       <div className="pd-split-text" style={{ order: imageFirst ? 2 : 1 }}>
@@ -221,7 +235,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
     : "60,100,255";
 
   const images = toStringArray(project.images);
-  const mockupImages = toStringArray(project.mockupImages);
+  const mockups = toMockupArray(project.mockupImages);
   const tools = toStringArray(project.tools);
   const blocks = toBlockArray(project.blocks);
 
@@ -449,13 +463,13 @@ export default function PortfolioDetail({ project }: { project: Project }) {
         )}
 
         {/* Mockup browser frames */}
-        {mockupImages.length > 0 && (
+        {mockups.length > 0 && (
           <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }} style={{ marginBottom: "120px" }}>
             <p style={{ fontSize: "var(--fs-base)", textTransform: "uppercase", letterSpacing: "0.25em", color: `rgba(${accentRgb},0.6)`, marginBottom: "28px" }}>
               Interface & aperçu
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: "40px" }}>
-              {mockupImages.map((src, i) => (
+            <div style={{ display: "flex", flexDirection: "column", gap: "56px" }}>
+              {mockups.map(({ src, caption }, i) => (
                 <motion.div key={i} custom={i} variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }}>
                   {/* Browser chrome */}
                   <div style={{ borderRadius: "14px", border: "1px solid rgba(255,255,255,0.09)", overflow: "hidden", boxShadow: `0 40px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(${accentRgb},0.06)` }}>
@@ -472,7 +486,7 @@ export default function PortfolioDetail({ project }: { project: Project }) {
                     <div style={{ position: "relative", overflow: "hidden", lineHeight: 0 }}>
                       <Image
                         src={src}
-                        alt={`${project.title} — aperçu ${i + 1}`}
+                        alt={caption || `${project.title} — aperçu ${i + 1}`}
                         width={1600}
                         height={900}
                         style={{ width: "100%", height: "auto", display: "block" }}
@@ -480,6 +494,13 @@ export default function PortfolioDetail({ project }: { project: Project }) {
                       />
                     </div>
                   </div>
+                  {/* Légende */}
+                  {caption && (
+                    <p style={{ display: "flex", alignItems: "center", gap: "10px", margin: "16px 0 0", fontFamily: "var(--font-poppins)", fontSize: "var(--fs-sm)", color: "rgba(255,255,255,0.5)", letterSpacing: "0.3px" }}>
+                      <span style={{ width: "20px", height: "1px", background: `rgba(${accentRgb},0.6)`, flexShrink: 0 }} />
+                      {caption}
+                    </p>
+                  )}
                 </motion.div>
               ))}
             </div>

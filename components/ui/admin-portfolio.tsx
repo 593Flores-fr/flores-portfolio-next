@@ -18,9 +18,24 @@ type PortfolioProject = {
   description: string; imageSrc: string; logoSrc: string; order: number; published: boolean;
   sectionId: string | null; section?: Section | null; year: string; client: string;
   fullDescription: string; challenge: string;
-  images: string[]; mockupImages: string[]; blocks: unknown; tools: string[];
+  images: string[]; mockupImages: unknown; blocks: unknown; tools: string[];
   externalLink: string | null; discordUrl: string | null; accentColor: string;
 };
+
+type MockupItem = { src: string; caption: string };
+
+// Accepte l'ancien format (string[]) et le nouveau ({ src, caption }[])
+function toMockupItems(val: unknown): MockupItem[] {
+  if (!Array.isArray(val)) return [];
+  return val.flatMap((v): MockupItem[] => {
+    if (typeof v === "string" && v.trim()) return [{ src: v.trim(), caption: "" }];
+    if (v && typeof v === "object" && typeof (v as { src?: unknown }).src === "string") {
+      const o = v as { src: string; caption?: unknown };
+      return [{ src: o.src, caption: typeof o.caption === "string" ? o.caption : "" }];
+    }
+    return [];
+  });
+}
 
 type PickerTarget =
   | { kind: "cover" | "logo" | "gallery" | "mockup" }
@@ -29,7 +44,7 @@ type PickerTarget =
 const emptyForm = {
   slug: "", title: "", tag: "", description: "", imageSrc: "", logoSrc: "",
   sectionId: "", year: "", client: "", fullDescription: "", challenge: "",
-  imagesRaw: "", mockupImagesRaw: "", toolsRaw: "", externalLink: "", discordUrl: "", accentColor: "",
+  imagesRaw: "", mockups: [] as MockupItem[], toolsRaw: "", externalLink: "", discordUrl: "", accentColor: "",
   order: 0, published: true, blocks: [] as PortfolioBlock[],
 };
 
@@ -238,15 +253,15 @@ function BlocksEditor({ blocks, onChange, onPickImage }: {
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 <input value={b.title ?? ""} onChange={e => update(i, { ...b, title: e.target.value })} placeholder="Titre (optionnel)" style={inputStyle} />
                 <textarea value={b.text} onChange={e => update(i, { ...b, text: e.target.value })} rows={5} placeholder="Texte…" style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }} />
-                <div style={{ display: "flex", gap: "6px", opacity: (b.imageFormat ?? "standard") === "banniere" ? 0.35 : 1 }}>
+                <div style={{ display: "flex", gap: "6px", opacity: ["banniere", "large"].includes(b.imageFormat ?? "standard") ? 0.35 : 1 }}>
                   {(["left", "right"] as const).map(pos => (
                     <button
                       key={pos}
                       type="button"
-                      disabled={(b.imageFormat ?? "standard") === "banniere"}
+                      disabled={["banniere", "large"].includes(b.imageFormat ?? "standard")}
                       onClick={() => update(i, { ...b, imagePosition: pos })}
                       style={{
-                        flex: 1, padding: "7px", borderRadius: "6px", cursor: (b.imageFormat ?? "standard") === "banniere" ? "default" : "pointer",
+                        flex: 1, padding: "7px", borderRadius: "6px", cursor: ["banniere", "large"].includes(b.imageFormat ?? "standard") ? "default" : "pointer",
                         border: `1px solid ${b.imagePosition === pos ? "rgba(92,92,245,0.4)" : "rgba(255,255,255,0.1)"}`,
                         background: b.imagePosition === pos ? "rgba(92,92,245,0.12)" : "transparent",
                         fontFamily: "var(--font-poppins)", fontSize: "9px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase",
@@ -447,7 +462,7 @@ export function AdminPortfolio() {
     sectionId: p.sectionId ?? "", year: p.year ?? "", client: p.client ?? "",
     fullDescription: p.fullDescription ?? "", challenge: p.challenge ?? "",
     imagesRaw: (p.images ?? []).join("\n"),
-    mockupImagesRaw: (p.mockupImages ?? []).join("\n"),
+    mockups: toMockupItems(p.mockupImages),
     toolsRaw: (p.tools ?? []).join(", "),
     externalLink: p.externalLink ?? "", discordUrl: p.discordUrl ?? "", accentColor: p.accentColor ?? "",
     order: p.order, published: p.published, blocks: toBlockArray(p.blocks),
@@ -469,7 +484,7 @@ export function AdminPortfolio() {
   const buildPayload = () => ({
     ...form,
     images: form.imagesRaw.split("\n").map(s => s.trim()).filter(Boolean),
-    mockupImages: form.mockupImagesRaw.split("\n").map(s => s.trim()).filter(Boolean),
+    mockupImages: form.mockups.filter(m => m.src.trim()).map(m => ({ src: m.src.trim(), caption: m.caption.trim() })),
     tools: form.toolsRaw.split(",").map(s => s.trim()).filter(Boolean),
     externalLink: form.externalLink.trim() || null,
     discordUrl: form.discordUrl.trim() || null,
@@ -538,7 +553,7 @@ export function AdminPortfolio() {
       case "gallery":
         setForm(f => ({ ...f, imagesRaw: f.imagesRaw ? f.imagesRaw.trimEnd() + "\n" + url : url })); break;
       case "mockup":
-        setForm(f => ({ ...f, mockupImagesRaw: f.mockupImagesRaw ? f.mockupImagesRaw.trimEnd() + "\n" + url : url })); break;
+        setForm(f => ({ ...f, mockups: [...f.mockups, { src: url, caption: "" }] })); break;
       case "blockImage": {
         const idx = pickerTarget.index;
         setForm(f => ({
@@ -874,7 +889,30 @@ export function AdminPortfolio() {
                       <BookImage size={10} /> + Bibliothèque
                     </button>
                   </div>
-                  <textarea value={form.mockupImagesRaw} onChange={e => setForm(f => ({ ...f, mockupImagesRaw: e.target.value }))} rows={4} placeholder={"https://…/mockup1.jpg\nhttps://…/mockup2.jpg"} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.8, fontFamily: "monospace", fontSize: "10px" }} />
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {form.mockups.map((m, i) => (
+                      <div key={i} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                        <div style={{ width: "58px", height: "36px", borderRadius: "6px", overflow: "hidden", background: "rgba(255,255,255,0.04)", flexShrink: 0 }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={m.src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        </div>
+                        <input
+                          value={m.caption}
+                          onChange={e => setForm(f => ({ ...f, mockups: f.mockups.map((x, xi) => xi === i ? { ...x, caption: e.target.value } : x) }))}
+                          placeholder="Légende (optionnel)"
+                          style={{ ...inputStyle, flex: 1 }}
+                        />
+                        <button type="button" onClick={() => setForm(f => ({ ...f, mockups: f.mockups.filter((_, xi) => xi !== i) }))} style={miniBtn}>
+                          <X size={13} color="rgba(248,113,113,0.6)" />
+                        </button>
+                      </div>
+                    ))}
+                    {form.mockups.length === 0 && (
+                      <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.25)", margin: "4px 0" }}>
+                        Aucun mockup — ajoute une image depuis la bibliothèque.
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <Field label="Lien externe (optionnel)">
