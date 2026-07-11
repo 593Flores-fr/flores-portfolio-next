@@ -228,12 +228,12 @@ export default function PortfolioDetail({ project }: { project: Project }) {
   return (
     <div style={{ background: "#060a0e", minHeight: "100dvh", color: "white", fontFamily: "var(--font-poppins)" }}>
 
-      {/* ── Nav ── */}
+      {/* ── Nav secondaire — sous la navbar globale (64px) ── */}
       <nav style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+        position: "fixed", top: "64px", left: 0, right: 0, zIndex: 40,
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "20px 6vw",
-        background: "linear-gradient(to bottom, rgba(6,10,14,0.9) 0%, transparent 100%)",
+        padding: "14px 6vw",
+        background: "linear-gradient(to bottom, rgba(6,10,14,0.75) 0%, transparent 100%)",
       }}>
         <Link href="/portfolio" style={{ display: "flex", alignItems: "center", gap: "8px", textDecoration: "none", fontFamily: "var(--font-poppins)", fontSize: "var(--fs-md)", fontWeight: 500, color: "rgba(255,255,255,0.55)" }}>
           <ArrowLeft size={14} /> Portfolio
